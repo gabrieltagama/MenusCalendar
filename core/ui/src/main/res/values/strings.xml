@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dish_type_starter">Primer plato</string>
+    <string name="dish_type_main">Segundo plato</string>
+    <string name="dish_type_dessert">Postre</string>
+    <string name="dish_type_single">Plato único</string>
+
+    <string name="heaviness_very_low">Muy baja</string>
+    <string name="heaviness_medium">Media</string>
+    <string name="heaviness_very_high">Muy alta</string>
+
+    <string name="unit_gram">g</string>
+    <string name="unit_kilogram">kg</string>
+    <string name="unit_milliliter">ml</string>
+    <string name="unit_liter">l</string>
+    <string name="unit_unit">ud.</string>
+    <string name="unit_tablespoon">cda.</string>
+    <string name="unit_teaspoon">cdta.</string>
+    <string name="unit_cup">taza</string>
+    <string name="unit_pinch">pizca</string>
+    <string name="unit_to_taste">al gusto</string>
+
+    <string name="error_blank_dish_name">El nombre del plato es obligatorio</string>
+    <string name="error_invalid_ingredient">El ingrediente %1$d no es válido</string>
+    <string name="error_dish_not_found">El plato no existe</string>
+    <string name="error_dish_in_use">No se puede borrar: el plato está en el calendario</string>
+    <string name="error_wrong_dish_type">El plato elegido no es de tipo %1$s</string>
+    <string name="error_invalid_import_file">El archivo no es un JSON de MenuPlanner válido</string>
+    <string name="error_unsupported_import_version">El archivo es de una versión no compatible</string>
+    <string name="error_invalid_credential">PIN incorrecto</string>
+
+    <string name="action_accept">Aceptar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="loading">Cargando…</string>
+</resources>

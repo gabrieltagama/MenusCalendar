@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dishes_title">Platos</string>
+    <string name="dishes_filter_all">Todos</string>
+    <string name="dishes_search_hint">Buscar por nombre</string>
+    <string name="dishes_clear_search">Borrar búsqueda</string>
+    <string name="dishes_add">Añadir plato</string>
+    <string name="dishes_empty">Aún no hay platos. Pulsa + para crear el primero.</string>
+    <string name="dishes_no_results">No hay platos que coincidan con el filtro.</string>
+
+    <string name="dish_editor_title_new">Nuevo plato</string>
+    <string name="dish_editor_title_edit">Editar plato</string>
+    <string name="dish_editor_back">Volver</string>
+    <string name="dish_editor_save">Guardar</string>
+    <string name="dish_editor_delete">Eliminar</string>
+    <string name="dish_editor_name">Nombre*</string>
+    <string name="dish_editor_name_required">El nombre es obligatorio</string>
+    <string name="dish_editor_description">Descripción</string>
+    <string name="dish_editor_type">Tipo</string>
+    <string name="dish_editor_heaviness">Pesadez</string>
+    <string name="dish_editor_ingredients">Ingredientes</string>
+    <string name="dish_editor_no_ingredients">Sin ingredientes</string>
+    <string name="dish_editor_ingredient_name">Ingrediente</string>
+    <string name="dish_editor_ingredient_quantity">Cantidad</string>
+    <string name="dish_editor_ingredient_unit">Unidad</string>
+    <string name="dish_editor_invalid_quantity">Cantidad no válida</string>
+    <string name="dish_editor_add_ingredient">Añadir ingrediente</string>
+    <string name="dish_editor_remove_ingredient">Quitar ingrediente</string>
+    <string name="dish_editor_preparation">Elaboración</string>
+    <string name="dish_editor_invalid_form">Revisa los campos marcados</string>
+    <string name="dish_editor_delete_title">Eliminar plato</string>
+    <string name="dish_editor_delete_text">¿Seguro que quieres eliminar «%1$s»?</string>
+</resources>

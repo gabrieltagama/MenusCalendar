@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calendar_previous_month">Mes anterior</string>
+    <string name="calendar_next_month">Mes siguiente</string>
+    <string name="calendar_today">Hoy</string>
+    <string-array name="calendar_weekday_initials">
+        <item>L</item>
+        <item>M</item>
+        <item>X</item>
+        <item>J</item>
+        <item>V</item>
+        <item>S</item>
+        <item>D</item>
+    </string-array>
+    <string name="calendar_no_menu">Sin menú</string>
+    <string name="calendar_plan">Planificar</string>
+    <string name="calendar_edit">Editar</string>
+    <string name="calendar_slot_starter">Primero</string>
+    <string name="calendar_slot_main">Segundo</string>
+    <string name="calendar_slot_single">Plato único</string>
+    <string name="calendar_slot_dessert">Postre</string>
+    <string name="calendar_no_dessert">—</string>
+
+    <string name="day_editor_back">Volver</string>
+    <string name="day_editor_save">Guardar</string>
+    <string name="day_editor_clear">Vaciar día</string>
+    <string name="day_editor_clear_title">Vaciar día</string>
+    <string name="day_editor_clear_text">Se eliminará el menú planificado para este día.</string>
+    <string name="day_editor_mode_courses">Primero + Segundo</string>
+    <string name="day_editor_mode_single">Plato único</string>
+    <string name="day_editor_required">%1$s*</string>
+    <string name="day_editor_select_dish">Selecciona un plato</string>
+    <string name="day_editor_no_dessert">Sin postre</string>
+    <string name="day_editor_no_dishes_hint">No hay platos de este tipo. Créalos en la pestaña Platos.</string>
+</resources>
