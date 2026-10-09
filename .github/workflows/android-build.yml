@@ -14,6 +14,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -37,6 +39,19 @@ jobs:
           name: MenuPlanner-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Publish APK as 'debug-latest' release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk MenuPlanner-debug.apk
+          gh release delete debug-latest --cleanup-tag --yes || true
+          gh release create debug-latest MenuPlanner-debug.apk \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "MenuPlanner debug (último build)" \
+            --notes "APK de pruebas generada automáticamente desde el commit ${GITHUB_SHA::7}."
 
       - name: Run unit tests
         if: always()
