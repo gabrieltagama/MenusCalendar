@@ -116,5 +116,18 @@ class ShareMergerTest {
         assertEquals(ImportSummary(0, 0, 2, 0, 0, 1), summary)
     }
 
+    @Test
+    fun `day with a dish in the wrong slot is skipped`() = runTest {
+        val content = ImportContent(
+            listOf(TestData.dish("d", type = DishType.DESSERT), TestData.dish("m", type = DishType.MAIN)),
+            listOf(TestData.coursesDay(date, "d", "m"))
+        )
+
+        val summary = merger.merge(content)
+
+        assertEquals(ImportSummary(2, 0, 0, 0, 0, 1), summary)
+        assertNull(mealDayDao.getByDate(date.toEpochDay()))
+    }
+
     private suspend fun insert(dish: Dish) = dishDao.upsertWithIngredients(dish.toEntity(), dish.toIngredientEntities())
 }

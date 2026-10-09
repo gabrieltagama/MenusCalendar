@@ -17,8 +17,10 @@ import java.time.Instant
 import java.time.LocalDate
 
 /**
- * Pure conversion between the share DTOs and the model. Unknown enum names or malformed dates
- * make the whole file invalid (InvalidImportFile). Dates use ISO-8601 (yyyy-MM-dd and instants).
+ * Pure conversion between the share DTOs and the model. Unknown enum names, malformed dates or
+ * dishes breaking the SaveDishUseCase rules (blank name, blank ingredient, negative or
+ * non-finite quantity) make the whole file invalid (InvalidImportFile). Repeated dish ids or
+ * meal day dates keep only their newest version. Dates use ISO-8601 (yyyy-MM-dd and instants).
  */
 internal object ShareDocumentMapper {
 
@@ -31,7 +33,12 @@ internal object ShareDocumentMapper {
 
     fun toImportContent(document: ShareDocumentDto): Outcome<ImportContent> =
         try {
-            Outcome.Success(ImportContent(document.dishes.map { it.toDomain() }, document.mealDays.map { it.toEntity() }))
+            Outcome.Success(
+                ImportContent(
+                    dishes = document.dishes.map { it.toDomain() }.newestPerId(),
+                    mealDays = document.mealDays.map { it.toEntity() }.newestPerDate()
+                )
+            )
         } catch (exception: IllegalArgumentException) {
             Outcome.Failure(DomainError.InvalidImportFile)
         } catch (exception: DateTimeException) {
@@ -58,7 +65,21 @@ internal object ShareDocumentMapper {
         updatedAt = Instant.ofEpochMilli(updatedAt).toString()
     )
 
-    private fun DishDto.toDomain(): Dish = Dish(
+    private fun List<Dish>.newestPerId(): List<Dish> =
+        groupBy(Dish::id).values.map { versions -> versions.maxBy(Dish::updatedAt) }
+
+    private fun List<MealDayEntity>.newestPerDate(): List<MealDayEntity> =
+        groupBy(MealDayEntity::date).values.map { versions -> versions.maxBy(MealDayEntity::updatedAt) }
+
+    private fun DishDto.toDomain(): Dish {
+        require(id.isNotBlank() && name.isNotBlank())
+        require(ingredients.all { it.isValid() })
+        return toDish()
+    }
+
+    private fun IngredientDto.isValid(): Boolean = name.isNotBlank() && quantity.isFinite() && quantity >= 0.0
+
+    private fun DishDto.toDish(): Dish = Dish(
         id = id,
         name = name,
         description = description,

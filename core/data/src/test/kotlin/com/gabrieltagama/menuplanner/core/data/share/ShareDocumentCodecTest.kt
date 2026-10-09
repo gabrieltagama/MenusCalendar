@@ -150,14 +150,61 @@ class ShareDocumentCodecTest {
         assertEquals(Outcome.Failure(DomainError.InvalidImportFile), ShareDocumentMapper.toImportContent(document))
     }
 
+    @Test
+    fun `blank dish name is InvalidImportFile`() =
+        assertEquals(Outcome.Failure(DomainError.InvalidImportFile), ShareDocumentMapper.toImportContent(documentWith(dishDto(name = "  "))))
+
+    @Test
+    fun `blank ingredient name is InvalidImportFile`() {
+        val dto = dishDto(ingredients = listOf(IngredientDto(" ", 1.0, "GRAM")))
+
+        assertEquals(Outcome.Failure(DomainError.InvalidImportFile), ShareDocumentMapper.toImportContent(documentWith(dto)))
+    }
+
+    @Test
+    fun `negative ingredient quantity is InvalidImportFile`() {
+        val dto = dishDto(ingredients = listOf(IngredientDto("Flour", -1.0, "GRAM")))
+
+        assertEquals(Outcome.Failure(DomainError.InvalidImportFile), ShareDocumentMapper.toImportContent(documentWith(dto)))
+    }
+
+    @Test
+    fun `non finite ingredient quantity is InvalidImportFile`() {
+        val dto = dishDto(ingredients = listOf(IngredientDto("Flour", Double.NaN, "GRAM")))
+
+        assertEquals(Outcome.Failure(DomainError.InvalidImportFile), ShareDocumentMapper.toImportContent(documentWith(dto)))
+    }
+
+    @Test
+    fun `repeated dish id keeps the newest version`() {
+        val older = dishDto(name = "Older", updatedAt = "2026-01-01T00:00:00Z")
+        val newer = dishDto(name = "Newer", updatedAt = "2026-02-01T00:00:00Z")
+        val document = ShareDocumentDto(exportedAt = "2026-05-01T00:00:00Z", dishes = listOf(newer, older), mealDays = emptyList())
+
+        val content = (ShareDocumentMapper.toImportContent(document) as Outcome.Success).value
+
+        assertEquals(listOf("Newer"), content.dishes.map { it.name })
+    }
+
+    @Test
+    fun `repeated meal day date keeps the newest version`() {
+        val newer = MealDayDto(date = "2026-03-10", singleId = "new", updatedAt = "2026-02-01T00:00:00Z")
+        val older = MealDayDto(date = "2026-03-10", singleId = "old", updatedAt = "2026-01-01T00:00:00Z")
+
+        val content = (ShareDocumentMapper.toImportContent(documentWith(dishDto(), newer, older)) as Outcome.Success).value
+
+        assertEquals(listOf("new"), content.mealDays.map { it.singleId })
+    }
+
     private fun dishDto(
+        name: String = "Dish",
         type: String = "MAIN",
         heaviness: String = "MEDIUM",
         ingredients: List<IngredientDto> = emptyList(),
         updatedAt: String = "2026-01-01T00:00:00Z"
     ) = DishDto(
         id = "d1",
-        name = "Dish",
+        name = name,
         description = "",
         ingredients = ingredients,
         preparation = "",

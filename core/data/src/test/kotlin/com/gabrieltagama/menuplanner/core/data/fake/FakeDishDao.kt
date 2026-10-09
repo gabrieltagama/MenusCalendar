@@ -64,5 +64,5 @@ internal class FakeDishDao(private val mealDayDao: FakeMealDayDao? = null) : Dis
     private fun withIngredients(entity: DishEntity): DishWithIngredients =
         DishWithIngredients(entity, ingredients.value.filter { it.dishId == entity.id })
 
-    private fun versionOf(entity: DishEntity): DishVersion = DishVersion(entity.id, entity.updatedAt)
+    private fun versionOf(entity: DishEntity): DishVersion = DishVersion(entity.id, entity.type, entity.updatedAt)
 }

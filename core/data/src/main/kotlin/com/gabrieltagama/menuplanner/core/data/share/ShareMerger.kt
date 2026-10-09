@@ -2,11 +2,11 @@ package com.gabrieltagama.menuplanner.core.data.share
 
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishDao
 import com.gabrieltagama.menuplanner.core.data.database.dao.MealDayDao
-import com.gabrieltagama.menuplanner.core.data.database.entity.DishVersion
 import com.gabrieltagama.menuplanner.core.data.database.entity.MealDayEntity
 import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import javax.inject.Inject
 
@@ -42,16 +42,16 @@ internal class ShareMerger @Inject constructor(
     }
 
     private suspend fun mergeDays(days: List<MealDayEntity>): MergeCount {
-        val knownDishIds = dishDao.getVersions().map(DishVersion::id).toSet()
+        val knownDishTypes = dishDao.getVersions().associate { it.id to DishType.valueOf(it.type) }
         val local = mealDayDao.getAll().associate { it.date to it.updatedAt }
-        val decisions = days.map { it to decideDay(it, local[it.date], knownDishIds) }
+        val decisions = days.map { it to decideDay(it, local[it.date], knownDishTypes) }
         decisions
             .filter { (_, decision) -> decision != MergeDecision.SKIP }
             .forEach { (day, _) -> mealDayDao.upsert(day) }
         return MergeCount.of(decisions.map { it.second })
     }
 
-    private fun decideDay(day: MealDayEntity, localUpdatedAt: Long?, knownDishIds: Set<String>): MergeDecision =
-        if (MergePolicy.isImportable(day, knownDishIds)) MergePolicy.decide(localUpdatedAt, day.updatedAt)
+    private fun decideDay(day: MealDayEntity, localUpdatedAt: Long?, knownDishTypes: Map<String, DishType>): MergeDecision =
+        if (MergePolicy.isImportable(day, knownDishTypes)) MergePolicy.decide(localUpdatedAt, day.updatedAt)
         else MergeDecision.SKIP
 }
