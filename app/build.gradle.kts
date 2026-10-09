@@ -47,6 +47,7 @@ dependencies {
     implementation(project(":feature:auth"))
     implementation(project(":feature:dishes"))
     implementation(project(":feature:calendar"))
+    implementation(project(":feature:settings"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

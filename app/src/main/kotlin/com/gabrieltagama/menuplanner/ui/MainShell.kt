@@ -44,12 +44,13 @@ import com.gabrieltagama.menuplanner.feature.calendar.navigation.navigateToDayEd
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.navigateToShoppingList
 import com.gabrieltagama.menuplanner.feature.dishes.navigation.dishesGraph
 import com.gabrieltagama.menuplanner.feature.dishes.navigation.navigateToDishEditor
+import com.gabrieltagama.menuplanner.feature.settings.navigation.settingsGraph
 import com.gabrieltagama.menuplanner.share.ShareEvent
 import com.gabrieltagama.menuplanner.share.ShareViewModel
 import com.gabrieltagama.menuplanner.share.text
 
 /**
- * Authenticated shell: a Scaffold with the bottom NavigationBar (Calendario, Platos, Más), the
+ * Authenticated shell: a Scaffold with the bottom NavigationBar (Calendario, Platos, Ajustes, Más), the
  * snackbar host and the NavHost of the feature graphs. Feature screens draw their own top bar,
  * so the shell only reserves space for the navigation bar. "Más" opens the share/logout sheet.
  */
@@ -127,6 +128,7 @@ private fun MainShellContent(
                 onBack = { navController.popBackStack() }
             )
             dishesGraph(onOpenDish = { navController.navigateToDishEditor(it) }, onBack = { navController.popBackStack() })
+            settingsGraph()
         }
     }
 
