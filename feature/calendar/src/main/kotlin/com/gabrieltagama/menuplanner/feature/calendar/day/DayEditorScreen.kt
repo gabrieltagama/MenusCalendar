@@ -1,24 +1,36 @@
 package com.gabrieltagama.menuplanner.feature.calendar.day
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Casino
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.filled.DoNotDisturbOn
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -26,16 +38,21 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,23 +65,28 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
+import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
+import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
-import com.gabrieltagama.menuplanner.core.ui.text.label
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 /**
  * Day menu editor: stateful route bound to [DayEditorViewModel] (events, snackbar) and a
- * stateless screen with the mode selector and one dish selector per slot of the active mode.
+ * stateless screen with the mode selector and one card per slot of the active mode. Tapping a
+ * card opens a searchable bottom sheet of the dishes of that type; the dice button picks a
+ * random one.
  */
 data class DayEditorActions(
     val onBack: () -> Unit = {},
     val onSave: () -> Unit = {},
     val onModeChange: (MenuMode) -> Unit = {},
     val onDishSelect: (MenuSlot, Dish?) -> Unit = { _, _ -> },
+    val onRandomDish: (MenuSlot) -> Unit = {},
     val onClearRequest: () -> Unit = {},
     val onClearConfirm: () -> Unit = {},
     val onClearDismiss: () -> Unit = {}
@@ -101,6 +123,7 @@ fun DayEditorScreenRoute(
             onSave = viewModel::onSave,
             onModeChange = viewModel::onModeChange,
             onDishSelect = viewModel::onDishSelect,
+            onRandomDish = viewModel::onRandomDish,
             onClearRequest = viewModel::onClearRequest,
             onClearConfirm = viewModel::onClearConfirm,
             onClearDismiss = viewModel::onClearDismiss
@@ -115,10 +138,18 @@ fun DayEditorScreen(
     actions: DayEditorActions,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
+    var pickingSlot by rememberSaveable { mutableStateOf<MenuSlot?>(null) }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = state.date.longTitleText(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = {
+                    Text(
+                        text = state.date.longTitleText().replaceFirstChar { it.uppercase() },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = actions.onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.day_editor_back))
@@ -139,7 +170,17 @@ fun DayEditorScreen(
     ) { padding ->
         val contentModifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
         if (state.form.isLoading || state.isOptionsLoading) LoadingIndicator(modifier = contentModifier)
-        else DayEditorContent(state = state, actions = actions, modifier = contentModifier)
+        else DayEditorContent(state = state, actions = actions, onPick = { pickingSlot = it }, modifier = contentModifier)
+    }
+
+    pickingSlot?.let { slot ->
+        DishPickerSheet(
+            slot = slot,
+            options = state.optionsFor(slot),
+            selected = state.selectionFor(slot),
+            onSelect = { actions.onDishSelect(slot, it) },
+            onDismiss = { pickingSlot = null }
+        )
     }
 
     if (state.form.showClearConfirm)
@@ -153,24 +194,30 @@ fun DayEditorScreen(
 }
 
 @Composable
-private fun DayEditorContent(state: DayEditorUiState, actions: DayEditorActions, modifier: Modifier = Modifier) = Column(
+private fun DayEditorContent(
+    state: DayEditorUiState,
+    actions: DayEditorActions,
+    onPick: (MenuSlot) -> Unit,
+    modifier: Modifier = Modifier
+) = Column(
     modifier = modifier.verticalScroll(rememberScrollState()).padding(16.dp),
-    verticalArrangement = Arrangement.spacedBy(16.dp)
+    verticalArrangement = Arrangement.spacedBy(12.dp)
 ) {
     ModeSelector(selected = state.form.mode, onSelect = actions.onModeChange)
     state.visibleSlots.forEach { slot ->
-        SlotSelector(
+        SlotCard(
             slot = slot,
-            options = state.optionsFor(slot),
             selected = state.selectionFor(slot),
-            onSelect = { actions.onDishSelect(slot, it) }
+            hasOptions = state.optionsFor(slot).isNotEmpty(),
+            onPick = { onPick(slot) },
+            onRandom = { actions.onRandomDish(slot) }
         )
     }
 }
 
 @Composable
 private fun ModeSelector(selected: MenuMode, onSelect: (MenuMode) -> Unit) =
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
         MenuMode.entries.forEachIndexed { index, mode ->
             SegmentedButton(
                 selected = mode == selected,
@@ -181,58 +228,148 @@ private fun ModeSelector(selected: MenuMode, onSelect: (MenuMode) -> Unit) =
         }
     }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SlotSelector(slot: MenuSlot, options: List<Dish>, selected: Dish?, onSelect: (Dish?) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
+private fun SlotCard(slot: MenuSlot, selected: Dish?, hasOptions: Boolean, onPick: () -> Unit, onRandom: () -> Unit) {
     val slotLabel = slot.label()
-    val fieldLabel = if (slot.isRequired) stringResource(R.string.day_editor_required, slotLabel) else slotLabel
+    val title = if (slot.isRequired) stringResource(R.string.day_editor_required, slotLabel) else slotLabel
     val placeholder = stringResource(if (slot.isRequired) R.string.day_editor_select_dish else R.string.day_editor_no_dessert)
-    val hasOptions = options.isNotEmpty()
-
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it && hasOptions }) {
-            OutlinedTextField(
-                value = selected?.name ?: placeholder,
-                onValueChange = {},
-                readOnly = true,
-                enabled = hasOptions || selected != null,
-                singleLine = true,
-                label = { Text(fieldLabel) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-            )
-            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                if (!slot.isRequired)
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.day_editor_no_dessert)) },
-                        onClick = {
-                            onSelect(null)
-                            expanded = false
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = if (selected != null) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = hasOptions, onClick = onPick)
+                    .heightIn(min = 72.dp)
+                    .padding(start = 16.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                DishTypeAvatar(type = slot.dishType)
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(text = title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = selected?.name ?: placeholder,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (selected != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
-                options.forEach { dish ->
-                    DropdownMenuItem(
-                        text = { Text(text = dish.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        trailingIcon = { Text(text = dish.heaviness.label(), style = MaterialTheme.typography.labelSmall) },
-                        onClick = {
-                            onSelect(dish)
-                            expanded = false
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                    )
+                    selected?.let { HeavinessChip(heaviness = it.heaviness, modifier = Modifier.padding(top = 4.dp)) }
+                }
+                IconButton(onClick = onRandom, enabled = hasOptions) {
+                    Icon(Icons.Filled.Casino, contentDescription = stringResource(R.string.day_editor_random))
+                }
+                IconButton(onClick = onPick, enabled = hasOptions) {
+                    Icon(Icons.Filled.UnfoldMore, contentDescription = stringResource(R.string.day_editor_change))
                 }
             }
+            if (!hasOptions)
+                Text(
+                    text = stringResource(R.string.day_editor_no_dishes_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+                )
         }
-        if (!hasOptions)
-            Text(
-                text = stringResource(R.string.day_editor_no_dishes_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DishPickerSheet(
+    slot: MenuSlot,
+    options: List<Dish>,
+    selected: Dish?,
+    onSelect: (Dish?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    var query by rememberSaveable { mutableStateOf("") }
+    val visible = remember(options, query) { options.filter { it.name.contains(query.trim(), ignoreCase = true) } }
+    val choose: (Dish?) -> Unit = { dish ->
+        onSelect(dish)
+        scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
+    }
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(modifier = Modifier.navigationBarsPadding()) {
+            Text(
+                text = slot.label(),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                placeholder = { Text(stringResource(R.string.day_editor_search_hint)) },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (query.isNotEmpty())
+                        IconButton(onClick = { query = "" }) { Icon(Icons.Filled.Clear, contentDescription = null) }
+                },
+                singleLine = true,
+                shape = MaterialTheme.shapes.extraLarge
+            )
+            LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
+                if (!slot.isRequired)
+                    item(key = "none") {
+                        PickerRow(
+                            headline = stringResource(R.string.day_editor_no_dessert),
+                            leading = { Icon(Icons.Filled.DoNotDisturbOn, contentDescription = null) },
+                            isSelected = selected == null,
+                            onClick = { choose(null) }
+                        )
+                    }
+                items(items = visible, key = { it.id }) { dish ->
+                    PickerRow(
+                        headline = dish.name,
+                        leading = { DishTypeAvatar(type = dish.type, size = 36.dp) },
+                        trailing = { HeavinessChip(heaviness = dish.heaviness) },
+                        isSelected = dish.id == selected?.id,
+                        onClick = { choose(dish) }
+                    )
+                }
+                if (visible.isEmpty())
+                    item(key = "empty") {
+                        Text(
+                            text = stringResource(R.string.day_editor_no_matches),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(24.dp)
+                        )
+                    }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PickerRow(
+    headline: String,
+    leading: @Composable () -> Unit,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    trailing: @Composable () -> Unit = {}
+) = ListItem(
+    headlineContent = { Text(text = headline, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+    leadingContent = leading,
+    trailingContent = {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            trailing()
+            if (isSelected) Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        }
+    },
+    colors = ListItemDefaults.colors(
+        containerColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow
+    ),
+    modifier = Modifier.clickable(onClick = onClick)
+)
 
 @Composable
 private fun MenuMode.label(): String = stringResource(

@@ -54,10 +54,9 @@ class CalendarScreenTest {
     }
 
     @Test
-    fun rendersPlannedDayNamesInGridAndSummary() {
+    fun rendersPlannedDayNamesInSummary() {
         setScreen()
 
-        composeRule.onNodeWithText("Gazpacho · Pollo asado").assertIsDisplayed()
         composeRule.onNodeWithText("Gazpacho").assertIsDisplayed()
         composeRule.onNodeWithText("Pollo asado").assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.calendar_edit)).assertIsDisplayed()
@@ -94,7 +93,7 @@ class CalendarScreenTest {
     @Test
     fun todayButtonTriggersCallback() {
         var todayClicks = 0
-        setScreen(onToday = { todayClicks++ })
+        setScreen(screenState = state.copy(month = state.month.plusMonths(1)), onToday = { todayClicks++ })
 
         composeRule.onNodeWithText(context.getString(R.string.calendar_today)).performClick()
 

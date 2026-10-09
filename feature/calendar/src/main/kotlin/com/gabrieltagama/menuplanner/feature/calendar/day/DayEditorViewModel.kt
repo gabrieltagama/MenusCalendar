@@ -33,7 +33,8 @@ import kotlinx.coroutines.launch
 /**
  * Editor of the lunch of one day. The form keeps a selection for every slot, so switching
  * between "starter + main" and "single dish" never loses what was picked; only the slots of the
- * active mode are saved. Options are observed per dish type.
+ * active mode are saved. Options are observed per dish type. A slot can also be filled with a
+ * random dish of its type, different from the current one when possible.
  */
 enum class MenuMode { COURSES, SINGLE }
 
@@ -125,6 +126,13 @@ class DayEditorViewModel @Inject constructor(
 
     fun onDishSelect(slot: MenuSlot, dish: Dish?) = form.update { current ->
         current.copy(selections = dish?.let { current.selections + (slot to it) } ?: (current.selections - slot))
+    }
+
+    fun onRandomDish(slot: MenuSlot) {
+        val state = uiState.value
+        val current = state.selectionFor(slot)
+        val options = state.optionsFor(slot)
+        options.filterNot { it.id == current?.id }.ifEmpty { options }.randomOrNull()?.let { onDishSelect(slot, it) }
     }
 
     fun onClearRequest() = form.update { it.copy(showClearConfirm = true) }
