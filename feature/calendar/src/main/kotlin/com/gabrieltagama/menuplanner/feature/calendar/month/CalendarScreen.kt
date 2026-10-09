@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
@@ -73,6 +77,7 @@ import java.time.YearMonth
  * Monthly calendar: stateful route bound to [CalendarViewModel] and a stateless screen with a
  * Monday-first month grid and the summary of the selected day. The top bar also offers the
  * random autofill of the visible month, confirmed with a dialog and summarised in a snackbar.
+ * Below the day summary a button opens the shopping list of the visible month.
  * Bottom insets are left to the app shell, which draws the NavigationBar below this screen.
  */
 data class AutoFillActions(
@@ -84,6 +89,7 @@ data class AutoFillActions(
 @Composable
 fun CalendarScreenRoute(
     onOpenDay: (LocalDate) -> Unit,
+    onOpenShoppingList: (YearMonth) -> Unit,
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -106,6 +112,7 @@ fun CalendarScreenRoute(
         onToday = viewModel::onToday,
         onDateSelect = viewModel::onDateSelect,
         onOpenDay = onOpenDay,
+        onOpenShoppingList = { onOpenShoppingList(state.month) },
         autoFillActions = AutoFillActions(
             onRequest = viewModel::onAutoFillRequest,
             onConfirm = viewModel::onAutoFill,
@@ -124,6 +131,7 @@ fun CalendarScreen(
     onToday: () -> Unit,
     onDateSelect: (LocalDate) -> Unit,
     onOpenDay: (LocalDate) -> Unit,
+    onOpenShoppingList: () -> Unit = {},
     autoFillActions: AutoFillActions = AutoFillActions(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) = Scaffold(
@@ -170,6 +178,15 @@ fun CalendarScreen(
             onOpenDay = { onOpenDay(state.selectedDate) },
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
         )
+        OutlinedButton(
+            onClick = onOpenShoppingList,
+            enabled = !state.isLoading,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).padding(bottom = 8.dp)
+        ) {
+            Icon(Icons.Filled.ShoppingCart, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.calendar_shopping_list))
+        }
     }
 }
 

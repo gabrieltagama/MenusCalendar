@@ -26,6 +26,15 @@
     <string name="calendar_autofill_confirm">Rellenar</string>
     <string name="calendar_autofill_nothing_to_fill">No hay días vacíos en este mes</string>
     <string name="calendar_autofill_not_enough_dishes">No hay platos suficientes: crea primeros y segundos o platos únicos</string>
+    <string name="calendar_shopping_list">Obtener lista de ingredientes</string>
+
+    <string name="shopping_list_title">Lista de la compra</string>
+    <string name="shopping_list_back">Volver</string>
+    <string name="shopping_list_share">Compartir lista</string>
+    <string name="shopping_list_share_chooser">Compartir lista de la compra</string>
+    <string name="shopping_list_share_header">Lista de la compra · %1$s</string>
+    <string name="shopping_list_month">%1$s · primeros, segundos y platos únicos</string>
+    <string name="shopping_list_empty">No hay ingredientes: planifica primeros, segundos o platos únicos con ingredientes en este mes.</string>
 
     <string name="day_editor_back">Volver</string>
     <string name="day_editor_save">Guardar</string>
