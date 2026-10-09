@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="dishes_title">Platos</string>
-    <string name="dishes_filter_all">Todos</string>
-    <string name="dishes_search_hint">Buscar por nombre</string>
+    <string name="dishes_filter_all_types">Todos</string>
+    <string name="dishes_filter_all_heaviness">Todas</string>
+    <string name="dishes_search_hint">Buscar por plato o ingrediente</string>
     <string name="dishes_clear_search">Borrar búsqueda</string>
-    <string name="dishes_add">Añadir plato</string>
-    <string name="dishes_empty">Aún no hay platos. Pulsa + para crear el primero.</string>
-    <string name="dishes_no_results">No hay platos que coincidan con el filtro.</string>
+    <string name="dishes_add">Nuevo plato</string>
+    <string name="dishes_empty">Aún no hay platos. Pulsa «Nuevo plato» para crear el primero.</string>
+    <string name="dishes_no_results">Ningún plato coincide con la búsqueda</string>
+    <string name="dishes_column_name">Nombre</string>
+    <string name="dishes_column_type">Tipo</string>
+    <string name="dishes_column_heaviness">Pesadez</string>
+    <string name="dishes_type_starter_short">Primero</string>
+    <string name="dishes_type_main_short">Segundo</string>
+    <string name="dishes_type_dessert_short">Postre</string>
+    <string name="dishes_type_single_short">Único</string>
 
     <string name="dish_editor_title_new">Nuevo plato</string>
     <string name="dish_editor_title_edit">Editar plato</string>

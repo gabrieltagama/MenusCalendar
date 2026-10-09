@@ -20,6 +20,12 @@
     <string name="calendar_slot_single">Plato único</string>
     <string name="calendar_slot_dessert">Postre</string>
     <string name="calendar_no_dessert">—</string>
+    <string name="calendar_autofill">Autorrellenar mes</string>
+    <string name="calendar_autofill_title">Autorrellenar mes</string>
+    <string name="calendar_autofill_text">Se rellenarán al azar los días vacíos de %1$s con tus platos. Los días ya planificados no se modifican.</string>
+    <string name="calendar_autofill_confirm">Rellenar</string>
+    <string name="calendar_autofill_nothing_to_fill">No hay días vacíos en este mes</string>
+    <string name="calendar_autofill_not_enough_dishes">No hay platos suficientes: crea primeros y segundos o platos únicos</string>
 
     <string name="day_editor_back">Volver</string>
     <string name="day_editor_save">Guardar</string>

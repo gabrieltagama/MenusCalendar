@@ -15,20 +15,21 @@ data class MealDay(
 
 sealed interface DailyMenu {
     val dessert: Dish?
-    val dishes: List<Dish>
+    val mainDishes: List<Dish>
+    val dishes: List<Dish> get() = mainDishes + listOfNotNull(dessert)
 
     data class Courses(
         val starter: Dish,
         val main: Dish,
         override val dessert: Dish? = null
     ) : DailyMenu {
-        override val dishes: List<Dish> get() = listOfNotNull(starter, main, dessert)
+        override val mainDishes: List<Dish> get() = listOf(starter, main)
     }
 
     data class Single(
         val single: Dish,
         override val dessert: Dish? = null
     ) : DailyMenu {
-        override val dishes: List<Dish> get() = listOfNotNull(single, dessert)
+        override val mainDishes: List<Dish> get() = listOf(single)
     }
 }

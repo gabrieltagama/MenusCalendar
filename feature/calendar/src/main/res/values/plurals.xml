@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="calendar_autofill_filled">
+        <item quantity="one">Rellenado %d día</item>
+        <item quantity="many">Rellenados %d días</item>
+        <item quantity="other">Rellenados %d días</item>
+    </plurals>
+    <plurals name="calendar_autofill_repeated_dish">
+        <item quantity="one">%d repite plato</item>
+        <item quantity="many">%d repiten plato</item>
+        <item quantity="other">%d repiten plato</item>
+    </plurals>
+    <plurals name="calendar_autofill_heavy_streak">
+        <item quantity="one">%d con dos días pesados seguidos</item>
+        <item quantity="many">%d con dos días pesados seguidos</item>
+        <item quantity="other">%d con dos días pesados seguidos</item>
+    </plurals>
+    <plurals name="calendar_autofill_unfilled">
+        <item quantity="one">%d sin rellenar (faltan platos)</item>
+        <item quantity="many">%d sin rellenar (faltan platos)</item>
+        <item quantity="other">%d sin rellenar (faltan platos)</item>
+    </plurals>
+</resources>

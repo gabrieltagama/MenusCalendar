@@ -6,8 +6,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Spanish date texts of the calendar: month title ("Octubre 2026") and long day title
- * ("viernes, 9 de octubre").
+ * Spanish date texts of the calendar: month title ("Octubre 2026"), month inside a sentence
+ * ("octubre 2026") and long day title ("viernes, 9 de octubre").
  */
 internal val spanishLocale: Locale = Locale.forLanguageTag("es-ES")
 
@@ -17,5 +17,7 @@ private val dayTitleFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("
 
 internal fun YearMonth.titleText(): String =
     format(monthTitleFormatter).replaceFirstChar { it.titlecase(spanishLocale) }
+
+internal fun YearMonth.inlineText(): String = format(monthTitleFormatter)
 
 internal fun LocalDate.longTitleText(): String = format(dayTitleFormatter)

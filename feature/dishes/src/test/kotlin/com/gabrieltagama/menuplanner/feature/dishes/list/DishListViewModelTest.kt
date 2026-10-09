@@ -4,6 +4,8 @@ import app.cash.turbine.test
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.feature.dishes.testing.FakeDishRepository
 import com.gabrieltagama.menuplanner.feature.dishes.testing.MainDispatcherRule
@@ -15,8 +17,8 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * DishListViewModel over the real ObserveDishesUseCase: loading, type filter, accent- and
- * case-insensitive search and alphabetical ordering.
+ * DishListViewModel over the real ObserveDishesUseCase: loading, type and heaviness filters,
+ * accent- and case-insensitive search by name or ingredient and alphabetical ordering.
  */
 class DishListViewModelTest {
 
@@ -105,6 +107,43 @@ class DishListViewModelTest {
 
             val state = awaitItemMatching { it.selectedType == DishType.MAIN && it.dishes.isEmpty() }
             assertTrue(state.hasDishes)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `filters by heaviness combined with type`() = runTest {
+        val lentils = Dish(id = "lentils", name = "Lentejas", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH)
+        repository.upsert(lentils)
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+
+            viewModel.onHeavinessSelect(Heaviness.VERY_HIGH)
+            viewModel.onTypeSelect(DishType.SINGLE)
+
+            val state = awaitItemMatching { it.selectedHeaviness == Heaviness.VERY_HIGH && it.selectedType == DishType.SINGLE }
+            assertEquals(listOf(lentils), state.dishes)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `search matches ingredient names`() = runTest {
+        val omelette = Dish(
+            id = "omelette",
+            name = "Tortilla",
+            ingredients = listOf(Ingredient("Patatas", 3.0, MeasureUnit.UNIT)),
+            type = DishType.SINGLE,
+            heaviness = Heaviness.MEDIUM
+        )
+        repository.upsert(omelette)
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+
+            viewModel.onQueryChange("PATATA")
+
+            val state = awaitItemMatching { it.query == "PATATA" }
+            assertEquals(listOf(omelette), state.dishes)
             cancelAndIgnoreRemainingEvents()
         }
     }

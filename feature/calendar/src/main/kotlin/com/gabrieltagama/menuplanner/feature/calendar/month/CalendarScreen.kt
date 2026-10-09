@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,15 +31,20 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,8 +60,10 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
+import com.gabrieltagama.menuplanner.feature.calendar.common.inlineText
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
 import com.gabrieltagama.menuplanner.feature.calendar.common.titleText
 import java.time.LocalDate
@@ -63,22 +71,47 @@ import java.time.YearMonth
 
 /**
  * Monthly calendar: stateful route bound to [CalendarViewModel] and a stateless screen with a
- * Monday-first month grid and the summary of the selected day. Bottom insets are left to the
- * app shell, which draws the NavigationBar below this screen.
+ * Monday-first month grid and the summary of the selected day. The top bar also offers the
+ * random autofill of the visible month, confirmed with a dialog and summarised in a snackbar.
+ * Bottom insets are left to the app shell, which draws the NavigationBar below this screen.
  */
+data class AutoFillActions(
+    val onRequest: () -> Unit = {},
+    val onConfirm: () -> Unit = {},
+    val onDismiss: () -> Unit = {}
+)
+
 @Composable
 fun CalendarScreenRoute(
     onOpenDay: (LocalDate) -> Unit,
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+    val formatter = remember(resources) { AutoFillMessageFormatter(ResourcesAutoFillTexts(resources)) }
+
+    LaunchedEffect(viewModel, formatter) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is CalendarEvent.AutoFillCompleted -> snackbarHostState.showSnackbar(formatter.format(event.result))
+            }
+        }
+    }
+
     CalendarScreen(
         state = state,
         onPreviousMonth = viewModel::onPreviousMonth,
         onNextMonth = viewModel::onNextMonth,
         onToday = viewModel::onToday,
         onDateSelect = viewModel::onDateSelect,
-        onOpenDay = onOpenDay
+        onOpenDay = onOpenDay,
+        autoFillActions = AutoFillActions(
+            onRequest = viewModel::onAutoFillRequest,
+            onConfirm = viewModel::onAutoFill,
+            onDismiss = viewModel::onAutoFillDismiss
+        ),
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -90,13 +123,18 @@ fun CalendarScreen(
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
     onDateSelect: (LocalDate) -> Unit,
-    onOpenDay: (LocalDate) -> Unit
+    onOpenDay: (LocalDate) -> Unit,
+    autoFillActions: AutoFillActions = AutoFillActions(),
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) = Scaffold(
     contentWindowInsets = ScaffoldDefaults.contentWindowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
     topBar = {
         TopAppBar(
             title = { Text(state.month.titleText()) },
             actions = {
+                IconButton(onClick = autoFillActions.onRequest, enabled = !state.isAutoFilling && !state.isLoading) {
+                    Icon(Icons.Filled.AutoAwesome, contentDescription = stringResource(R.string.calendar_autofill))
+                }
                 IconButton(onClick = onPreviousMonth) {
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.calendar_previous_month))
                 }
@@ -106,14 +144,23 @@ fun CalendarScreen(
                 TextButton(onClick = onToday) { Text(stringResource(R.string.calendar_today)) }
             }
         )
-    }
+    },
+    snackbarHost = { SnackbarHost(snackbarHostState) }
 ) { padding ->
+    if (state.showAutoFillConfirm)
+        ConfirmDialog(
+            title = stringResource(R.string.calendar_autofill_title),
+            text = stringResource(R.string.calendar_autofill_text, state.month.inlineText()),
+            onConfirm = autoFillActions.onConfirm,
+            onDismiss = autoFillActions.onDismiss,
+            confirmLabel = stringResource(R.string.calendar_autofill_confirm)
+        )
     Column(
         modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(4.dp)) {
-            if (state.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            if (state.isLoading || state.isAutoFilling) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
         WeekdayHeader()
         MonthGrid(state = state, onDateSelect = onDateSelect)
