@@ -2,12 +2,16 @@ package com.gabrieltagama.menuplanner.feature.dishes.editor
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -21,11 +25,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -34,6 +38,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -50,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -58,6 +64,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
+import com.gabrieltagama.menuplanner.core.ui.component.HeavinessDot
+import com.gabrieltagama.menuplanner.core.ui.component.icon
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
 import com.gabrieltagama.menuplanner.core.ui.text.label
 import com.gabrieltagama.menuplanner.core.ui.text.message
@@ -66,7 +74,9 @@ import com.gabrieltagama.menuplanner.feature.dishes.R
 
 /**
  * Dish create/edit form: stateful route bound to [DishEditorViewModel] (events, snackbar) and a
- * stateless screen receiving the form state and one callback per user action.
+ * stateless screen receiving the form state and one callback per user action. The form is split
+ * into section cards (basics, classification, ingredients, preparation); type is chosen with
+ * icon chips and heaviness with a color-coded segmented button.
  */
 data class DishEditorActions(
     val onBack: () -> Unit = {},
@@ -183,56 +193,88 @@ private fun DishForm(state: DishEditorUiState, actions: DishEditorActions, modif
     modifier = modifier.imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp)
 ) {
-    OutlinedTextField(
-        value = state.name,
-        onValueChange = actions.onNameChange,
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(stringResource(R.string.dish_editor_name)) },
-        isError = state.isNameInvalid,
-        supportingText = { if (state.isNameInvalid) Text(stringResource(R.string.dish_editor_name_required)) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-    )
-    OutlinedTextField(
-        value = state.description,
-        onValueChange = actions.onDescriptionChange,
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(stringResource(R.string.dish_editor_description)) },
-        minLines = 2,
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-    )
-    EnumDropdown(
-        label = stringResource(R.string.dish_editor_type),
-        options = DishType.entries,
-        selected = state.type,
-        optionLabel = { it.label() },
-        onSelect = actions.onTypeChange,
-        modifier = Modifier.fillMaxWidth()
-    )
-    HeavinessSelector(selected = state.heaviness, onSelect = actions.onHeavinessChange)
-    IngredientsSection(state = state, actions = actions)
-    OutlinedTextField(
-        value = state.preparation,
-        onValueChange = actions.onPreparationChange,
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(stringResource(R.string.dish_editor_preparation)) },
-        minLines = 4,
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-    )
+    SectionCard(title = stringResource(R.string.dish_editor_section_basics)) {
+        OutlinedTextField(
+            value = state.name,
+            onValueChange = actions.onNameChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.dish_editor_name)) },
+            isError = state.isNameInvalid,
+            supportingText = { if (state.isNameInvalid) Text(stringResource(R.string.dish_editor_name_required)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+        )
+        OutlinedTextField(
+            value = state.description,
+            onValueChange = actions.onDescriptionChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.dish_editor_description)) },
+            minLines = 2,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+        )
+    }
+    SectionCard(title = stringResource(R.string.dish_editor_section_classification)) {
+        TypeSelector(selected = state.type, onSelect = actions.onTypeChange)
+        HeavinessSelector(selected = state.heaviness, onSelect = actions.onHeavinessChange)
+    }
+    SectionCard(title = stringResource(R.string.dish_editor_ingredients)) {
+        IngredientsSection(state = state, actions = actions)
+    }
+    SectionCard(title = stringResource(R.string.dish_editor_preparation)) {
+        OutlinedTextField(
+            value = state.preparation,
+            onValueChange = actions.onPreparationChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.dish_editor_preparation)) },
+            minLines = 4,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+        )
+    }
+}
+
+@Composable
+private fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) = Surface(
+    shape = MaterialTheme.shapes.large,
+    color = MaterialTheme.colorScheme.surfaceContainerLow,
+    modifier = Modifier.fillMaxWidth()
+) {
+    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        content()
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TypeSelector(selected: DishType, onSelect: (DishType) -> Unit) = Column(
+    verticalArrangement = Arrangement.spacedBy(8.dp)
+) {
+    Text(text = stringResource(R.string.dish_editor_type), style = MaterialTheme.typography.labelLarge)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        DishType.entries.forEach { type ->
+            FilterChip(
+                selected = type == selected,
+                onClick = { onSelect(type) },
+                label = { Text(type.label()) },
+                leadingIcon = { Icon(type.icon, contentDescription = null, modifier = Modifier.size(18.dp)) }
+            )
+        }
+    }
 }
 
 @Composable
 private fun HeavinessSelector(selected: Heaviness, onSelect: (Heaviness) -> Unit) = Column(
     verticalArrangement = Arrangement.spacedBy(8.dp)
 ) {
-    Text(text = stringResource(R.string.dish_editor_heaviness), style = MaterialTheme.typography.titleSmall)
+    Text(text = stringResource(R.string.dish_editor_heaviness), style = MaterialTheme.typography.labelLarge)
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         Heaviness.entries.forEachIndexed { index, heaviness ->
             SegmentedButton(
                 selected = heaviness == selected,
                 onClick = { onSelect(heaviness) },
                 shape = SegmentedButtonDefaults.itemShape(index = index, count = Heaviness.entries.size),
-                label = { Text(heaviness.label()) }
+                icon = { HeavinessDot(heaviness = heaviness) },
+                label = { Text(text = heaviness.label(), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             )
         }
     }
@@ -242,8 +284,6 @@ private fun HeavinessSelector(selected: Heaviness, onSelect: (Heaviness) -> Unit
 private fun IngredientsSection(state: DishEditorUiState, actions: DishEditorActions) = Column(
     verticalArrangement = Arrangement.spacedBy(8.dp)
 ) {
-    HorizontalDivider()
-    Text(text = stringResource(R.string.dish_editor_ingredients), style = MaterialTheme.typography.titleSmall)
     if (state.ingredients.isEmpty())
         Text(
             text = stringResource(R.string.dish_editor_no_ingredients),
@@ -255,11 +295,10 @@ private fun IngredientsSection(state: DishEditorUiState, actions: DishEditorActi
             IngredientRow(ingredient = ingredient, showErrors = state.showValidationErrors, actions = actions)
         }
     }
-    OutlinedButton(onClick = actions.onAddIngredient) {
-        Icon(Icons.Filled.Add, contentDescription = null)
+    FilledTonalButton(onClick = actions.onAddIngredient) {
+        Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
         Text(text = stringResource(R.string.dish_editor_add_ingredient), modifier = Modifier.padding(start = 8.dp))
     }
-    HorizontalDivider()
 }
 
 @Composable

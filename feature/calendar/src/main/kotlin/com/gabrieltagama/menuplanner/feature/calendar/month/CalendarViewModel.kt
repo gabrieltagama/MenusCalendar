@@ -40,6 +40,8 @@ data class CalendarUiState(
     val showAutoFillConfirm: Boolean = false
 ) {
     val selectedDay: MealDay? get() = days[selectedDate]
+
+    val isShowingCurrentMonth: Boolean get() = month == YearMonth.from(today)
 }
 
 sealed interface CalendarEvent {

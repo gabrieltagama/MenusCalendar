@@ -8,7 +8,6 @@
     <string name="dishes_add">Nuevo plato</string>
     <string name="dishes_empty">Aún no hay platos. Pulsa «Nuevo plato» para crear el primero.</string>
     <string name="dishes_no_results">Ningún plato coincide con la búsqueda</string>
-    <string name="dishes_column_name">Nombre</string>
     <string name="dishes_column_type">Tipo</string>
     <string name="dishes_column_heaviness">Pesadez</string>
     <string name="dishes_type_starter_short">Primero</string>
@@ -26,6 +25,8 @@
     <string name="dish_editor_description">Descripción</string>
     <string name="dish_editor_type">Tipo</string>
     <string name="dish_editor_heaviness">Pesadez</string>
+    <string name="dish_editor_section_basics">Datos básicos</string>
+    <string name="dish_editor_section_classification">Clasificación</string>
     <string name="dish_editor_ingredients">Ingredientes</string>
     <string name="dish_editor_no_ingredients">Sin ingredientes</string>
     <string name="dish_editor_ingredient_name">Ingrediente</string>
