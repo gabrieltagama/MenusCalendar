@@ -15,3 +15,7 @@ La app no tiene login. En el primer arranque ofrece **Conectar con Google** o **
 3. Crear un **ID de cliente OAuth de tipo Android** con el paquete `com.gabrieltagama.menuplanner` y la huella SHA-1 del certificado con el que se firma la APK (una por cada certificado: debug, release y la clave de firma de Google Play).
 
 No hace falta ninguna clave en el código: Google identifica la app por paquete y firma.
+
+### Firma fija de la APK debug
+
+La APK que genera GitHub Actions se firma siempre con el mismo certificado debug, guardado como secret `DEBUG_KEYSTORE_BASE64` (keystore PKCS12 en base64; contraseñas `android`, alias `androiddebugkey`). Sin ese secret se usa la clave debug aleatoria del runner y el login con Google no funciona. Su huella SHA-1 es la que hay que registrar en el cliente OAuth Android.
