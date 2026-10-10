@@ -14,8 +14,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 /**
- * Settings stored in private SharedPreferences. The theme is read once when the repository is
- * created, so it is available synchronously at app start; unknown stored values fall back to SYSTEM.
+ * Settings stored in private SharedPreferences. The theme and the onboarding flag are read once
+ * when the repository is created, so they are available synchronously at app start; unknown
+ * stored theme values fall back to SYSTEM.
  */
 @Singleton
 internal class SharedPreferencesSettingsRepository @Inject constructor(
@@ -24,12 +25,20 @@ internal class SharedPreferencesSettingsRepository @Inject constructor(
 
     private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
     private val mode = MutableStateFlow(readThemeMode())
+    private val onboardingCompleted = MutableStateFlow(preferences.getBoolean(KEY_ONBOARDING_COMPLETED, false))
 
     override val themeMode: StateFlow<ThemeMode> = mode.asStateFlow()
+
+    override val isOnboardingCompleted: StateFlow<Boolean> = onboardingCompleted.asStateFlow()
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         this.mode.value = mode
         withContext(Dispatchers.IO) { preferences.edit { putString(KEY_THEME_MODE, mode.name) } }
+    }
+
+    override suspend fun completeOnboarding() {
+        onboardingCompleted.value = true
+        withContext(Dispatchers.IO) { preferences.edit { putBoolean(KEY_ONBOARDING_COMPLETED, true) } }
     }
 
     private fun readThemeMode(): ThemeMode =
@@ -38,5 +47,6 @@ internal class SharedPreferencesSettingsRepository @Inject constructor(
     private companion object {
         const val PREFERENCES_NAME = "menu_planner_settings"
         const val KEY_THEME_MODE = "theme_mode"
+        const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
     }
 }

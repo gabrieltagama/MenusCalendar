@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="login_title">MenuPlanner</string>
-    <string name="login_subtitle">Introduce tu PIN para continuar</string>
-    <string name="login_pin_label">PIN</string>
-    <string name="login_submit">Entrar</string>
-</resources>

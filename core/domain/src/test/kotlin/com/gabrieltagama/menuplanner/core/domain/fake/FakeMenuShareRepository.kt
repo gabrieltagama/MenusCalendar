@@ -9,6 +9,7 @@ import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
  */
 class FakeMenuShareRepository(
     private val exportJson: String = "{}",
+    private val recipesJson: String = "{}",
     private val importResult: Outcome<ImportSummary> = Outcome.Success(ImportSummary(0, 0, 0, 0, 0, 0))
 ) : MenuShareRepository {
     val importedJson = mutableListOf<String>()
@@ -19,6 +20,8 @@ class FakeMenuShareRepository(
         exportCalls++
         return exportJson
     }
+
+    override suspend fun exportRecipes(): String = recipesJson
 
     override suspend fun importAndMerge(json: String): Outcome<ImportSummary> {
         importedJson += json

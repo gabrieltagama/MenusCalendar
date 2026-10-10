@@ -55,5 +55,6 @@ fun DomainError.message(): String = when (this) {
     is DomainError.WrongDishType -> stringResource(R.string.error_wrong_dish_type, expected.label())
     DomainError.InvalidImportFile -> stringResource(R.string.error_invalid_import_file)
     DomainError.UnsupportedImportVersion -> stringResource(R.string.error_unsupported_import_version)
-    DomainError.InvalidCredential -> stringResource(R.string.error_invalid_credential)
+    DomainError.CloudUnavailable -> stringResource(R.string.error_cloud_unavailable)
+    DomainError.CloudAuthorizationRequired -> stringResource(R.string.error_cloud_authorization_required)
 }

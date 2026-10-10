@@ -1,11 +1,9 @@
 package com.gabrieltagama.menuplanner.core.data.di
 
-import com.gabrieltagama.menuplanner.core.data.auth.LocalPinAuthRepository
 import com.gabrieltagama.menuplanner.core.data.repository.JsonMenuShareRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
 import com.gabrieltagama.menuplanner.core.data.settings.SharedPreferencesSettingsRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.AuthRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
@@ -34,10 +32,6 @@ internal abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMenuShareRepository(implementation: JsonMenuShareRepository): MenuShareRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindAuthRepository(implementation: LocalPinAuthRepository): AuthRepository
 
     @Binds
     @Singleton

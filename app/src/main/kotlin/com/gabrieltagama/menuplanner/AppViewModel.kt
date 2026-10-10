@@ -1,30 +1,25 @@
 package com.gabrieltagama.menuplanner
 
 import androidx.lifecycle.ViewModel
-import com.gabrieltagama.menuplanner.core.domain.model.AuthState
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
-import com.gabrieltagama.menuplanner.core.domain.usecase.auth.LogoutUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.auth.ObserveAuthStateUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveOnboardingCompletedUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveThemeModeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * App-wide state holder: exposes the authentication state, which is the single source of truth
- * deciding between the login flow and the main shell, performs logout and exposes the theme mode
- * chosen in the settings, which the activity applies to the whole UI.
+ * App-wide state holder: exposes whether the first-start welcome screen was already answered,
+ * which decides between that screen and the main shell, and the theme mode chosen in the
+ * settings, which the activity applies to the whole UI.
  */
 @HiltViewModel
 class AppViewModel @Inject constructor(
-    observeAuthState: ObserveAuthStateUseCase,
-    observeThemeMode: ObserveThemeModeUseCase,
-    private val logoutUseCase: LogoutUseCase
+    observeOnboardingCompleted: ObserveOnboardingCompletedUseCase,
+    observeThemeMode: ObserveThemeModeUseCase
 ) : ViewModel() {
 
-    val authState: StateFlow<AuthState> = observeAuthState()
+    val isOnboardingCompleted: StateFlow<Boolean> = observeOnboardingCompleted()
 
     val themeMode: StateFlow<ThemeMode> = observeThemeMode()
-
-    fun logout() = logoutUseCase()
 }

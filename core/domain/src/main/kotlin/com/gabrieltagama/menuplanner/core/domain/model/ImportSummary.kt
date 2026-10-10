@@ -10,4 +10,8 @@ data class ImportSummary(
     val daysAdded: Int,
     val daysUpdated: Int,
     val daysSkipped: Int
-)
+) {
+    companion object {
+        val EMPTY = ImportSummary(0, 0, 0, 0, 0, 0)
+    }
+}

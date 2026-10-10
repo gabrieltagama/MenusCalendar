@@ -4,28 +4,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 import com.gabrieltagama.menuplanner.AppViewModel
-import com.gabrieltagama.menuplanner.core.domain.model.AuthState
-import com.gabrieltagama.menuplanner.feature.auth.navigation.LoginRoute
-import com.gabrieltagama.menuplanner.feature.auth.navigation.loginScreen
+import com.gabrieltagama.menuplanner.feature.onboarding.ui.WelcomeScreenRoute
 
 /**
- * Root composable. The authentication state is the single source of truth: while
- * unauthenticated only the login graph exists, so logging out returns to it automatically and
- * the main back stack is discarded.
+ * Root composable. There is no login: on the first start the welcome screen offers linking
+ * Google for the recipe backup or using the app locally; once answered the app always opens the
+ * main shell directly.
  */
 @Composable
 fun MenuPlannerAppRoot(viewModel: AppViewModel = hiltViewModel()) {
-    val authState by viewModel.authState.collectAsStateWithLifecycle()
-    when (authState) {
-        AuthState.Unauthenticated -> LoginHost()
-        AuthState.Authenticated -> MainShell(onLogout = viewModel::logout)
-    }
-}
-
-@Composable
-private fun LoginHost() = NavHost(navController = rememberNavController(), startDestination = LoginRoute) {
-    loginScreen(onLoggedIn = {})
+    val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle()
+    if (isOnboardingCompleted) MainShell()
+    else WelcomeScreenRoute()
 }

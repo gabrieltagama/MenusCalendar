@@ -44,7 +44,8 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:data"))
     implementation(project(":core:ui"))
-    implementation(project(":feature:auth"))
+    implementation(project(":core:cloud"))
+    implementation(project(":feature:onboarding"))
     implementation(project(":feature:dishes"))
     implementation(project(":feature:calendar"))
     implementation(project(":feature:settings"))
@@ -56,6 +57,8 @@ dependencies {
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
     implementation(libs.kotlinx.serialization.json)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
