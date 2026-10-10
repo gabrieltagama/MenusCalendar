@@ -27,7 +27,8 @@
     <string name="error_wrong_dish_type">El plato elegido no es de tipo %1$s</string>
     <string name="error_invalid_import_file">El archivo no es un JSON de MenuPlanner válido</string>
     <string name="error_unsupported_import_version">El archivo es de una versión no compatible</string>
-    <string name="error_invalid_credential">PIN incorrecto</string>
+    <string name="error_cloud_unavailable">No se ha podido conectar con Google Drive. Inténtalo de nuevo más tarde</string>
+    <string name="error_cloud_authorization_required">Google Drive necesita que vuelvas a dar permiso. Conecta de nuevo la cuenta en Ajustes</string>
 
     <string name="action_accept">Aceptar</string>
     <string name="action_cancel">Cancelar</string>

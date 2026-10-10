@@ -9,4 +9,20 @@
     <string name="settings_theme_light_hint">Fondo blanco con texto oscuro</string>
     <string name="settings_theme_dark">Oscuro</string>
     <string name="settings_theme_dark_hint">Fondo oscuro con texto claro</string>
+
+    <string name="settings_section_backup">Copia de seguridad de recetas</string>
+    <string name="settings_backup_connect">Conectar con Google</string>
+    <string name="settings_backup_connect_hint">Guarda tus recetas en una carpeta privada de tu Google Drive y recupéralas en otro móvil</string>
+    <string name="settings_backup_connected">Conectado como %1$s</string>
+    <string name="settings_backup_connected_hint">Copia automática una vez al día si cambian tus recetas</string>
+    <string name="settings_backup_now">Hacer copia ahora</string>
+    <string name="settings_backup_restore">Restaurar recetas</string>
+    <string name="settings_backup_restore_hint">Añade las recetas de la copia que no tengas y actualiza las más antiguas</string>
+    <string name="settings_backup_disconnect">Desconectar cuenta</string>
+    <string name="settings_backup_disconnect_hint">Deja de hacer copias; la última copia sigue en tu Drive</string>
+
+    <string name="settings_backup_done">Copia de recetas guardada en Google Drive</string>
+    <string name="settings_backup_restored">Recetas recuperadas: %1$d nuevas, %2$d actualizadas</string>
+    <string name="settings_backup_disconnected">Cuenta de Google desconectada</string>
+    <string name="settings_backup_cancelled">No se ha conectado la cuenta de Google</string>
 </resources>

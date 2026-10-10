@@ -19,7 +19,8 @@ sealed interface DomainError {
     data class WrongDishType(val slot: MenuSlot, val expected: DishType) : DomainError
     data object InvalidImportFile : DomainError
     data object UnsupportedImportVersion : DomainError
-    data object InvalidCredential : DomainError
+    data object CloudUnavailable : DomainError
+    data object CloudAuthorizationRequired : DomainError
 }
 
 enum class MenuSlot { STARTER, MAIN, SINGLE, DESSERT }

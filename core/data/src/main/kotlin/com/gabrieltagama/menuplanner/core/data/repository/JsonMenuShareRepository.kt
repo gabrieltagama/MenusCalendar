@@ -15,8 +15,9 @@ import java.time.Instant
 import javax.inject.Inject
 
 /**
- * JSON sharing of the recipe book and calendar. Export reads a consistent snapshot; import is
- * decoded and validated first and then merged inside a single transaction.
+ * JSON sharing of the recipe book and calendar. Export reads a consistent snapshot, the recipes
+ * export leaves the calendar out; import is decoded and validated first and then merged inside a
+ * single transaction.
  */
 internal class JsonMenuShareRepository @Inject constructor(
     private val database: MenuPlannerDatabase,
@@ -35,6 +36,14 @@ internal class JsonMenuShareRepository @Inject constructor(
         }
         return codec.encode(document)
     }
+
+    override suspend fun exportRecipes(): String = codec.encode(
+        ShareDocumentMapper.toDocument(
+            dishes = database.dishDao().getAll().map(DishWithIngredients::toDomain),
+            mealDays = emptyList(),
+            exportedAt = Instant.now(clock)
+        )
+    )
 
     override suspend fun importAndMerge(json: String): Outcome<ImportSummary> =
         when (val decoded = codec.decode(json)) {

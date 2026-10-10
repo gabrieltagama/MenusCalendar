@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_title">Bienvenido a MenuPlanner</string>
+    <string name="welcome_subtitle">Conecta tu cuenta de Google para guardar una copia de tus recetas en tu propio Google Drive y recuperarlas en otro móvil. Es opcional: puedes usar la app solo en este dispositivo.</string>
+    <string name="welcome_privacy">Nadie más tiene acceso: la copia queda en una carpeta privada de tu Drive y la app no guarda tu contraseña.</string>
+    <string name="welcome_connect_google">Conectar con Google</string>
+    <string name="welcome_continue_local">Continuar sin cuenta</string>
+    <string name="welcome_connecting">Recuperando tus recetas…</string>
+    <string name="welcome_connect_cancelled">No se ha conectado la cuenta de Google</string>
+</resources>

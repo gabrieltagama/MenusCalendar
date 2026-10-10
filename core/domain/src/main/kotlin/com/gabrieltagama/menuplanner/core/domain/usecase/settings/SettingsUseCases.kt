@@ -6,7 +6,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Use cases of the settings screen: observe and change the theme mode.
+ * Use cases of the user settings: observe and change the theme mode, and know or mark that the
+ * welcome screen was answered.
  */
 class ObserveThemeModeUseCase @Inject constructor(private val repository: SettingsRepository) {
     operator fun invoke(): StateFlow<ThemeMode> = repository.themeMode
@@ -14,4 +15,12 @@ class ObserveThemeModeUseCase @Inject constructor(private val repository: Settin
 
 class SetThemeModeUseCase @Inject constructor(private val repository: SettingsRepository) {
     suspend operator fun invoke(mode: ThemeMode) = repository.setThemeMode(mode)
+}
+
+class ObserveOnboardingCompletedUseCase @Inject constructor(private val repository: SettingsRepository) {
+    operator fun invoke(): StateFlow<Boolean> = repository.isOnboardingCompleted
+}
+
+class CompleteOnboardingUseCase @Inject constructor(private val repository: SettingsRepository) {
+    suspend operator fun invoke() = repository.completeOnboarding()
 }

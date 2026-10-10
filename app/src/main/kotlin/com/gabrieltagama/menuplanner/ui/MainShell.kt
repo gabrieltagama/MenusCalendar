@@ -50,13 +50,12 @@ import com.gabrieltagama.menuplanner.share.ShareViewModel
 import com.gabrieltagama.menuplanner.share.text
 
 /**
- * Authenticated shell: a Scaffold with the bottom NavigationBar (Calendario, Platos, Ajustes, Más), the
+ * Main shell: a Scaffold with the bottom NavigationBar (Calendario, Platos, Ajustes, Más), the
  * snackbar host and the NavHost of the feature graphs. Feature screens draw their own top bar,
- * so the shell only reserves space for the navigation bar. "Más" opens the share/logout sheet.
+ * so the shell only reserves space for the navigation bar. "Más" opens the share sheet.
  */
 @Composable
 internal fun MainShell(
-    onLogout: () -> Unit,
     shareViewModel: ShareViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -86,8 +85,7 @@ internal fun MainShell(
         snackbarHostState = snackbarHostState,
         isBusy = shareState.isBusy,
         onExport = shareViewModel::onExport,
-        onImport = { importLauncher.launch(ImportMimeTypes) },
-        onLogout = onLogout
+        onImport = { importLauncher.launch(ImportMimeTypes) }
     )
 }
 
@@ -97,7 +95,6 @@ private fun MainShellContent(
     isBusy: Boolean,
     onExport: () -> Unit,
     onImport: () -> Unit,
-    onLogout: () -> Unit,
     navController: NavHostController = rememberNavController()
 ) {
     val currentDestination = navController.currentBackStackEntryAsState().value?.destination
@@ -137,8 +134,7 @@ private fun MainShellContent(
             isBusy = isBusy,
             onDismiss = { showMoreSheet = false },
             onExport = onExport,
-            onImport = onImport,
-            onLogout = onLogout
+            onImport = onImport
         )
 }
 

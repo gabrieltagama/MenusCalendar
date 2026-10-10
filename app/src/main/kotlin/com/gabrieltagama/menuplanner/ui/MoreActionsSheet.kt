@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,8 +26,8 @@ import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import kotlinx.coroutines.launch
 
 /**
- * Bottom sheet opened from the "Más" tab with the secondary actions: export JSON, import JSON
- * and logout. The sheet is hidden with its animation before the chosen action runs.
+ * Bottom sheet opened from the "Más" tab with the secondary actions: export JSON and import
+ * JSON. The sheet is hidden with its animation before the chosen action runs.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,8 +35,7 @@ internal fun MoreActionsSheet(
     isBusy: Boolean,
     onDismiss: () -> Unit,
     onExport: () -> Unit,
-    onImport: () -> Unit,
-    onLogout: () -> Unit
+    onImport: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
@@ -51,8 +49,7 @@ internal fun MoreActionsSheet(
         MoreActionsContent(
             isBusy = isBusy,
             onExport = { closeThen(onExport) },
-            onImport = { closeThen(onImport) },
-            onLogout = { closeThen(onLogout) }
+            onImport = { closeThen(onImport) }
         )
     }
 }
@@ -61,13 +58,11 @@ internal fun MoreActionsSheet(
 private fun MoreActionsContent(
     isBusy: Boolean,
     onExport: () -> Unit,
-    onImport: () -> Unit,
-    onLogout: () -> Unit
+    onImport: () -> Unit
 ) = Column(modifier = Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
     if (isBusy) LinearProgressIndicator(modifier = Modifier.padding(horizontal = 16.dp))
     ActionItem(Icons.Filled.FileUpload, stringResource(R.string.more_export_json), enabled = !isBusy, onClick = onExport)
     ActionItem(Icons.Filled.FileDownload, stringResource(R.string.more_import_json), enabled = !isBusy, onClick = onImport)
-    ActionItem(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.more_logout), enabled = true, onClick = onLogout)
 }
 
 @Composable
@@ -80,5 +75,5 @@ private fun ActionItem(icon: ImageVector, label: String, enabled: Boolean, onCli
 @Preview(showBackground = true)
 @Composable
 private fun MoreActionsContentPreview() = MenuPlannerTheme {
-    MoreActionsContent(isBusy = false, onExport = {}, onImport = {}, onLogout = {})
+    MoreActionsContent(isBusy = false, onExport = {}, onImport = {})
 }
