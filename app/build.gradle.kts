@@ -19,6 +19,17 @@ android {
         testInstrumentationRunner = "com.gabrieltagama.menuplanner.HiltTestRunner"
     }
 
+    signingConfigs {
+        getByName("debug") {
+            System.getenv("DEBUG_KEYSTORE_PATH")?.let { path ->
+                storeFile = file(path)
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
