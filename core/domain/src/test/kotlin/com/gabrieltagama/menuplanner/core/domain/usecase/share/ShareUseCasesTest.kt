@@ -6,6 +6,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuShareRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeShareFileStore
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
@@ -32,7 +33,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests ExportMenusUseCase delegation and ImportMenusUseCase: decode failures leave the data
+ * Tests the export and import of share files, and ImportMenusUseCase: decode failures leave the data
  * untouched, last-writer-wins for dishes, lunches and dinners, days that break a calendar rule are
  * skipped, everything runs in one transaction and the recipe book ends in standard units.
  */
@@ -60,11 +61,35 @@ class ShareUseCasesTest {
     private fun store(vararg stored: Dish) = runBlocking { stored.forEach { dishes.upsert(it) } }
 
     @Test
-    fun `export returns repository json`() = runBlocking {
+    fun `export writes the repository json to a shareable file`() = runBlocking {
         val repository = FakeMenuShareRepository(exportJson = """{"dishes":[]}""")
+        val files = FakeShareFileStore()
 
-        assertEquals("""{"dishes":[]}""", ExportMenusUseCase(repository)())
+        val location = ExportMenusUseCase(repository, files)()
+
+        assertEquals("""{"dishes":[]}""", files.files.getValue(location!!))
         assertEquals(1, repository.exportCalls)
+    }
+
+    @Test
+    fun `export returns null when the file cannot be written`() = runBlocking {
+        assertNull(ExportMenusUseCase(FakeMenuShareRepository(), FakeShareFileStore(failing = true))())
+    }
+
+    @Test
+    fun `importing a file reads it and imports its json`() = runBlocking {
+        val files = FakeShareFileStore().apply { this.files["picked"] = "payload" }
+
+        val result = ImportMenusFileUseCase(files, importMenus)("picked")
+
+        assertTrue(result is Outcome.Success)
+        assertEquals(listOf("payload"), share.decodedJson)
+    }
+
+    @Test
+    fun `an unreadable file is an invalid import file`() = runBlocking {
+        assertEquals(Outcome.Failure(DomainError.InvalidImportFile), ImportMenusFileUseCase(FakeShareFileStore(), importMenus)("missing"))
+        assertTrue(share.decodedJson.isEmpty())
     }
 
     @Test

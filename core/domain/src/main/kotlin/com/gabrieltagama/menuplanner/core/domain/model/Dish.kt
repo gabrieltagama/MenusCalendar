@@ -8,6 +8,7 @@ import java.util.UUID
  * across devices when a shared JSON is imported; updatedAt decides which version wins. A dish can
  * be planned as a dinner when it is served at dinner and is not a dessert; the same rule is exposed
  * as isDinnerOption(type, mealTime) for code that only knows those two attributes (imports).
+ * updatedAt defaults to EPOCH (never saved): the use cases stamp it with the injected Clock.
  */
 data class Dish(
     val id: String = UUID.randomUUID().toString(),
@@ -19,7 +20,7 @@ data class Dish(
     val heaviness: Heaviness,
     val rating: Rating = Rating.THREE,
     val mealTime: MealTime = MealTime.ANY,
-    val updatedAt: Instant = Instant.now()
+    val updatedAt: Instant = Instant.EPOCH
 ) {
     val isDinnerOption: Boolean get() = isDinnerOption(type, mealTime)
 

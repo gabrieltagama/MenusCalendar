@@ -18,6 +18,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
@@ -169,7 +170,8 @@ class DayEditorViewModelTest {
             observeDishes = ObserveDishesUseCase(dishRepository),
             getMealDay = GetMealDayUseCase(mealPlanRepository),
             saveMealDay = SaveMealDayUseCase(mealPlanRepository, clock),
-            clearMealDay = ClearMealDayUseCase(mealPlanRepository)
+            clearMealDay = ClearMealDayUseCase(mealPlanRepository),
+            random = Random(SEED)
         )
         val collector: Job = launch { viewModel.uiState.collect {} }
         try {
@@ -189,5 +191,6 @@ class DayEditorViewModelTest {
 
     private companion object {
         const val TIMEOUT_MS = 5_000L
+        const val SEED = 1
     }
 }

@@ -7,12 +7,14 @@ import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanReposito
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
 import com.gabrieltagama.menuplanner.core.data.settings.SharedPreferencesSettingsRepository
+import com.gabrieltagama.menuplanner.core.data.share.CacheShareFileStore
 import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.InitialDishesSource
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.repository.ShareFileStore
 import com.gabrieltagama.menuplanner.core.domain.repository.TransactionRunner
 import dagger.Binds
 import dagger.Module
@@ -21,8 +23,8 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Binds the domain ports (repositories, the initial recipe book source and the transaction
- * runner) to their data-layer implementations.
+ * Binds the domain ports (repositories, the initial recipe book source, the transaction runner
+ * and the share file store) to their data-layer implementations.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -53,4 +55,7 @@ internal abstract class RepositoryModule {
 
     @Binds
     abstract fun bindTransactionRunner(implementation: RoomTransactionRunner): TransactionRunner
+
+    @Binds
+    abstract fun bindShareFileStore(implementation: CacheShareFileStore): ShareFileStore
 }

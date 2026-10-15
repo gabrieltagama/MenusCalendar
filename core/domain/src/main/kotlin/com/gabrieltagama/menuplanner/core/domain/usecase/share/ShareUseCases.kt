@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.share
 
+import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.ImportContent
@@ -10,6 +11,7 @@ import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.PlanRepository
+import com.gabrieltagama.menuplanner.core.domain.repository.ShareFileStore
 import com.gabrieltagama.menuplanner.core.domain.repository.TransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
 import java.time.Instant
@@ -17,14 +19,27 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 /**
- * Use cases to share the recipe book and calendar as JSON. Import is the single entry point for
+ * Use cases to share the recipe book and calendar as JSON. Export writes every dish and planned
+ * day to a shareable file and returns its location (null when it could not be written); a file
+ * that cannot be read imports as InvalidImportFile. Import is the single entry point for
  * received files, cloud restores and the starter recipe book: the file is validated first, then
  * dishes are merged with MergePolicy, then lunches and dinners (they may reference dishes from the
  * same file, and days breaking a calendar rule are skipped), and finally the recipe book is
  * converted to standard units, all inside one transaction so a failure leaves nothing half done.
  */
-class ExportMenusUseCase @Inject constructor(private val repository: MenuShareRepository) {
-    suspend operator fun invoke(): String = repository.exportAll()
+class ExportMenusUseCase @Inject constructor(
+    private val repository: MenuShareRepository,
+    private val files: ShareFileStore
+) {
+    suspend operator fun invoke(): String? = files.write(repository.exportAll())
+}
+
+class ImportMenusFileUseCase @Inject constructor(
+    private val files: ShareFileStore,
+    private val importMenus: ImportMenusUseCase
+) {
+    suspend operator fun invoke(location: String): Outcome<ImportSummary> =
+        files.read(location)?.let { importMenus(it) } ?: Outcome.Failure(DomainError.InvalidImportFile)
 }
 
 class ImportMenusUseCase @Inject constructor(

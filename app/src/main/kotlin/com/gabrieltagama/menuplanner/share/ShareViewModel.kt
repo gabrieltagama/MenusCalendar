@@ -1,23 +1,15 @@
 package com.gabrieltagama.menuplanner.share
 
-import android.content.Context
 import android.net.Uri
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ExportMenusUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusFileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.File
-import java.io.IOException
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,12 +18,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
- * Exports the recipe book and calendar to a JSON file exposed through FileProvider, and imports
- * a JSON picked by the user. File I/O runs on Dispatchers.IO; results surface as a nullable
- * [ShareMessage] in [ShareUiState] and the file to share as a one-shot [ShareEvent].
+ * Exports the recipe book and calendar to a shareable JSON file and imports a JSON picked by the
+ * user, both through domain use cases (the file handling lives behind ShareFileStore). Results
+ * surface as a nullable [ShareMessage] in [ShareUiState] and the file to share as a one-shot
+ * [ShareEvent].
  */
 data class ShareUiState(
     val isBusy: Boolean = false,
@@ -51,8 +43,7 @@ sealed interface ShareEvent {
 @HiltViewModel
 class ShareViewModel @Inject constructor(
     private val exportMenus: ExportMenusUseCase,
-    private val importMenus: ImportMenusUseCase,
-    @param:ApplicationContext private val context: Context
+    private val importMenusFile: ImportMenusFileUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ShareUiState())
@@ -62,22 +53,13 @@ class ShareViewModel @Inject constructor(
     val events: Flow<ShareEvent> = _events.receiveAsFlow()
 
     fun onExport() = runBusy {
-        val uri = try {
-            writeExportFile(exportMenus())
-        } catch (exception: IOException) {
-            null
-        }
-        if (uri == null) showMessage(ShareMessage.ExportFailed)
-        else _events.send(ShareEvent.ShareFile(uri))
+        val location = exportMenus()
+        if (location == null) showMessage(ShareMessage.ExportFailed)
+        else _events.send(ShareEvent.ShareFile(Uri.parse(location)))
     }
 
     fun onImport(uri: Uri) = runBusy {
-        val json = readText(uri)
-        if (json == null) {
-            showMessage(ShareMessage.Failed(DomainError.InvalidImportFile))
-            return@runBusy
-        }
-        when (val outcome = importMenus(json)) {
+        when (val outcome = importMenusFile(uri.toString())) {
             is Outcome.Success -> showMessage(ShareMessage.Imported(outcome.value))
             is Outcome.Failure -> showMessage(ShareMessage.Failed(outcome.error))
         }
@@ -98,27 +80,4 @@ class ShareViewModel @Inject constructor(
     }
 
     private fun showMessage(message: ShareMessage) = _uiState.update { it.copy(message = message) }
-
-    private suspend fun writeExportFile(json: String): Uri = withContext(Dispatchers.IO) {
-        val directory = File(context.cacheDir, SHARED_DIRECTORY).apply { mkdirs() }
-        val fileName = "menuplanner-${LocalDateTime.now().format(FILE_DATE_FORMAT)}.json"
-        val file = File(directory, fileName).apply { writeText(json) }
-        FileProvider.getUriForFile(context, "${context.packageName}$AUTHORITY_SUFFIX", file)
-    }
-
-    private suspend fun readText(uri: Uri): String? = withContext(Dispatchers.IO) {
-        try {
-            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-        } catch (exception: IOException) {
-            null
-        } catch (exception: SecurityException) {
-            null
-        }
-    }
-
-    private companion object {
-        const val SHARED_DIRECTORY = "shared"
-        const val AUTHORITY_SUFFIX = ".fileprovider"
-        val FILE_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")
-    }
 }

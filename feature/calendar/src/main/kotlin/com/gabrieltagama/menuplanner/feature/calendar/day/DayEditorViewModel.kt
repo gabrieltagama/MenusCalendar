@@ -19,6 +19,7 @@ import com.gabrieltagama.menuplanner.feature.calendar.navigation.DayEditorRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.random.Random
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,7 +89,8 @@ class DayEditorViewModel @Inject constructor(
     observeDishes: ObserveDishesUseCase,
     private val getMealDay: GetMealDayUseCase,
     private val saveMealDay: SaveMealDayUseCase,
-    private val clearMealDay: ClearMealDayUseCase
+    private val clearMealDay: ClearMealDayUseCase,
+    private val random: Random
 ) : ViewModel() {
 
     private val date: LocalDate = LocalDate.ofEpochDay(savedStateHandle.toRoute<DayEditorRoute>().epochDay)
@@ -122,7 +124,7 @@ class DayEditorViewModel @Inject constructor(
         val state = uiState.value
         val current = state.selectionFor(slot)
         val options = state.optionsFor(slot)
-        options.filterNot { it.id == current?.id }.ifEmpty { options }.randomOrNull()?.let { onDishSelect(slot, it) }
+        options.filterNot { it.id == current?.id }.ifEmpty { options }.randomOrNull(random)?.let { onDishSelect(slot, it) }
     }
 
     fun onClearRequest() = form.update { it.copy(showClearConfirm = true) }
