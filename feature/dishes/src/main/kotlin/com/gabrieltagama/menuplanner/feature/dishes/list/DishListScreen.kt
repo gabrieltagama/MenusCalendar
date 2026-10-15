@@ -60,7 +60,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.EmptyState
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
@@ -71,14 +73,16 @@ import com.gabrieltagama.menuplanner.feature.dishes.R
 
 /**
  * Recipe book: stateful route bound to [DishListViewModel] and a stateless screen with a search
- * field (dish or ingredient name), one row of dropdown filter chips (type, heaviness) and a list
- * of dish cards with type avatar, ingredient count and heaviness chip. The FAB collapses while
- * scrolling. Bottom insets are left to the app shell, which draws the NavigationBar below.
+ * field (dish or ingredient name), one scrollable row of dropdown filter chips (type, heaviness,
+ * minimum rating, meal time) and a list of dish cards with type avatar, ingredient count and
+ * heaviness chip. The FAB collapses while scrolling. Bottom insets are left to the app shell, which draws the NavigationBar below.
  */
 data class DishListActions(
     val onQueryChange: (String) -> Unit,
     val onTypeSelect: (DishType?) -> Unit,
     val onHeavinessSelect: (Heaviness?) -> Unit,
+    val onMinRatingSelect: (Rating?) -> Unit,
+    val onMealTimeSelect: (MealTime?) -> Unit,
     val onOpenDish: (String?) -> Unit
 )
 
@@ -96,6 +100,8 @@ fun DishListScreenRoute(
             onQueryChange = viewModel::onQueryChange,
             onTypeSelect = viewModel::onTypeSelect,
             onHeavinessSelect = viewModel::onHeavinessSelect,
+            onMinRatingSelect = viewModel::onMinRatingSelect,
+            onMealTimeSelect = viewModel::onMealTimeSelect,
             onOpenDish = onOpenDish
         )
     )
@@ -182,6 +188,22 @@ private fun FilterRow(state: DishListUiState, actions: DishListActions) = Row(
         optionLabel = { it.label() },
         onSelect = actions.onHeavinessSelect
     )
+    DropdownFilterChip(
+        title = stringResource(R.string.dishes_column_rating),
+        allLabel = stringResource(R.string.dishes_filter_all_ratings),
+        options = Rating.entries.reversed(),
+        selected = state.selectedMinRating,
+        optionLabel = { stringResource(R.string.dishes_filter_min_rating, it.label()) },
+        onSelect = actions.onMinRatingSelect
+    )
+    DropdownFilterChip(
+        title = stringResource(R.string.dishes_column_meal_time),
+        allLabel = stringResource(R.string.dishes_filter_all_meal_times),
+        options = MealTime.entries,
+        selected = state.selectedMealTime,
+        optionLabel = { it.label() },
+        onSelect = actions.onMealTimeSelect
+    )
 }
 
 @Composable
@@ -257,7 +279,14 @@ private fun DishType.shortLabel(): String = stringResource(
     }
 )
 
-private val previewActions = DishListActions(onQueryChange = {}, onTypeSelect = {}, onHeavinessSelect = {}, onOpenDish = {})
+private val previewActions = DishListActions(
+    onQueryChange = {},
+    onTypeSelect = {},
+    onHeavinessSelect = {},
+    onMinRatingSelect = {},
+    onMealTimeSelect = {},
+    onOpenDish = {}
+)
 
 private val previewState = DishListUiState(
     isLoading = false,
