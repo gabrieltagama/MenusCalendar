@@ -11,7 +11,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 import kotlin.random.Random
-import kotlinx.coroutines.flow.first
 
 /**
  * Fills every empty day of a month with a random menu built by MenuPicker, using only dishes
@@ -27,7 +26,7 @@ class AutoFillMonthUseCase @Inject constructor(
     private val clock: Clock
 ) {
     suspend operator fun invoke(month: YearMonth): AutoFillResult {
-        val lunchDishes = dishRepository.observeDishes().first().filter { it.mealTime.isServedAtLunch }
+        val lunchDishes = dishRepository.getDishes().filter { it.mealTime.isServedAtLunch }
         val picker = MenuPicker(lunchDishes, random)
         val history = loadHistory(month)
         val emptyDays = month.days().filterNot(history::containsKey)

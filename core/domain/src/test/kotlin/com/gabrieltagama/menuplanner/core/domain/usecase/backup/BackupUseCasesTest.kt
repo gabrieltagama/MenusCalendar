@@ -4,14 +4,18 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeBackupScheduler
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeCloudBackupRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuShareRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.BackupResult
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,7 +34,10 @@ class BackupUseCasesTest {
 
     private fun backUp(cloud: FakeCloudBackupRepository) = BackUpRecipesUseCase(cloud, share, dishes)
 
-    private fun restore(cloud: FakeCloudBackupRepository) = RestoreRecipesUseCase(cloud, share, StandardizeRecipeBookUseCase(dishes))
+    private fun restore(cloud: FakeCloudBackupRepository) = RestoreRecipesUseCase(
+        cloud,
+        ImportMenusUseCase(share, dishes, FakeMealPlanRepository(), FakeDinnerPlanRepository(), FakeTransactionRunner(), StandardizeRecipeBookUseCase(dishes))
+    )
 
     private fun connect(cloud: FakeCloudBackupRepository) =
         ConnectCloudAccountUseCase(cloud, restore(cloud), backUp(cloud), scheduler)
@@ -85,7 +92,7 @@ class BackupUseCasesTest {
         val cloud = FakeCloudBackupRepository(connected)
 
         assertEquals(Outcome.Success(ImportSummary.EMPTY), restore(cloud)())
-        assertTrue(share.importedJson.isEmpty())
+        assertTrue(share.decodedJson.isEmpty())
     }
 
     @Test
@@ -93,7 +100,7 @@ class BackupUseCasesTest {
         val cloud = FakeCloudBackupRepository(connected, remoteJson = "remote")
         restore(cloud)()
 
-        assertEquals(listOf("remote"), share.importedJson)
+        assertEquals(listOf("remote"), share.decodedJson)
     }
 
     @Test
@@ -102,7 +109,7 @@ class BackupUseCasesTest {
 
         assertEquals(Outcome.Success(ImportSummary.EMPTY), connect(cloud)("token"))
         assertEquals(connected, cloud.account.value)
-        assertEquals(listOf("remote"), share.importedJson)
+        assertEquals(listOf("remote"), share.decodedJson)
         assertEquals(listOf(RECIPES_JSON), cloud.uploads)
         assertTrue(scheduler.isScheduled)
     }

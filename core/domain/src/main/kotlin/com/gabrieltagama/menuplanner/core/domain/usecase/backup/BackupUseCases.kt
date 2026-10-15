@@ -9,14 +9,13 @@ import com.gabrieltagama.menuplanner.core.domain.repository.BackupScheduler
 import com.gabrieltagama.menuplanner.core.domain.repository.CloudBackupRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
-import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 
 /**
  * Use cases of the optional recipe backup. Only recipes are saved, never the calendar. Restoring
- * merges with the share rules (newest updatedAt wins) and converts to standard units; an
+ * goes through ImportMenusUseCase (newest updatedAt wins, standard units, one transaction); an
  * automatic backup uploads only when the recipes fingerprint changed since the last upload.
  * Connecting restores, uploads and schedules the daily backup; disconnecting cancels it.
  */
@@ -31,7 +30,7 @@ class BackUpRecipesUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(onlyIfChanged: Boolean): Outcome<BackupResult> {
         if (cloud.account.value is CloudAccount.Disconnected) return Outcome.Success(BackupResult.NOT_CONNECTED)
-        val fingerprint = RecipesFingerprint.of(dishes.observeDishes().first())
+        val fingerprint = RecipesFingerprint.of(dishes.getDishes())
         if (onlyIfChanged && fingerprint == cloud.lastUploadedFingerprint()) return Outcome.Success(BackupResult.NO_CHANGES)
         return when (val upload = cloud.upload(share.exportRecipes(), fingerprint)) {
             is Outcome.Failure -> upload
@@ -42,16 +41,12 @@ class BackUpRecipesUseCase @Inject constructor(
 
 class RestoreRecipesUseCase @Inject constructor(
     private val cloud: CloudBackupRepository,
-    private val share: MenuShareRepository,
-    private val standardizeRecipeBook: StandardizeRecipeBookUseCase
+    private val importMenus: ImportMenusUseCase
 ) {
     suspend operator fun invoke(): Outcome<ImportSummary> = when (val download = cloud.download()) {
         is Outcome.Failure -> download
-        is Outcome.Success -> download.value?.let { restore(it) } ?: Outcome.Success(ImportSummary.EMPTY)
+        is Outcome.Success -> download.value?.let { importMenus(it) } ?: Outcome.Success(ImportSummary.EMPTY)
     }
-
-    private suspend fun restore(json: String): Outcome<ImportSummary> =
-        share.importAndMerge(json).also { if (it is Outcome.Success) standardizeRecipeBook() }
 }
 
 class ConnectCloudAccountUseCase @Inject constructor(

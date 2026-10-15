@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.core.data.di
 
-import com.gabrieltagama.menuplanner.core.data.initial.AssetInitialDishesRepository
+import com.gabrieltagama.menuplanner.core.data.database.RoomTransactionRunner
+import com.gabrieltagama.menuplanner.core.data.initial.AssetInitialDishesSource
 import com.gabrieltagama.menuplanner.core.data.repository.JsonMenuShareRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
@@ -8,10 +9,11 @@ import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
 import com.gabrieltagama.menuplanner.core.data.settings.SharedPreferencesSettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.InitialDishesRepository
+import com.gabrieltagama.menuplanner.core.domain.repository.InitialDishesSource
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.repository.TransactionRunner
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -19,7 +21,8 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Binds the domain repository ports to their data-layer implementations.
+ * Binds the domain ports (repositories, the initial recipe book source and the transaction
+ * runner) to their data-layer implementations.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -46,6 +49,8 @@ internal abstract class RepositoryModule {
     abstract fun bindSettingsRepository(implementation: SharedPreferencesSettingsRepository): SettingsRepository
 
     @Binds
-    @Singleton
-    abstract fun bindInitialDishesRepository(implementation: AssetInitialDishesRepository): InitialDishesRepository
+    abstract fun bindInitialDishesSource(implementation: AssetInitialDishesSource): InitialDishesSource
+
+    @Binds
+    abstract fun bindTransactionRunner(implementation: RoomTransactionRunner): TransactionRunner
 }

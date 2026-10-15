@@ -25,6 +25,8 @@ internal class RoomDishRepository @Inject constructor(
     override fun observeDishesByType(type: DishType): Flow<List<Dish>> =
         dishDao.observeByType(type.name).map { it.toDomainList() }
 
+    override suspend fun getDishes(): List<Dish> = dishDao.getAll().toDomainList()
+
     override suspend fun getDish(id: String): Dish? = dishDao.getById(id)?.toDomain()
 
     override suspend fun upsert(dish: Dish) = dishDao.upsertWithIngredients(dish.toEntity(), dish.toIngredientEntities())

@@ -4,7 +4,6 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import javax.inject.Inject
-import kotlinx.coroutines.flow.first
 
 /**
  * Leaves the whole recipe book in standard units (see IngredientStandardizer), so a product has
@@ -30,7 +29,7 @@ class StandardizeRecipeBookUseCase @Inject constructor(private val repository: D
     }
 
     private suspend fun storedDishes(excludedId: String? = null): List<Dish> =
-        repository.observeDishes().first().filterNot { it.id == excludedId }
+        repository.getDishes().filterNot { it.id == excludedId }
 
     private fun changedDishes(stored: List<Dish>, standard: List<Dish>): List<Dish> =
         standard.zip(stored)

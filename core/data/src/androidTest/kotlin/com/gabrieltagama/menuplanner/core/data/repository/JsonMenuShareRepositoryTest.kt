@@ -3,14 +3,16 @@ package com.gabrieltagama.menuplanner.core.data.repository
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.data.database.AndroidTestData
 import com.gabrieltagama.menuplanner.core.data.database.MenuPlannerDatabase
+import com.gabrieltagama.menuplanner.core.data.database.RoomTransactionRunner
 import com.gabrieltagama.menuplanner.core.data.share.ShareDocumentCodec
-import com.gabrieltagama.menuplanner.core.data.share.ShareMerger
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -27,9 +29,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Instrumented tests of JsonMenuShareRepository on an in-memory database: export, wipe and import
- * restores the same data; importing the same file again skips everything; invalid files leave the
- * database untouched.
+ * Instrumented tests of JsonMenuShareRepository with ImportMenusUseCase on an in-memory database:
+ * export, wipe and import restores the same data; importing the same file again skips everything;
+ * invalid files leave the database untouched.
  */
 @RunWith(AndroidJUnit4::class)
 class JsonMenuShareRepositoryTest {
@@ -37,6 +39,7 @@ class JsonMenuShareRepositoryTest {
     private lateinit var dishRepository: RoomDishRepository
     private lateinit var mealPlanRepository: RoomMealPlanRepository
     private lateinit var repository: JsonMenuShareRepository
+    private lateinit var importMenus: ImportMenusUseCase
 
     private val clock = Clock.fixed(Instant.parse("2026-05-01T00:00:00Z"), ZoneOffset.UTC)
     private val json = Json {
@@ -49,7 +52,7 @@ class JsonMenuShareRepositoryTest {
         "st",
         name = "Gazpacho",
         type = DishType.STARTER,
-        ingredients = listOf(Ingredient("Tomato", 500.0, MeasureUnit.GRAM), Ingredient("Oil", 2.0, MeasureUnit.TABLESPOON))
+        ingredients = listOf(Ingredient("Tomato", 500.0, MeasureUnit.GRAM), Ingredient("Oil", 30.0, MeasureUnit.MILLILITER))
     )
     private val main = AndroidTestData.dish("mn", name = "Paella", type = DishType.MAIN, updatedAt = AndroidTestData.NEW_INSTANT)
     private val single = AndroidTestData.dish("sg", name = "Lasagna", type = DishType.SINGLE)
@@ -74,7 +77,7 @@ class JsonMenuShareRepositoryTest {
         database = AndroidTestData.inMemoryDatabase()
         createRepositories()
 
-        val result = repository.importAndMerge(exported)
+        val result = importMenus(exported)
 
         assertEquals(Outcome.Success(ImportSummary(4, 0, 0, 2, 0, 0)), result)
         assertEquals(listOf(dessert, starter, single, main), dishRepository.observeDishes().first())
@@ -87,7 +90,7 @@ class JsonMenuShareRepositoryTest {
         seed()
         val exported = repository.exportAll()
 
-        val result = repository.importAndMerge(exported)
+        val result = importMenus(exported)
 
         assertEquals(Outcome.Success(ImportSummary(0, 0, 4, 0, 0, 2)), result)
     }
@@ -99,9 +102,9 @@ class JsonMenuShareRepositoryTest {
         database.close()
         database = AndroidTestData.inMemoryDatabase()
         createRepositories()
-        repository.importAndMerge(exported)
+        importMenus(exported)
 
-        val second = repository.importAndMerge(exported)
+        val second = importMenus(exported)
 
         assertEquals(Outcome.Success(ImportSummary(0, 0, 4, 0, 0, 2)), second)
     }
@@ -120,7 +123,7 @@ class JsonMenuShareRepositoryTest {
     fun invalidFileDoesNotTouchTheDatabase() = runTest {
         seed()
 
-        assertEquals(Outcome.Failure(DomainError.InvalidImportFile), repository.importAndMerge("not json"))
+        assertEquals(Outcome.Failure(DomainError.InvalidImportFile), importMenus("not json"))
         assertEquals(4, dishRepository.observeDishes().first().size)
     }
 
@@ -128,14 +131,14 @@ class JsonMenuShareRepositoryTest {
     fun newerSchemaVersionIsRejected() = runTest {
         val text = """{"schemaVersion":2,"exportedAt":"2026-05-01T00:00:00Z","dishes":[],"mealDays":[]}"""
 
-        assertEquals(Outcome.Failure(DomainError.UnsupportedImportVersion), repository.importAndMerge(text))
+        assertEquals(Outcome.Failure(DomainError.UnsupportedImportVersion), importMenus(text))
     }
 
     @Test
     fun dayReferencingUnknownDishIsSkippedOnImport() = runTest {
         val text = """{"schemaVersion":1,"exportedAt":"2026-05-01T00:00:00Z","dishes":[],"mealDays":[{"date":"2026-03-12","singleId":"ghost","updatedAt":"2026-01-01T00:00:00Z"}]}"""
 
-        assertEquals(Outcome.Success(ImportSummary(0, 0, 0, 0, 0, 1)), repository.importAndMerge(text))
+        assertEquals(Outcome.Success(ImportSummary(0, 0, 0, 0, 0, 1)), importMenus(text))
         assertNull(mealPlanRepository.getDay(LocalDate.of(2026, 3, 12)))
     }
 
@@ -147,9 +150,16 @@ class JsonMenuShareRepositoryTest {
 
     private fun createRepositories() {
         val dishDao = database.dishDao()
-        val mealDayDao = database.mealDayDao()
         dishRepository = RoomDishRepository(dishDao)
-        mealPlanRepository = RoomMealPlanRepository(mealDayDao, dishDao)
-        repository = JsonMenuShareRepository(database, ShareDocumentCodec(json), ShareMerger(dishDao, mealDayDao), clock)
+        mealPlanRepository = RoomMealPlanRepository(database.mealDayDao(), dishDao)
+        repository = JsonMenuShareRepository(database, ShareDocumentCodec(json), clock)
+        importMenus = ImportMenusUseCase(
+            share = repository,
+            dishes = dishRepository,
+            lunches = mealPlanRepository,
+            dinners = RoomDinnerPlanRepository(database.dinnerDayDao(), dishDao),
+            transactions = RoomTransactionRunner(database),
+            standardizeRecipeBook = StandardizeRecipeBookUseCase(dishRepository)
+        )
     }
 }

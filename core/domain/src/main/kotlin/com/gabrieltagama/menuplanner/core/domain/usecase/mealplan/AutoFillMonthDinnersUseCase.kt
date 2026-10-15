@@ -13,7 +13,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 import kotlin.random.Random
-import kotlinx.coroutines.flow.first
 
 /**
  * Fills every empty dinner of a month with one random dinner option (DinnerPicker). Dinners
@@ -29,7 +28,7 @@ class AutoFillMonthDinnersUseCase @Inject constructor(
     private val clock: Clock
 ) {
     suspend operator fun invoke(month: YearMonth): AutoFillResult {
-        val picker = DinnerPicker(dishRepository.observeDishes().first().filter(Dish::isDinnerOption), random)
+        val picker = DinnerPicker(dishRepository.getDishes().filter(Dish::isDinnerOption), random)
         val window = month.minusMonths(1).atDay(1)..month.plusMonths(1).atEndOfMonth()
         val lunches = mealPlanRepository.getRange(window).associate { it.date to it.menu }
         val dinners = dinnerPlanRepository.getRange(window).associate { it.date to it.dish }.toMutableMap()

@@ -6,9 +6,8 @@ import com.gabrieltagama.menuplanner.core.data.database.entity.DishWithIngredien
 import com.gabrieltagama.menuplanner.core.data.mapper.toDomain
 import com.gabrieltagama.menuplanner.core.data.share.ShareDocumentCodec
 import com.gabrieltagama.menuplanner.core.data.share.ShareDocumentMapper
-import com.gabrieltagama.menuplanner.core.data.share.ShareMerger
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
-import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
+import com.gabrieltagama.menuplanner.core.domain.model.ImportContent
 import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
 import java.time.Clock
 import java.time.Instant
@@ -16,13 +15,12 @@ import javax.inject.Inject
 
 /**
  * JSON sharing of the recipe book and calendar (lunches and dinners). Export reads a consistent
- * snapshot, the recipes export leaves the calendar out; import is decoded and validated first and then merged inside a
- * single transaction.
+ * snapshot and the recipes export leaves the calendar out; decode validates a received file and
+ * returns its content, which ImportMenusUseCase merges.
  */
 internal class JsonMenuShareRepository @Inject constructor(
     private val database: MenuPlannerDatabase,
     private val codec: ShareDocumentCodec,
-    private val merger: ShareMerger,
     private val clock: Clock
 ) : MenuShareRepository {
 
@@ -46,12 +44,9 @@ internal class JsonMenuShareRepository @Inject constructor(
         )
     )
 
-    override suspend fun importAndMerge(json: String): Outcome<ImportSummary> =
+    override suspend fun decode(json: String): Outcome<ImportContent> =
         when (val decoded = codec.decode(json)) {
             is Outcome.Failure -> decoded
-            is Outcome.Success -> when (val content = ShareDocumentMapper.toImportContent(decoded.value)) {
-                is Outcome.Failure -> content
-                is Outcome.Success -> Outcome.Success(database.withTransaction { merger.merge(content.value) })
-            }
+            is Outcome.Success -> ShareDocumentMapper.toImportContent(decoded.value)
         }
 }

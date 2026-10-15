@@ -1,18 +1,19 @@
 package com.gabrieltagama.menuplanner.core.domain.fake
 
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
-import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
+import com.gabrieltagama.menuplanner.core.domain.model.ImportContent
 import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
 
 /**
- * In-memory MenuShareRepository returning canned results and recording imported JSON.
+ * In-memory MenuShareRepository returning canned export texts and a canned decode result, and
+ * recording every decoded JSON.
  */
 class FakeMenuShareRepository(
     private val exportJson: String = "{}",
     private val recipesJson: String = "{}",
-    private val importResult: Outcome<ImportSummary> = Outcome.Success(ImportSummary(0, 0, 0, 0, 0, 0))
+    var decodeResult: Outcome<ImportContent> = Outcome.Success(ImportContent(emptyList()))
 ) : MenuShareRepository {
-    val importedJson = mutableListOf<String>()
+    val decodedJson = mutableListOf<String>()
     var exportCalls = 0
         private set
 
@@ -23,8 +24,8 @@ class FakeMenuShareRepository(
 
     override suspend fun exportRecipes(): String = recipesJson
 
-    override suspend fun importAndMerge(json: String): Outcome<ImportSummary> {
-        importedJson += json
-        return importResult
+    override suspend fun decode(json: String): Outcome<ImportContent> {
+        decodedJson += json
+        return decodeResult
     }
 }

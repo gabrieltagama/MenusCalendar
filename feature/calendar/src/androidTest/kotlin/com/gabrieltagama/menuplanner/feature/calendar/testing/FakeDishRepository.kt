@@ -21,6 +21,8 @@ class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository {
     override fun observeDishesByType(type: DishType): Flow<List<Dish>> =
         dishes.map { all -> all.values.filter { it.type == type } }
 
+    override suspend fun getDishes(): List<Dish> = dishes.value.values.toList()
+
     override suspend fun getDish(id: String): Dish? = dishes.value[id]
 
     override suspend fun upsert(dish: Dish) {

@@ -10,10 +10,13 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.ImportedDinner
+import com.gabrieltagama.menuplanner.core.domain.model.ImportedLunch
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
-import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -54,7 +57,13 @@ class ShareDocumentCodecTest {
         assertEquals(Outcome.Success(document), decoded)
         val content = (ShareDocumentMapper.toImportContent((decoded as Outcome.Success).value) as Outcome.Success).value
         assertEquals(dishes, content.dishes)
-        assertEquals(listOf(coursesDay, singleDay), content.mealDays)
+        assertEquals(
+            listOf(
+                ImportedLunch(LocalDate.of(2026, 3, 10), mapOf(MenuSlot.STARTER to starter.id, MenuSlot.MAIN to main.id, MenuSlot.DESSERT to dessert.id), TestData.NEW_INSTANT),
+                ImportedLunch(LocalDate.of(2026, 3, 11), mapOf(MenuSlot.SINGLE to single.id), TestData.OLD_INSTANT)
+            ),
+            content.lunches
+        )
     }
 
     @Test
@@ -66,8 +75,11 @@ class ShareDocumentCodecTest {
         val legacy = (codec.decode(codec.encode(document).replace(Regex(",\\s*\"dinnerDays\"\\s*:\\s*\\[[^\\]]*\\]"), "")) as Outcome.Success).value
 
         assertEquals("2026-03-10", decoded.dinnerDays.single().date)
-        assertEquals(listOf(dinner), (ShareDocumentMapper.toImportContent(decoded) as Outcome.Success).value.dinnerDays)
-        assertTrue((ShareDocumentMapper.toImportContent(legacy) as Outcome.Success).value.dinnerDays.isEmpty())
+        assertEquals(
+            listOf(ImportedDinner(LocalDate.of(2026, 3, 10), single.id, TestData.NEW_INSTANT)),
+            (ShareDocumentMapper.toImportContent(decoded) as Outcome.Success).value.dinners
+        )
+        assertTrue((ShareDocumentMapper.toImportContent(legacy) as Outcome.Success).value.dinners.isEmpty())
     }
 
     @Test
@@ -228,7 +240,7 @@ class ShareDocumentCodecTest {
 
         val content = (ShareDocumentMapper.toImportContent(documentWith(dishDto(), newer, older)) as Outcome.Success).value
 
-        assertEquals(listOf("new"), content.mealDays.map { it.singleId })
+        assertEquals(listOf("new"), content.lunches.map { it.dishIds[MenuSlot.SINGLE] })
     }
 
     private fun dishDto(
