@@ -21,7 +21,8 @@ import org.junit.Test
 /**
  * Tests that BuildShoppingListUseCase adds up the ingredients of the starters, mains and single
  * dishes of one month and its dinners in standard units, one line per product, leaving desserts and
- * other months out, and that it can be limited to lunches or to dinners.
+ * other months out, that it can be limited to lunches or to dinners and to a date range that may
+ * span several months.
  */
 class BuildShoppingListUseCaseTest {
     private val october = YearMonth.of(2026, 10)
@@ -193,5 +194,35 @@ class BuildShoppingListUseCaseTest {
         )
 
         assertEquals(listOf(ShoppingItem(name = "Huevos", quantity = 3.0, unit = MeasureUnit.UNIT)), items)
+    }
+
+    @Test
+    fun `lists only the days inside the date range, even across months`() {
+        val rice = dish(type = DishType.SINGLE, ingredients = listOf(Ingredient("Arroz", 100.0, MeasureUnit.GRAM)))
+        val omelette = dish(type = DishType.MAIN, ingredients = listOf(Ingredient("Huevos", 1.0, MeasureUnit.UNIT)))
+        val lunches = listOf(
+            day(LocalDate.of(2026, 10, 14), DailyMenu.Single(single = rice)),
+            day(LocalDate.of(2026, 10, 15), DailyMenu.Single(single = rice)),
+            day(LocalDate.of(2026, 11, 2), DailyMenu.Single(single = rice)),
+            day(LocalDate.of(2026, 11, 3), DailyMenu.Single(single = rice))
+        )
+        val dinners = listOf(
+            DinnerDay(date = LocalDate.of(2026, 10, 14), dish = omelette),
+            DinnerDay(date = LocalDate.of(2026, 10, 31), dish = omelette)
+        )
+
+        val items = runBlocking {
+            BuildShoppingListUseCase(FakeMealPlanRepository(lunches), FakeDinnerPlanRepository(dinners))(
+                LocalDate.of(2026, 10, 15)..LocalDate.of(2026, 11, 2)
+            )
+        }
+
+        assertEquals(
+            listOf(
+                ShoppingItem(name = "Arroz", quantity = 200.0, unit = MeasureUnit.GRAM),
+                ShoppingItem(name = "Huevos", quantity = 1.0, unit = MeasureUnit.UNIT)
+            ),
+            items
+        )
     }
 }

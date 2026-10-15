@@ -8,11 +8,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -21,9 +26,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,13 +51,15 @@ import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
 import com.gabrieltagama.menuplanner.core.ui.text.label
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
-import com.gabrieltagama.menuplanner.feature.calendar.common.titleText
-import java.time.YearMonth
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 /**
  * Shopping list of a month: stateful route bound to [ShoppingListViewModel] and a stateless
  * screen listing every ingredient with its total amount. Chips at the top choose whether the list
- * covers lunches, dinners or both. The top bar shares the list as plain text.
+ * covers lunches, dinners or both, and two date chips open a calendar to pick the first and last
+ * day of the range. The top bar shares the list as plain text.
  */
 @Composable
 fun ShoppingListScreenRoute(
@@ -63,7 +75,9 @@ fun ShoppingListScreenRoute(
         state = state,
         onBack = onBack,
         onShare = { context.sendText(shareText, chooserTitle) },
-        onMealToggle = viewModel::onMealToggle
+        onMealToggle = viewModel::onMealToggle,
+        onFromChange = viewModel::onFromChange,
+        onToChange = viewModel::onToChange
     )
 }
 
@@ -73,7 +87,9 @@ fun ShoppingListScreen(
     state: ShoppingListUiState,
     onBack: () -> Unit,
     onShare: () -> Unit,
-    onMealToggle: (Meal) -> Unit
+    onMealToggle: (Meal) -> Unit,
+    onFromChange: (LocalDate) -> Unit,
+    onToChange: (LocalDate) -> Unit
 ) = Scaffold(
     topBar = {
         TopAppBar(
@@ -93,6 +109,7 @@ fun ShoppingListScreen(
 ) { padding ->
     Column(modifier = Modifier.fillMaxSize().padding(padding)) {
         MealChips(selected = state.selectedMeals, onMealToggle = onMealToggle)
+        DateRangeChips(state = state, onFromChange = onFromChange, onToChange = onToChange)
         val contentModifier = Modifier.fillMaxWidth().weight(1f)
         when {
             state.isLoading -> LoadingIndicator(modifier = contentModifier)
@@ -117,10 +134,65 @@ private fun MealChips(selected: Set<Meal>, onMealToggle: (Meal) -> Unit) = Row(
 }
 
 @Composable
+private fun DateRangeChips(
+    state: ShoppingListUiState,
+    onFromChange: (LocalDate) -> Unit,
+    onToChange: (LocalDate) -> Unit
+) = Row(
+    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+    horizontalArrangement = Arrangement.spacedBy(8.dp)
+) {
+    DateChip(label = stringResource(R.string.shopping_list_from, state.from.shortText()), date = state.from, onDateChange = onFromChange)
+    DateChip(label = stringResource(R.string.shopping_list_to, state.to.shortText()), date = state.to, onDateChange = onToChange)
+}
+
+@Composable
+private fun DateChip(label: String, date: LocalDate, onDateChange: (LocalDate) -> Unit) {
+    var isPicking by remember { mutableStateOf(false) }
+    AssistChip(
+        onClick = { isPicking = true },
+        label = { Text(label) },
+        leadingIcon = { Icon(Icons.Filled.DateRange, contentDescription = null, modifier = Modifier.size(18.dp)) }
+    )
+    if (isPicking)
+        DateDialog(
+            initial = date,
+            onDismiss = { isPicking = false },
+            onConfirm = {
+                isPicking = false
+                onDateChange(it)
+            }
+        )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateDialog(initial: LocalDate, onDismiss: () -> Unit, onConfirm: (LocalDate) -> Unit) {
+    val pickerState = rememberDatePickerState(initialSelectedDateMillis = initial.toUtcMillis())
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = { pickerState.selectedDateMillis?.let { onConfirm(it.toUtcDate()) } ?: onDismiss() }) {
+                Text(stringResource(R.string.shopping_list_date_ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.shopping_list_date_cancel)) }
+        }
+    ) {
+        DatePicker(state = pickerState)
+    }
+}
+
+private fun LocalDate.toUtcMillis(): Long = atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+
+private fun Long.toUtcDate(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
+
+@Composable
 private fun ShoppingItems(state: ShoppingListUiState, modifier: Modifier = Modifier) = LazyColumn(modifier = modifier) {
     item {
         Text(
-            text = stringResource(R.string.shopping_list_month, state.month.titleText(), state.mealsText()),
+            text = stringResource(R.string.shopping_list_summary, state.rangeText(), state.mealsText()),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
@@ -155,7 +227,8 @@ private fun Context.sendText(text: String, chooserTitle: String) {
 private fun ShoppingListScreenPreview() = MenuPlannerTheme {
     ShoppingListScreen(
         state = ShoppingListUiState(
-            month = YearMonth.of(2026, 10),
+            from = LocalDate.of(2026, 10, 15),
+            to = LocalDate.of(2026, 10, 31),
             isLoading = false,
             items = listOf(
                 ShoppingItem(name = "Aceite", quantity = 250.0, unit = MeasureUnit.MILLILITER),
@@ -166,6 +239,8 @@ private fun ShoppingListScreenPreview() = MenuPlannerTheme {
         ),
         onBack = {},
         onShare = {},
-        onMealToggle = {}
+        onMealToggle = {},
+        onFromChange = {},
+        onToChange = {}
     )
 }

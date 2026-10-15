@@ -38,12 +38,16 @@
     <string name="shopping_list_back">Volver</string>
     <string name="shopping_list_share">Compartir lista</string>
     <string name="shopping_list_share_chooser">Compartir lista de la compra</string>
-    <string name="shopping_list_share_header">Lista de la compra · %1$s</string>
-    <string name="shopping_list_month">%1$s · %2$s, sin postres</string>
+    <string name="shopping_list_share_header">Lista de la compra · %1$s · %2$s</string>
+    <string name="shopping_list_summary">%1$s · %2$s, sin postres</string>
+    <string name="shopping_list_from">Desde: %1$s</string>
+    <string name="shopping_list_to">Hasta: %1$s</string>
+    <string name="shopping_list_date_ok">Aceptar</string>
+    <string name="shopping_list_date_cancel">Cancelar</string>
     <string name="shopping_list_meals_lunch">solo comidas</string>
     <string name="shopping_list_meals_dinner">solo cenas</string>
     <string name="shopping_list_meals_all">comidas y cenas</string>
-    <string name="shopping_list_empty">No hay ingredientes: planifica comidas o cenas con ingredientes en este mes.</string>
+    <string name="shopping_list_empty">No hay ingredientes: planifica comidas o cenas con ingredientes en estas fechas.</string>
 
     <string name="day_editor_back">Volver</string>
     <string name="day_editor_save">Guardar</string>
