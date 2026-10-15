@@ -5,12 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.common.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetMealDayUseCase
@@ -77,16 +77,6 @@ data class DayEditorUiState(
         }
     }
 }
-
-val MenuSlot.dishType: DishType
-    get() = when (this) {
-        MenuSlot.STARTER -> DishType.STARTER
-        MenuSlot.MAIN -> DishType.MAIN
-        MenuSlot.SINGLE -> DishType.SINGLE
-        MenuSlot.DESSERT -> DishType.DESSERT
-    }
-
-val MenuSlot.isRequired: Boolean get() = this != MenuSlot.DESSERT
 
 sealed interface DayEditorEvent {
     data object Close : DayEditorEvent
@@ -165,21 +155,12 @@ class DayEditorViewModel @Inject constructor(
     private fun fillForm(day: MealDay?) = form.update { current ->
         when (val menu = day?.menu) {
             null -> current.copy(isLoading = false)
-            is DailyMenu.Courses -> current.copy(
-                isLoading = false,
-                hasSavedDay = true,
-                mode = MenuMode.COURSES,
-                selections = selectionsOf(MenuSlot.STARTER to menu.starter, MenuSlot.MAIN to menu.main, MenuSlot.DESSERT to menu.dessert)
-            )
-            is DailyMenu.Single -> current.copy(
-                isLoading = false,
-                hasSavedDay = true,
-                mode = MenuMode.SINGLE,
-                selections = selectionsOf(MenuSlot.SINGLE to menu.single, MenuSlot.DESSERT to menu.dessert)
-            )
+            else -> current.copy(isLoading = false, hasSavedDay = true, mode = menu.mode(), selections = menu.slots)
         }
     }
 
-    private fun selectionsOf(vararg slots: Pair<MenuSlot, Dish?>): Map<MenuSlot, Dish> =
-        slots.mapNotNull { (slot, dish) -> dish?.let { slot to it } }.toMap()
+    private fun DailyMenu.mode(): MenuMode = when (this) {
+        is DailyMenu.Courses -> MenuMode.COURSES
+        is DailyMenu.Single -> MenuMode.SINGLE
+    }
 }

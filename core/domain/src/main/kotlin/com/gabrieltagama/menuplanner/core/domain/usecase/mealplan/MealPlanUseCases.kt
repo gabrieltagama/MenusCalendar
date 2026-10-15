@@ -1,11 +1,8 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.common.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
-import com.gabrieltagama.menuplanner.core.domain.model.Dish
-import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import java.time.Clock
@@ -39,24 +36,7 @@ class SaveMealDayUseCase @Inject constructor(
     }
 
     private fun validate(menu: DailyMenu): DomainError? =
-        slotsOf(menu).firstNotNullOfOrNull { (slot, dish) -> dish?.let { checkSlot(slot, it) } }
-
-    private fun slotsOf(menu: DailyMenu): List<Pair<MenuSlot, Dish?>> = when (menu) {
-        is DailyMenu.Courses -> listOf(MenuSlot.STARTER to menu.starter, MenuSlot.MAIN to menu.main, MenuSlot.DESSERT to menu.dessert)
-        is DailyMenu.Single -> listOf(MenuSlot.SINGLE to menu.single, MenuSlot.DESSERT to menu.dessert)
-    }
-
-    private fun checkSlot(slot: MenuSlot, dish: Dish): DomainError? {
-        val expected = slot.expectedType()
-        return if (dish.type == expected) null else DomainError.WrongDishType(slot, expected)
-    }
-
-    private fun MenuSlot.expectedType(): DishType = when (this) {
-        MenuSlot.STARTER -> DishType.STARTER
-        MenuSlot.MAIN -> DishType.MAIN
-        MenuSlot.SINGLE -> DishType.SINGLE
-        MenuSlot.DESSERT -> DishType.DESSERT
-    }
+        menu.misplacedSlot?.let { DomainError.WrongDishType(it, it.dishType) }
 }
 
 class ClearMealDayUseCase @Inject constructor(private val repository: MealPlanRepository) {

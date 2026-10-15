@@ -3,14 +3,15 @@ package com.gabrieltagama.menuplanner.core.data.share
 import com.gabrieltagama.menuplanner.core.data.database.entity.DinnerDayEntity
 import com.gabrieltagama.menuplanner.core.data.database.entity.MealDayEntity
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 
 /**
  * Last-writer-wins merge rule: an item unknown locally is added, a known item is updated only
  * when the incoming updatedAt is strictly newer, anything else is skipped. A meal day is
  * importable only when it has exactly one valid shape (single, or starter + main, never both)
  * and every referenced dish is known after the dishes have been merged and sits in the slot
- * matching its type, the same rule SaveMealDayUseCase applies. A dinner is importable when its
- * dish is known and is not a dessert.
+ * matching its type (MenuSlot), the same rule SaveMealDayUseCase applies. A dinner is importable
+ * when its dish is known and is a dinner option (Dish.isDinnerOption), as SaveDinnerDayUseCase requires.
  */
 internal enum class MergeDecision { ADD, UPDATE, SKIP }
 
@@ -23,10 +24,9 @@ internal object MergePolicy {
     }
 
     fun isImportable(day: MealDayEntity, knownDishTypes: Map<String, DishType>): Boolean =
-        hasValidShape(day) && day.slots().all { (dishId, expected) -> knownDishTypes[dishId] == expected }
+        hasValidShape(day) && day.slots().all { (slot, dishId) -> knownDishTypes[dishId]?.let(slot::accepts) ?: false }
 
-    fun isImportable(dinner: DinnerDayEntity, knownDishTypes: Map<String, DishType>): Boolean =
-        knownDishTypes[dinner.dishId]?.let { it != DishType.DESSERT } ?: false
+    fun isImportable(dinner: DinnerDayEntity, dinnerOptionIds: Set<String>): Boolean = dinner.dishId in dinnerOptionIds
 
     private fun hasValidShape(day: MealDayEntity): Boolean {
         val isSingle = day.singleId != null && day.starterId == null && day.mainId == null
@@ -34,11 +34,11 @@ internal object MergePolicy {
         return isSingle || isCourses
     }
 
-    private fun MealDayEntity.slots(): List<Pair<String, DishType>> = listOfNotNull(
-        starterId?.let { it to DishType.STARTER },
-        mainId?.let { it to DishType.MAIN },
-        singleId?.let { it to DishType.SINGLE },
-        dessertId?.let { it to DishType.DESSERT }
+    private fun MealDayEntity.slots(): List<Pair<MenuSlot, String>> = listOfNotNull(
+        starterId?.let { MenuSlot.STARTER to it },
+        mainId?.let { MenuSlot.MAIN to it },
+        singleId?.let { MenuSlot.SINGLE to it },
+        dessertId?.let { MenuSlot.DESSERT to it }
     )
 }
 

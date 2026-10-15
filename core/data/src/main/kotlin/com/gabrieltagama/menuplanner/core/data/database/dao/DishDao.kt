@@ -26,7 +26,7 @@ internal interface DishDao {
     @Query("SELECT * FROM dishes WHERE type = :type ORDER BY name COLLATE NOCASE")
     fun observeByType(type: String): Flow<List<DishWithIngredients>>
 
-    @Query("SELECT id, type, updated_at FROM dishes")
+    @Query("SELECT id, type, meal_time, updated_at FROM dishes")
     fun observeVersions(): Flow<List<DishVersion>>
 
     @Transaction
@@ -41,7 +41,7 @@ internal interface DishDao {
     @Query("SELECT * FROM dishes ORDER BY name COLLATE NOCASE")
     suspend fun getAll(): List<DishWithIngredients>
 
-    @Query("SELECT id, type, updated_at FROM dishes")
+    @Query("SELECT id, type, meal_time, updated_at FROM dishes")
     suspend fun getVersions(): List<DishVersion>
 
     @Query(

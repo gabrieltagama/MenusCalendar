@@ -10,6 +10,7 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import java.time.LocalDate
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -162,6 +163,17 @@ class ShareMergerTest {
         val summary = merger.merge(ImportContent(emptyList(), emptyList(), incoming))
 
         assertEquals(2, summary.daysSkipped)
+        assertTrue(dinnerDayDao.currentDays.isEmpty())
+    }
+
+    @Test
+    fun `dinners with a lunch only dish are skipped`() = runTest {
+        insert(TestData.dish("l", type = DishType.MAIN, mealTime = MealTime.LUNCH))
+        val incoming = listOf(DinnerDayEntity(date.toEpochDay(), "l", updatedAt = 1))
+
+        val summary = merger.merge(ImportContent(emptyList(), emptyList(), incoming))
+
+        assertEquals(1, summary.daysSkipped)
         assertTrue(dinnerDayDao.currentDays.isEmpty())
     }
 }
