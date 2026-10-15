@@ -102,4 +102,12 @@ class DinnerPlanUseCasesTest {
         assertEquals(0, run.filled)
         assertTrue(run.dinners.current.isEmpty())
     }
+
+    @Test
+    fun `stores every filled dinner in one batch`() {
+        val run = autoFill(dinnerCatalog, seed = 1)
+
+        assertEquals(1, run.dinners.batches.size)
+        assertEquals(run.filled, run.dinners.batches.single().size)
+    }
 }

@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.feature.calendar.month
 
 import android.content.res.Resources
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.feature.calendar.R
 
 /**
@@ -22,7 +23,7 @@ interface AutoFillTexts {
 
 class AutoFillMessageFormatter(private val texts: AutoFillTexts) {
 
-    fun format(result: AutoFillResult, view: PlanView = PlanView.LUNCH): String = when {
+    fun format(result: AutoFillResult, view: Meal = Meal.LUNCH): String = when {
         result.filledDays == 0 && result.unfilledDays == 0 -> texts.nothingToFill
         result.filledDays == 0 -> notEnoughDishes(view)
         else -> summaryParts(result).joinToString(SEPARATOR)
@@ -35,9 +36,9 @@ class AutoFillMessageFormatter(private val texts: AutoFillTexts) {
         result.unfilledDays.takeIf { it > 0 }?.let(texts::unfilled)
     )
 
-    private fun notEnoughDishes(view: PlanView): String = when (view) {
-        PlanView.LUNCH -> texts.notEnoughDishes
-        PlanView.DINNER -> texts.notEnoughDinnerDishes
+    private fun notEnoughDishes(view: Meal): String = when (view) {
+        Meal.LUNCH -> texts.notEnoughDishes
+        Meal.DINNER -> texts.notEnoughDinnerDishes
     }
 
     private companion object {

@@ -27,6 +27,7 @@ class StandardizeRecipeBookUseCaseTest {
 
         val converted = legacyDish.copy(ingredients = listOf(Ingredient("Aceite de oliva", 30.0, MeasureUnit.MILLILITER)))
         assertEquals(listOf(converted), repository.upserted)
+        assertEquals(listOf(listOf(converted)), repository.batches)
         assertEquals(TestDishes.OLD_INSTANT, repository.current.getValue("old").updatedAt)
     }
 

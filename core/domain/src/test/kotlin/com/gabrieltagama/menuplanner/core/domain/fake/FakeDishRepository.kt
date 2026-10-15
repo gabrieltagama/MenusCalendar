@@ -14,6 +14,7 @@ class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository {
     private val dishes = MutableStateFlow(initial.associateBy { it.id })
     val usedInCalendar = mutableSetOf<String>()
     val upserted = mutableListOf<Dish>()
+    val batches = mutableListOf<List<Dish>>()
     val deletedIds = mutableListOf<String>()
 
     val current: Map<String, Dish> get() = dishes.value
@@ -28,6 +29,11 @@ class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository {
     override suspend fun upsert(dish: Dish) {
         upserted += dish
         dishes.value = dishes.value + (dish.id to dish)
+    }
+
+    override suspend fun upsertAll(dishes: List<Dish>) {
+        batches += dishes
+        dishes.forEach { upsert(it) }
     }
 
     override suspend fun delete(id: String) {

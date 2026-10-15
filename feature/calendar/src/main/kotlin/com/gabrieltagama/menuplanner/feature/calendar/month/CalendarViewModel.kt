@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthUseCase
@@ -33,13 +34,11 @@ import kotlinx.coroutines.launch
  * month changes. It also runs the random autofill of the active view for the visible month after
  * confirmation and reports its result as a one-shot event.
  */
-enum class PlanView { LUNCH, DINNER }
-
 data class CalendarUiState(
     val month: YearMonth,
     val selectedDate: LocalDate,
     val today: LocalDate,
-    val view: PlanView = PlanView.LUNCH,
+    val view: Meal = Meal.LUNCH,
     val isLoading: Boolean = true,
     val days: Map<LocalDate, MealDay> = emptyMap(),
     val dinners: Map<LocalDate, DinnerDay> = emptyMap(),
@@ -53,13 +52,13 @@ data class CalendarUiState(
     val isShowingCurrentMonth: Boolean get() = month == YearMonth.from(today)
 
     fun isPlanned(date: LocalDate): Boolean = when (view) {
-        PlanView.LUNCH -> date in days
-        PlanView.DINNER -> date in dinners
+        Meal.LUNCH -> date in days
+        Meal.DINNER -> date in dinners
     }
 }
 
 sealed interface CalendarEvent {
-    data class AutoFillCompleted(val result: AutoFillResult, val view: PlanView) : CalendarEvent
+    data class AutoFillCompleted(val result: AutoFillResult, val view: Meal) : CalendarEvent
 }
 
 private data class MonthPlan(val month: YearMonth, val days: Map<LocalDate, MealDay>, val dinners: Map<LocalDate, DinnerDay>)
@@ -78,7 +77,7 @@ class CalendarViewModel @Inject constructor(
 
     private val month = MutableStateFlow(YearMonth.now(clock))
     private val selectedDate = MutableStateFlow(LocalDate.now(clock))
-    private val view = MutableStateFlow(PlanView.LUNCH)
+    private val view = MutableStateFlow(Meal.LUNCH)
     private val autoFillStatus = MutableStateFlow(AutoFillStatus())
 
     private val monthPlan = month.flatMapLatest { visibleMonth ->
@@ -124,7 +123,7 @@ class CalendarViewModel @Inject constructor(
         selectedDate.value = date
     }
 
-    fun onViewChange(target: PlanView) {
+    fun onViewChange(target: Meal) {
         view.value = target
     }
 
@@ -146,9 +145,9 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
-    private suspend fun autoFill(target: YearMonth, targetView: PlanView): AutoFillResult = when (targetView) {
-        PlanView.LUNCH -> autoFillMonth(target)
-        PlanView.DINNER -> autoFillMonthDinners(target)
+    private suspend fun autoFill(target: YearMonth, targetView: Meal): AutoFillResult = when (targetView) {
+        Meal.LUNCH -> autoFillMonth(target)
+        Meal.DINNER -> autoFillMonthDinners(target)
     }
 
     private fun showMonth(target: YearMonth) {

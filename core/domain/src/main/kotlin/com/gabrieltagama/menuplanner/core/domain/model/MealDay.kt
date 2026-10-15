@@ -10,10 +10,12 @@ import java.time.LocalDate
  * dish of another type, the rule checked when a day is saved or imported.
  */
 data class MealDay(
-    val date: LocalDate,
+    override val date: LocalDate,
     val menu: DailyMenu,
-    val updatedAt: Instant = Instant.now()
-)
+    override val updatedAt: Instant = Instant.now()
+) : PlannedMeal {
+    override val dishes: List<Dish> get() = menu.dishes
+}
 
 sealed interface DailyMenu {
     val dessert: Dish?

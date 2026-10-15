@@ -52,9 +52,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -83,6 +83,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
@@ -164,7 +165,7 @@ fun CalendarScreen(
     onDateSelect: (LocalDate) -> Unit,
     onOpenDay: (LocalDate) -> Unit,
     onOpenDinner: (LocalDate) -> Unit = {},
-    onViewChange: (PlanView) -> Unit = {},
+    onViewChange: (Meal) -> Unit = {},
     onOpenShoppingList: () -> Unit = {},
     autoFillActions: AutoFillActions = AutoFillActions(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
@@ -216,7 +217,7 @@ fun CalendarScreen(
                 date = state.selectedDate,
                 lines = state.summaryLines(),
                 view = state.view,
-                onOpen = { if (state.view == PlanView.LUNCH) onOpenDay(state.selectedDate) else onOpenDinner(state.selectedDate) }
+                onOpen = { if (state.view == Meal.LUNCH) onOpenDay(state.selectedDate) else onOpenDinner(state.selectedDate) }
             )
             OutlinedButton(onClick = onOpenShoppingList, enabled = !state.isLoading, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.ShoppingCart, contentDescription = null)
@@ -355,7 +356,7 @@ private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSel
 }
 
 @Composable
-private fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, Dish>>, view: PlanView, onOpen: () -> Unit) = Surface(
+private fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, Dish>>, view: Meal, onOpen: () -> Unit) = Surface(
     shape = MaterialTheme.shapes.large,
     color = MaterialTheme.colorScheme.surfaceContainer,
     modifier = Modifier.fillMaxWidth()
@@ -373,11 +374,11 @@ private fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, Dish>>, vie
 }
 
 @Composable
-private fun EmptyDaySummary(view: PlanView, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+private fun EmptyDaySummary(view: Meal, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Icons.Filled.EventBusy, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
-            text = stringResource(if (view == PlanView.LUNCH) R.string.calendar_no_menu else R.string.calendar_no_dinner),
+            text = stringResource(if (view == Meal.LUNCH) R.string.calendar_no_menu else R.string.calendar_no_dinner),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -414,22 +415,22 @@ private fun SummaryLine(label: String, dish: Dish) = Row(
 
 @Composable
 private fun CalendarUiState.summaryLines(): List<Pair<String, Dish>> = when (view) {
-    PlanView.LUNCH -> selectedDay?.menu?.summaryLines().orEmpty()
-    PlanView.DINNER -> listOfNotNull(selectedDinner?.let { stringResource(R.string.calendar_slot_dinner) to it.dish })
+    Meal.LUNCH -> selectedDay?.menu?.summaryLines().orEmpty()
+    Meal.DINNER -> listOfNotNull(selectedDinner?.let { stringResource(R.string.calendar_slot_dinner) to it.dish })
 }
 
 private fun CalendarUiState.plannedDishes(date: LocalDate): List<Dish> = when (view) {
-    PlanView.LUNCH -> days[date]?.menu?.dishes.orEmpty()
-    PlanView.DINNER -> listOfNotNull(dinners[date]?.dish)
+    Meal.LUNCH -> days[date]?.menu?.dishes.orEmpty()
+    Meal.DINNER -> listOfNotNull(dinners[date]?.dish)
 }
 
-private fun PlanView.autoFillTextRes(): Int = when (this) {
-    PlanView.LUNCH -> R.string.calendar_autofill_text
-    PlanView.DINNER -> R.string.calendar_autofill_dinner_text
+private fun Meal.autoFillTextRes(): Int = when (this) {
+    Meal.LUNCH -> R.string.calendar_autofill_text
+    Meal.DINNER -> R.string.calendar_autofill_dinner_text
 }
 
 @Composable
-private fun MealViewSwitch(view: PlanView, onViewChange: (PlanView) -> Unit) = Row(
+private fun MealViewSwitch(view: Meal, onViewChange: (Meal) -> Unit) = Row(
     modifier = Modifier.fillMaxWidth(),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
@@ -437,15 +438,15 @@ private fun MealViewSwitch(view: PlanView, onViewChange: (PlanView) -> Unit) = R
     MealViewLabel(
         text = stringResource(R.string.calendar_view_lunch),
         icon = Icons.Filled.WbSunny,
-        isActive = view == PlanView.LUNCH,
-        onClick = { onViewChange(PlanView.LUNCH) }
+        isActive = view == Meal.LUNCH,
+        onClick = { onViewChange(Meal.LUNCH) }
     )
     Switch(
-        checked = view == PlanView.DINNER,
-        onCheckedChange = { isDinner -> onViewChange(if (isDinner) PlanView.DINNER else PlanView.LUNCH) },
+        checked = view == Meal.DINNER,
+        onCheckedChange = { isDinner -> onViewChange(if (isDinner) Meal.DINNER else Meal.LUNCH) },
         thumbContent = {
             Icon(
-                imageVector = if (view == PlanView.DINNER) Icons.Filled.Bedtime else Icons.Filled.WbSunny,
+                imageVector = if (view == Meal.DINNER) Icons.Filled.Bedtime else Icons.Filled.WbSunny,
                 contentDescription = null,
                 modifier = Modifier.size(SwitchDefaults.IconSize)
             )
@@ -460,8 +461,8 @@ private fun MealViewSwitch(view: PlanView, onViewChange: (PlanView) -> Unit) = R
     MealViewLabel(
         text = stringResource(R.string.calendar_view_dinner),
         icon = Icons.Filled.Bedtime,
-        isActive = view == PlanView.DINNER,
-        onClick = { onViewChange(PlanView.DINNER) }
+        isActive = view == Meal.DINNER,
+        onClick = { onViewChange(Meal.DINNER) }
     )
 }
 

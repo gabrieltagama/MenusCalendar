@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.first
  * Fills every empty dinner of a month with one random dinner option (DinnerPicker). Dinners
  * already planned are never modified. Lunches and dinners of the neighbouring months are taken
  * into account so the rules also hold across month boundaries. Dinners have no heaviness rule,
- * so heavyStreakDays is always 0.
+ * so heavyStreakDays is always 0. Every new dinner is stored in one atomic batch.
  */
 class AutoFillMonthDinnersUseCase @Inject constructor(
     private val dishRepository: DishRepository,
@@ -30,27 +30,20 @@ class AutoFillMonthDinnersUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(month: YearMonth): AutoFillResult {
         val picker = DinnerPicker(dishRepository.observeDishes().first().filter(Dish::isDinnerOption), random)
-        val lunches = month.window().flatMap { mealPlanRepository.observeMonth(it).first() }.associate { it.date to it.menu }
-        val dinners = month.window().flatMap { dinnerPlanRepository.observeMonth(it).first() }.associate { it.date to it.dish }.toMutableMap()
+        val window = month.minusMonths(1).atDay(1)..month.plusMonths(1).atEndOfMonth()
+        val lunches = mealPlanRepository.getRange(window).associate { it.date to it.menu }
+        val dinners = dinnerPlanRepository.getRange(window).associate { it.date to it.dish }.toMutableMap()
         val emptyDays = month.days().filterNot(dinners::containsKey)
-        val picks = mutableListOf<DinnerPick>()
-        for (date in emptyDays) {
-            val pick = picker.pick(date, lunches, dinners) ?: continue
-            dinners[date] = pick.dish
-            dinnerPlanRepository.save(DinnerDay(date = date, dish = pick.dish, updatedAt = Instant.now(clock)))
-            picks += pick
-        }
+        val picks = emptyDays.mapNotNull { date -> picker.pick(date, lunches, dinners)?.also { dinners[date] = it.dish }?.let { date to it } }
+        val updatedAt = Instant.now(clock)
+        dinnerPlanRepository.saveAll(picks.map { (date, pick) -> DinnerDay(date = date, dish = pick.dish, updatedAt = updatedAt) })
         return AutoFillResult(
             filledDays = picks.size,
-            repeatedDishDays = picks.count(DinnerPick::repeated),
+            repeatedDishDays = picks.count { (_, pick) -> pick.repeated },
             heavyStreakDays = 0,
             unfilledDays = emptyDays.size - picks.size
         )
     }
-
-    private fun YearMonth.window(): List<YearMonth> = listOf(minusMonths(1), this, plusMonths(1))
-
-    private fun YearMonth.days(): List<LocalDate> = (1..lengthOfMonth()).map(::atDay)
 }
 
 /**

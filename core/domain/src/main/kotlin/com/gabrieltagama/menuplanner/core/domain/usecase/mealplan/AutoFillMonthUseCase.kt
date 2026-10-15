@@ -17,7 +17,8 @@ import kotlinx.coroutines.flow.first
  * Fills every empty day of a month with a random menu built by MenuPicker, using only dishes
  * served at lunch (MealTime LUNCH or ANY). Days already planned are never modified; the last
  * days of the previous month are taken into account so the no-repeat and heavy-streak rules also
- * hold across the month boundary.
+ * hold across the month boundary. Every new day is stored in one atomic batch, so the month is
+ * never left half filled.
  */
 class AutoFillMonthUseCase @Inject constructor(
     private val dishRepository: DishRepository,
@@ -30,27 +31,19 @@ class AutoFillMonthUseCase @Inject constructor(
         val picker = MenuPicker(lunchDishes, random)
         val history = loadHistory(month)
         val emptyDays = month.days().filterNot(history::containsKey)
-        val picks = mutableListOf<MenuPick>()
-        for (date in emptyDays) {
-            val pick = picker.pick(date, history) ?: continue
-            history[date] = pick.menu
-            mealPlanRepository.save(MealDay(date = date, menu = pick.menu, updatedAt = Instant.now(clock)))
-            picks += pick
-        }
+        val picks = emptyDays.mapNotNull { date -> picker.pick(date, history)?.also { history[date] = it.menu }?.let { date to it } }
+        val updatedAt = Instant.now(clock)
+        mealPlanRepository.saveAll(picks.map { (date, pick) -> MealDay(date = date, menu = pick.menu, updatedAt = updatedAt) })
         return AutoFillResult(
             filledDays = picks.size,
-            repeatedDishDays = picks.count(MenuPick::repeated),
-            heavyStreakDays = picks.count(MenuPick::breaksHeavyRule),
+            repeatedDishDays = picks.count { (_, pick) -> pick.repeated },
+            heavyStreakDays = picks.count { (_, pick) -> pick.breaksHeavyRule },
             unfilledDays = emptyDays.size - picks.size
         )
     }
 
-    private suspend fun loadHistory(month: YearMonth): MutableMap<LocalDate, DailyMenu> {
-        val windowStart = month.atDay(1).minusDays(MenuPicker.RECENT_DAYS)
-        val previous = mealPlanRepository.observeMonth(month.minusMonths(1)).first().filter { !it.date.isBefore(windowStart) }
-        val current = mealPlanRepository.observeMonth(month).first()
-        return (previous + current).associate { it.date to it.menu }.toMutableMap()
-    }
-
-    private fun YearMonth.days(): List<LocalDate> = (1..lengthOfMonth()).map(::atDay)
+    private suspend fun loadHistory(month: YearMonth): MutableMap<LocalDate, DailyMenu> =
+        mealPlanRepository.getRange(month.atDay(1).minusDays(MenuPicker.RECENT_DAYS)..month.atEndOfMonth())
+            .associate { it.date to it.menu }
+            .toMutableMap()
 }

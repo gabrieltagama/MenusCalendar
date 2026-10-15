@@ -375,4 +375,12 @@ class AutoFillMonthUseCaseTest {
 
         assertEquals(AutoFillResult(filledDays = 0, repeatedDishDays = 0, heavyStreakDays = 0, unfilledDays = 31), run.result)
     }
+
+    @Test
+    fun `stores every filled day in one batch`() {
+        val run = autoFill(richCatalog, seed = 1)
+
+        assertEquals(1, run.repository.batches.size)
+        assertEquals(run.result.filledDays, run.repository.batches.single().size)
+    }
 }

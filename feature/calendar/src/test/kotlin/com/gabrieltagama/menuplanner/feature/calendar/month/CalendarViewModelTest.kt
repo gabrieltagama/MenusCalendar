@@ -7,6 +7,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthUseCase
@@ -241,7 +242,7 @@ class CalendarViewModelTest {
         viewModel.events.test {
             viewModel.onAutoFill()
 
-            assertEquals(CalendarEvent.AutoFillCompleted(AutoFillResult(0, 0, 0, 30), PlanView.LUNCH), awaitItem())
+            assertEquals(CalendarEvent.AutoFillCompleted(AutoFillResult(0, 0, 0, 30), Meal.LUNCH), awaitItem())
         }
         assertTrue(repository.saved.isEmpty())
     }
@@ -250,11 +251,11 @@ class CalendarViewModelTest {
     fun `switching to dinners shows the dinner of the selected day`() = runTest {
         viewModel.uiState.test {
             val lunchState = awaitItemMatching { !it.isLoading }
-            assertEquals(PlanView.LUNCH, lunchState.view)
+            assertEquals(Meal.LUNCH, lunchState.view)
 
-            viewModel.onViewChange(PlanView.DINNER)
+            viewModel.onViewChange(Meal.DINNER)
 
-            val state = awaitItemMatching { it.view == PlanView.DINNER }
+            val state = awaitItemMatching { it.view == Meal.DINNER }
             assertEquals(todayDinner, state.selectedDinner)
             assertTrue(state.isPlanned(today))
             assertFalse(state.isPlanned(today.plusDays(1)))
@@ -266,14 +267,14 @@ class CalendarViewModelTest {
     fun `autofill in the dinner view fills only dinners`() = runTest {
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
-            viewModel.onViewChange(PlanView.DINNER)
-            awaitItemMatching { it.view == PlanView.DINNER }
+            viewModel.onViewChange(Meal.DINNER)
+            awaitItemMatching { it.view == Meal.DINNER }
 
             viewModel.events.test {
                 viewModel.onAutoFill()
 
                 val event = awaitItem() as CalendarEvent.AutoFillCompleted
-                assertEquals(PlanView.DINNER, event.view)
+                assertEquals(Meal.DINNER, event.view)
                 assertEquals(30, event.result.filledDays)
             }
 

@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Data access for dishes and their ingredients. The dish row is upserted (never REPLACE) so
- * neither the ingredient cascade nor the calendar RESTRICT constraint fire on update.
+ * neither the ingredient cascade nor the calendar RESTRICT constraint fire on update; several dishes
+ * can be written in one transaction with upsertAllWithIngredients.
  */
 @Dao
 internal interface DishDao {
@@ -68,4 +69,8 @@ internal interface DishDao {
         deleteIngredients(dish.id)
         insertIngredients(ingredients)
     }
+
+    @Transaction
+    suspend fun upsertAllWithIngredients(dishes: List<Pair<DishEntity, List<IngredientEntity>>>) =
+        dishes.forEach { (dish, ingredients) -> upsertWithIngredients(dish, ingredients) }
 }
