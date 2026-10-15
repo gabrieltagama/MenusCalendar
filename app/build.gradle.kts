@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.gabrieltagama.menuplanner"
-    compileSdk = 37
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "com.gabrieltagama.menuplanner"
-        minSdk = 31
-        targetSdk = 36
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0.0"
         testInstrumentationRunner = "com.gabrieltagama.menuplanner.HiltTestRunner"
@@ -42,8 +42,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
     }
 
     buildFeatures {

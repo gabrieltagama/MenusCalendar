@@ -5,15 +5,15 @@ plugins {
 
 android {
     namespace = "com.gabrieltagama.menuplanner.core.ui"
-    compileSdk = 37
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 31
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
     }
 
     buildFeatures {
