@@ -5,6 +5,7 @@ import androidx.compose.ui.res.stringResource
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
@@ -38,6 +39,14 @@ fun MealTime.label(): String = stringResource(
         MealTime.LUNCH -> R.string.meal_time_lunch
         MealTime.DINNER -> R.string.meal_time_dinner
         MealTime.ANY -> R.string.meal_time_any
+    }
+)
+
+@Composable
+fun Meal.label(): String = stringResource(
+    when (this) {
+        Meal.LUNCH -> R.string.meal_time_lunch
+        Meal.DINNER -> R.string.meal_time_dinner
     }
 )
 

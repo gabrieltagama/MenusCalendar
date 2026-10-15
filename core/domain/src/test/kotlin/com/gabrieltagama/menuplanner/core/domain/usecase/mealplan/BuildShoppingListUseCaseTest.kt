@@ -7,6 +7,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
@@ -20,7 +21,7 @@ import org.junit.Test
 /**
  * Tests that BuildShoppingListUseCase adds up the ingredients of the starters, mains and single
  * dishes of one month and its dinners in standard units, one line per product, leaving desserts and
- * other months out.
+ * other months out, and that it can be limited to lunches or to dinners.
  */
 class BuildShoppingListUseCaseTest {
     private val october = YearMonth.of(2026, 10)
@@ -60,8 +61,12 @@ class BuildShoppingListUseCaseTest {
 
     private fun day(date: LocalDate, menu: DailyMenu) = MealDay(date = date, menu = menu)
 
-    private fun build(vararg days: MealDay, dinners: List<DinnerDay> = emptyList()) = runBlocking {
-        BuildShoppingListUseCase(FakeMealPlanRepository(days.toList()), FakeDinnerPlanRepository(dinners))(october)
+    private fun build(
+        vararg days: MealDay,
+        dinners: List<DinnerDay> = emptyList(),
+        meals: Set<Meal> = Meal.entries.toSet()
+    ) = runBlocking {
+        BuildShoppingListUseCase(FakeMealPlanRepository(days.toList()), FakeDinnerPlanRepository(dinners))(october, meals)
     }
 
     @Test
@@ -160,5 +165,33 @@ class BuildShoppingListUseCaseTest {
         )
 
         assertEquals(listOf(ShoppingItem(name = "Huevo", quantity = 5.0, unit = MeasureUnit.UNIT)), items)
+    }
+
+    @Test
+    fun `lists only the lunches when only lunch is selected`() {
+        val omelette = dish(type = DishType.MAIN, ingredients = listOf(Ingredient("Huevos", 3.0, MeasureUnit.UNIT)))
+        val lunch = dish(type = DishType.SINGLE, ingredients = listOf(Ingredient("Arroz", 200.0, MeasureUnit.GRAM)))
+
+        val items = build(
+            day(LocalDate.of(2026, 10, 10), DailyMenu.Single(single = lunch)),
+            dinners = listOf(DinnerDay(date = LocalDate.of(2026, 10, 10), dish = omelette)),
+            meals = setOf(Meal.LUNCH)
+        )
+
+        assertEquals(listOf(ShoppingItem(name = "Arroz", quantity = 200.0, unit = MeasureUnit.GRAM)), items)
+    }
+
+    @Test
+    fun `lists only the dinners when only dinner is selected`() {
+        val omelette = dish(type = DishType.MAIN, ingredients = listOf(Ingredient("Huevos", 3.0, MeasureUnit.UNIT)))
+        val lunch = dish(type = DishType.SINGLE, ingredients = listOf(Ingredient("Arroz", 200.0, MeasureUnit.GRAM)))
+
+        val items = build(
+            day(LocalDate.of(2026, 10, 10), DailyMenu.Single(single = lunch)),
+            dinners = listOf(DinnerDay(date = LocalDate.of(2026, 10, 10), dish = omelette)),
+            meals = setOf(Meal.DINNER)
+        )
+
+        assertEquals(listOf(ShoppingItem(name = "Huevos", quantity = 3.0, unit = MeasureUnit.UNIT)), items)
     }
 }

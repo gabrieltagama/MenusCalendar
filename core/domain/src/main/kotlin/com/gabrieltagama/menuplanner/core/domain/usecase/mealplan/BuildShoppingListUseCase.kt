@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
@@ -16,7 +17,8 @@ import kotlinx.coroutines.flow.first
 
 /**
  * Builds the shopping list of a month from the starters, mains and single dishes planned for
- * lunch and the dishes planned for dinner; desserts are left out. A dish counts once per meal it
+ * lunch and the dishes planned for dinner, limited to the requested meals (both by default);
+ * desserts are left out. A dish counts once per meal it
  * is planned in. Every line is converted to its standard unit and grouped by IngredientKey
  * (ignoring case, accents and plurals), so each product appears once with its total; the most
  * used spelling names it. Grams and millilitres are shown in kilograms and litres from 1000
@@ -27,8 +29,8 @@ class BuildShoppingListUseCase @Inject constructor(
     private val dinnerPlanRepository: DinnerPlanRepository
 ) {
 
-    suspend operator fun invoke(month: YearMonth): List<ShoppingItem> =
-        plannedDishes(month)
+    suspend operator fun invoke(month: YearMonth, meals: Set<Meal> = Meal.entries.toSet()): List<ShoppingItem> =
+        plannedDishes(month, meals)
             .flatMap { it.ingredients }
             .filter { it.name.isNotBlank() }
             .let(IngredientStandardizer::standardizeLines)
@@ -36,9 +38,13 @@ class BuildShoppingListUseCase @Inject constructor(
             .map { (_, lines) -> lines.toShoppingItem() }
             .sortedWith(compareBy(spanishCollator()) { it.name })
 
-    private suspend fun plannedDishes(month: YearMonth): List<Dish> =
-        mealPlanRepository.observeMonth(month).first().flatMap { it.menu.mainDishes } +
-            dinnerPlanRepository.observeMonth(month).first().map { it.dish }
+    private suspend fun plannedDishes(month: YearMonth, meals: Set<Meal>): List<Dish> =
+        Meal.entries.filter { it in meals }.flatMap { dishesOf(it, month) }
+
+    private suspend fun dishesOf(meal: Meal, month: YearMonth): List<Dish> = when (meal) {
+        Meal.LUNCH -> mealPlanRepository.observeMonth(month).first().flatMap { it.menu.mainDishes }
+        Meal.DINNER -> dinnerPlanRepository.observeMonth(month).first().map { it.dish }
+    }
 }
 
 private const val METRIC_FACTOR = 1000.0

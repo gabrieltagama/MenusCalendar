@@ -6,10 +6,13 @@ package com.gabrieltagama.menuplanner.core.domain.model
  * plans lunches with LUNCH and ANY dishes and dinners with DINNER and ANY dishes. Ingredients
  * are kept in the STANDARD units (grams, millilitres or units); the other MeasureUnit values
  * remain only to read old data and shared files, and are converted on save, import and app start.
+ * Meal names the two meals of a day that the calendar plans (lunch and dinner).
  */
 enum class DishType { STARTER, MAIN, DESSERT, SINGLE }
 
 enum class Heaviness { VERY_LOW, MEDIUM, VERY_HIGH }
+
+enum class Meal { LUNCH, DINNER }
 
 enum class MeasureUnit {
     GRAM, KILOGRAM, MILLILITER, LITER, UNIT, TABLESPOON, TEASPOON, CUP, PINCH, TO_TASTE;

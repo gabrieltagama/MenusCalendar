@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.feature.calendar.shopping
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,10 +33,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import com.gabrieltagama.menuplanner.core.ui.component.EmptyState
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
+import com.gabrieltagama.menuplanner.core.ui.text.label
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import com.gabrieltagama.menuplanner.feature.calendar.common.titleText
@@ -42,7 +46,8 @@ import java.time.YearMonth
 
 /**
  * Shopping list of a month: stateful route bound to [ShoppingListViewModel] and a stateless
- * screen listing every ingredient with its total amount. The top bar shares the list as plain text.
+ * screen listing every ingredient with its total amount. Chips at the top choose whether the list
+ * covers lunches, dinners or both. The top bar shares the list as plain text.
  */
 @Composable
 fun ShoppingListScreenRoute(
@@ -57,7 +62,8 @@ fun ShoppingListScreenRoute(
     ShoppingListScreen(
         state = state,
         onBack = onBack,
-        onShare = { context.sendText(shareText, chooserTitle) }
+        onShare = { context.sendText(shareText, chooserTitle) },
+        onMealToggle = viewModel::onMealToggle
     )
 }
 
@@ -66,7 +72,8 @@ fun ShoppingListScreenRoute(
 fun ShoppingListScreen(
     state: ShoppingListUiState,
     onBack: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onMealToggle: (Meal) -> Unit
 ) = Scaffold(
     topBar = {
         TopAppBar(
@@ -84,11 +91,28 @@ fun ShoppingListScreen(
         )
     }
 ) { padding ->
-    val contentModifier = Modifier.fillMaxSize().padding(padding)
-    when {
-        state.isLoading -> LoadingIndicator(modifier = contentModifier)
-        state.items.isEmpty() -> EmptyState(message = stringResource(R.string.shopping_list_empty), modifier = contentModifier)
-        else -> ShoppingItems(state = state, modifier = contentModifier)
+    Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        MealChips(selected = state.selectedMeals, onMealToggle = onMealToggle)
+        val contentModifier = Modifier.fillMaxWidth().weight(1f)
+        when {
+            state.isLoading -> LoadingIndicator(modifier = contentModifier)
+            state.items.isEmpty() -> EmptyState(message = stringResource(R.string.shopping_list_empty), modifier = contentModifier)
+            else -> ShoppingItems(state = state, modifier = contentModifier)
+        }
+    }
+}
+
+@Composable
+private fun MealChips(selected: Set<Meal>, onMealToggle: (Meal) -> Unit) = Row(
+    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+    horizontalArrangement = Arrangement.spacedBy(8.dp)
+) {
+    Meal.entries.forEach { meal ->
+        FilterChip(
+            selected = meal in selected,
+            onClick = { onMealToggle(meal) },
+            label = { Text(meal.label()) }
+        )
     }
 }
 
@@ -96,7 +120,7 @@ fun ShoppingListScreen(
 private fun ShoppingItems(state: ShoppingListUiState, modifier: Modifier = Modifier) = LazyColumn(modifier = modifier) {
     item {
         Text(
-            text = stringResource(R.string.shopping_list_month, state.month.titleText()),
+            text = stringResource(R.string.shopping_list_month, state.month.titleText(), state.mealsText()),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
@@ -141,6 +165,7 @@ private fun ShoppingListScreenPreview() = MenuPlannerTheme {
             )
         ),
         onBack = {},
-        onShare = {}
+        onShare = {},
+        onMealToggle = {}
     )
 }
