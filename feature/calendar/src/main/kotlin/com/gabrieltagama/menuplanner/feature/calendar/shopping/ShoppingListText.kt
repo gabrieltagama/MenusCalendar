@@ -10,7 +10,7 @@ import com.gabrieltagama.menuplanner.feature.calendar.common.spanishLocale
 import java.text.NumberFormat
 
 /**
- * Spanish texts of the shopping list: the amount of a line ("1,5 kg", "al gusto") and the plain
+ * Spanish texts of the shopping list: the amount of a line ("1,5 kg", "3 ud.") and the plain
  * text shared with other apps, one "• name: amount" line per ingredient under a month header.
  */
 internal fun Double.quantityText(): String =
@@ -18,7 +18,7 @@ internal fun Double.quantityText(): String =
 
 @Composable
 internal fun ShoppingItem.amountText(): String =
-    quantity?.let { "${it.quantityText()} ${unit.label()}" } ?: unit.label()
+    "${quantity.quantityText()} ${unit.label()}"
 
 @Composable
 internal fun ShoppingListUiState.shareText(): String {

@@ -9,15 +9,16 @@ import com.gabrieltagama.menuplanner.core.domain.repository.BackupScheduler
 import com.gabrieltagama.menuplanner.core.domain.repository.CloudBackupRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 
 /**
  * Use cases of the optional recipe backup. Only recipes are saved, never the calendar. Restoring
- * merges with the share rules (newest updatedAt wins); an automatic backup uploads only when the
- * recipes fingerprint changed since the last upload. Connecting restores, uploads and schedules
- * the daily backup; disconnecting cancels it.
+ * merges with the share rules (newest updatedAt wins) and converts to standard units; an
+ * automatic backup uploads only when the recipes fingerprint changed since the last upload.
+ * Connecting restores, uploads and schedules the daily backup; disconnecting cancels it.
  */
 class ObserveCloudAccountUseCase @Inject constructor(private val cloud: CloudBackupRepository) {
     operator fun invoke(): StateFlow<CloudAccount> = cloud.account
@@ -41,12 +42,16 @@ class BackUpRecipesUseCase @Inject constructor(
 
 class RestoreRecipesUseCase @Inject constructor(
     private val cloud: CloudBackupRepository,
-    private val share: MenuShareRepository
+    private val share: MenuShareRepository,
+    private val standardizeRecipeBook: StandardizeRecipeBookUseCase
 ) {
     suspend operator fun invoke(): Outcome<ImportSummary> = when (val download = cloud.download()) {
         is Outcome.Failure -> download
-        is Outcome.Success -> download.value?.let { share.importAndMerge(it) } ?: Outcome.Success(ImportSummary.EMPTY)
+        is Outcome.Success -> download.value?.let { restore(it) } ?: Outcome.Success(ImportSummary.EMPTY)
     }
+
+    private suspend fun restore(json: String): Outcome<ImportSummary> =
+        share.importAndMerge(json).also { if (it is Outcome.Success) standardizeRecipeBook() }
 }
 
 class ConnectCloudAccountUseCase @Inject constructor(

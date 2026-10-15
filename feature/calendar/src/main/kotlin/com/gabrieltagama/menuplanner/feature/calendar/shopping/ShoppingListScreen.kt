@@ -137,7 +137,7 @@ private fun ShoppingListScreenPreview() = MenuPlannerTheme {
                 ShoppingItem(name = "Aceite", quantity = 250.0, unit = MeasureUnit.MILLILITER),
                 ShoppingItem(name = "Arroz", quantity = 1.5, unit = MeasureUnit.KILOGRAM),
                 ShoppingItem(name = "Pollo", quantity = 2.0, unit = MeasureUnit.UNIT),
-                ShoppingItem(name = "Sal", quantity = null, unit = MeasureUnit.TO_TASTE)
+                ShoppingItem(name = "Sal", quantity = 15.0, unit = MeasureUnit.GRAM)
             )
         ),
         onBack = {},

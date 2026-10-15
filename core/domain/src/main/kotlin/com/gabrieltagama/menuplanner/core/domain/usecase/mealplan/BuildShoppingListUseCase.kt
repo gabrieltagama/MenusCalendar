@@ -3,6 +3,8 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
+import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
+import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import java.text.Collator
 import java.time.YearMonth
@@ -12,10 +14,10 @@ import kotlinx.coroutines.flow.first
 
 /**
  * Builds the shopping list of a month from the starters, mains and single dishes planned in it;
- * desserts are left out. A dish counts once per day it is planned. Ingredients are grouped by
- * name ignoring case and extra spaces; grams with kilograms and millilitres with litres are added
- * together and shown in the larger unit from 1000 upwards. Pinch and to-taste lines appear once,
- * without quantity. The result is sorted alphabetically in Spanish order.
+ * desserts are left out. A dish counts once per day it is planned. Every line is converted to its
+ * standard unit and grouped by IngredientKey (ignoring case, accents and plurals), so each product
+ * appears once with its total; the most used spelling names it. Grams and millilitres are shown
+ * in kilograms and litres from 1000 upwards. The result is sorted alphabetically in Spanish order.
  */
 class BuildShoppingListUseCase @Inject constructor(private val repository: MealPlanRepository) {
 
@@ -24,11 +26,10 @@ class BuildShoppingListUseCase @Inject constructor(private val repository: MealP
             .flatMap { it.menu.mainDishes }
             .flatMap { it.ingredients }
             .filter { it.name.isNotBlank() }
-            .groupBy { ShoppingKey(it.name.normalized(), it.unit.baseUnit()) }
-            .map { (key, lines) -> lines.toShoppingItem(key.unit) }
+            .let(IngredientStandardizer::standardizeLines)
+            .groupBy { IngredientKey.of(it.name) }
+            .map { (_, lines) -> lines.toShoppingItem() }
             .sortedWith(compareBy(spanishCollator()) { it.name })
-
-    private data class ShoppingKey(val name: String, val unit: MeasureUnit)
 }
 
 private const val METRIC_FACTOR = 1000.0
@@ -39,34 +40,25 @@ private val whitespace = Regex("\\s+")
 
 private fun spanishCollator(): Collator = Collator.getInstance(spanishLocale).apply { strength = Collator.PRIMARY }
 
-private fun String.normalized(): String = trim().replace(whitespace, " ").lowercase(spanishLocale)
-
-private fun List<Ingredient>.toShoppingItem(baseUnit: MeasureUnit): ShoppingItem {
-    val name = first().name.trim().replace(whitespace, " ")
-    val total = sumOf { it.quantity * it.unit.baseFactor() }
-    val largerUnit = baseUnit.largerUnit()
+private fun List<Ingredient>.toShoppingItem(): ShoppingItem {
+    val total = sumOf { it.quantity }
+    val unit = first().unit
+    val largerUnit = unit.largerUnit()
     return when {
-        !baseUnit.isMeasured() -> ShoppingItem(name = name, quantity = null, unit = baseUnit)
-        largerUnit != null && total >= METRIC_FACTOR -> ShoppingItem(name = name, quantity = total / METRIC_FACTOR, unit = largerUnit)
-        else -> ShoppingItem(name = name, quantity = total, unit = baseUnit)
+        largerUnit != null && total >= METRIC_FACTOR -> ShoppingItem(name = displayName(), quantity = total / METRIC_FACTOR, unit = largerUnit)
+        else -> ShoppingItem(name = displayName(), quantity = total, unit = unit)
     }
 }
 
-private fun MeasureUnit.baseUnit(): MeasureUnit = when (this) {
-    MeasureUnit.KILOGRAM -> MeasureUnit.GRAM
-    MeasureUnit.LITER -> MeasureUnit.MILLILITER
-    else -> this
-}
-
-private fun MeasureUnit.baseFactor(): Double = when (this) {
-    MeasureUnit.KILOGRAM, MeasureUnit.LITER -> METRIC_FACTOR
-    else -> 1.0
-}
+private fun List<Ingredient>.displayName(): String =
+    map { it.name.trim().replace(whitespace, " ") }
+        .groupingBy { it }
+        .eachCount()
+        .maxBy { it.value }
+        .key
 
 private fun MeasureUnit.largerUnit(): MeasureUnit? = when (this) {
     MeasureUnit.GRAM -> MeasureUnit.KILOGRAM
     MeasureUnit.MILLILITER -> MeasureUnit.LITER
     else -> null
 }
-
-private fun MeasureUnit.isMeasured(): Boolean = this != MeasureUnit.PINCH && this != MeasureUnit.TO_TASTE

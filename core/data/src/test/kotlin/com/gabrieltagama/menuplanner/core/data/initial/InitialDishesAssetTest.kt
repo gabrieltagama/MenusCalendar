@@ -6,6 +6,8 @@ import com.gabrieltagama.menuplanner.core.data.share.ShareDocumentMapper
 import com.gabrieltagama.menuplanner.core.data.share.dto.ShareDocumentDto
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
+import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -13,7 +15,8 @@ import org.junit.Test
 
 /**
  * Checks that the bundled initial_dishes.json is a valid share document that the import accepts
- * as a whole: recipes only, unique ids and names, and every dish type represented.
+ * as a whole: recipes only, unique ids and names, every dish type represented, and ingredients
+ * already in standard units so the app does not need to convert them.
  */
 class InitialDishesAssetTest {
     private val codec = ShareDocumentCodec(TestData.json)
@@ -37,6 +40,14 @@ class InitialDishesAssetTest {
     @Test
     fun `asset covers every dish type`() =
         assertEquals(DishType.entries.map { it.name }.toSet(), document.dishes.map { it.type }.toSet())
+
+    @Test
+    fun `asset ingredients are already in standard units`() {
+        val dishes = (ShareDocumentMapper.toImportContent(document) as Outcome.Success).value.dishes
+
+        assertTrue(dishes.flatMap { it.ingredients }.all { it.unit in MeasureUnit.STANDARD })
+        assertEquals(dishes, IngredientStandardizer.standardize(dishes))
+    }
 
     private companion object {
         const val ASSET_PATH = "src/main/assets/initial_dishes.json"

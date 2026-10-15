@@ -1,11 +1,11 @@
 package com.gabrieltagama.menuplanner.core.domain.model
 
 /**
- * Value object: one line of the monthly shopping list, an ingredient with its total quantity in
- * [unit]. The quantity is null for units that are not measured (pinch, to taste).
+ * Value object: one line of the monthly shopping list, a product with its total quantity in
+ * [unit] (grams, millilitres or units, or kilograms and litres for large amounts).
  */
 data class ShoppingItem(
     val name: String,
-    val quantity: Double?,
+    val quantity: Double,
     val unit: MeasureUnit
 )

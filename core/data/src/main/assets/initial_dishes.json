@@ -10,8 +10,8 @@
       "ingredients": [
         {
           "name": "Caldo de pollo",
-          "quantity": 1.5,
-          "unit": "LITER"
+          "quantity": 1500.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Fideos finos",
@@ -20,8 +20,8 @@
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Calentar el caldo en una cazuela hasta que hierva.\n2. Añadir los fideos y cocer 4-5 minutos.\n3. Rectificar de sal y servir caliente.",
@@ -36,8 +36,8 @@
       "ingredients": [
         {
           "name": "Caldo de pescado",
-          "quantity": 1.5,
-          "unit": "LITER"
+          "quantity": 1500.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Merluza",
@@ -71,13 +71,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Pochar la cebolla y el ajo picados en el aceite.\n2. Añadir el tomate rallado y sofreír 5 minutos.\n3. Incorporar el caldo y el pan, y cocer 10 minutos.\n4. Añadir la merluza troceada y las gambas peladas y cocer 5 minutos más.\n5. Rectificar de sal y servir.",
@@ -117,18 +117,18 @@
         },
         {
           "name": "Caldo de verduras",
-          "quantity": 1.5,
-          "unit": "LITER"
+          "quantity": 1500.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Lavar, pelar y trocear todas las verduras en dados pequeños.\n2. Rehogarlas 5 minutos con el aceite.\n3. Cubrir con el caldo y cocer 20 minutos a fuego medio.\n4. Rectificar de sal y servir.",
@@ -143,8 +143,8 @@
       "ingredients": [
         {
           "name": "Caldo de cocido",
-          "quantity": 1.5,
-          "unit": "LITER"
+          "quantity": 1500.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Fideos finos",
@@ -153,8 +153,8 @@
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Colar el caldo del cocido y ponerlo a hervir.\n2. Añadir los fideos y cocer 4-5 minutos.\n3. Rectificar de sal y servir antes que el resto del cocido.",
@@ -184,13 +184,13 @@
         },
         {
           "name": "Queso rallado",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 30.0,
+          "unit": "GRAM"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cocer la pasta en agua con sal durante 15 minutos (1-2 puñados por persona).\n2. Escurrir la pasta.\n3. En la misma cacerola freír las salchichas troceadas.\n4. Echar el tomate y juntar con la pasta.\n5. Opcional: añadir queso rallado o chorizo por encima.",
@@ -215,13 +215,13 @@
         },
         {
           "name": "Queso rallado",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 30.0,
+          "unit": "GRAM"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cocer la pasta en agua con sal durante 12-15 minutos.\n2. Escurrir la pasta.\n3. Echar el tomate caliente por encima y mezclar.\n4. Opcional: saltear unas gambas con ajo y añadirlas.",
@@ -236,8 +236,8 @@
       "ingredients": [
         {
           "name": "Judías verdes",
-          "quantity": 1.0,
-          "unit": "KILOGRAM"
+          "quantity": 1000.0,
+          "unit": "GRAM"
         },
         {
           "name": "Beicon o jamón en tiras",
@@ -251,13 +251,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 1.0,
-          "unit": "TABLESPOON"
+          "quantity": 15.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cocer las judías en agua con sal unos 15 minutos y escurrir.\n2. En la sartén echar el aceite y esperar a que se caliente.\n3. Echar el ajo troceado y esperar a que se dore.\n4. Echar el beicon y dejar que coja punto.\n5. Echar las judías y rehogar todo junto.",
@@ -277,13 +277,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 1.0,
-          "unit": "TABLESPOON"
+          "quantity": 15.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal gruesa",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 10.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Lavar los espárragos y cortar la parte dura del tallo.\n2. Calentar la plancha con un poco de aceite.\n3. Hacerlos 6-8 minutos dándoles la vuelta.\n4. Servir con sal gruesa por encima.",
@@ -333,8 +333,8 @@
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cocer las patatas y las zanahorias con piel unos 25 minutos.\n2. Cocer los huevos 10 minutos.\n3. Pelar y trocear patatas, zanahorias y huevos en dados.\n4. Mezclar con el atún, los guisantes y las aceitunas.\n5. Añadir la mayonesa, mezclar y enfriar en la nevera.",
@@ -359,13 +359,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Separar el brócoli en ramilletes y lavarlo.\n2. Cocerlo al vapor o en agua con sal 6-8 minutos.\n3. Dorar el ajo laminado en el aceite.\n4. Saltear el brócoli con el ajo un minuto y servir.",
@@ -405,18 +405,18 @@
         },
         {
           "name": "Vinagre",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 10.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 10.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cocer la pasta durante 15 minutos y escurrirla.\n2. Cocer el maíz y la zanahoria y escurrir.\n3. Mezclar todo en una ensaladera con el atún y el tomate troceado.\n4. Añadir sal, vinagre y aceite al gusto.",
@@ -456,13 +456,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Pelar y trocear todas las verduras.\n2. Rehogar la cebolla y el puerro en el aceite.\n3. Añadir el resto de verduras, cubrir de agua y cocer 25 minutos.\n4. Triturar hasta que quede fino y rectificar de sal.",
@@ -497,13 +497,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Pochar la cebolla picada en el aceite.\n2. Añadir el calabacín y la patata troceados y rehogar.\n3. Cubrir con agua y cocer 20 minutos.\n4. Añadir los quesitos, triturar y rectificar de sal.",
@@ -518,8 +518,8 @@
       "ingredients": [
         {
           "name": "Acelgas",
-          "quantity": 1.0,
-          "unit": "KILOGRAM"
+          "quantity": 1000.0,
+          "unit": "GRAM"
         },
         {
           "name": "Patatas",
@@ -533,18 +533,18 @@
         },
         {
           "name": "Pimentón dulce",
-          "quantity": 1.0,
-          "unit": "TEASPOON"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Lavar y trocear las acelgas y pelar y trocear las patatas.\n2. Cocer juntas en agua con sal 15 minutos y escurrir.\n3. Dorar el ajo laminado en el aceite y retirar del fuego.\n4. Añadir el pimentón y verter sobre las acelgas.",
@@ -569,18 +569,18 @@
         },
         {
           "name": "Pimentón dulce",
-          "quantity": 1.0,
-          "unit": "TEASPOON"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cortar el repollo en tiras y lavarlo.\n2. Cocerlo en agua con sal 20 minutos y escurrir.\n3. Dorar el ajo laminado en el aceite.\n4. Añadir el pimentón, juntar con el repollo y rehogar 2 minutos.",
@@ -605,13 +605,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Lavar bien las espinacas.\n2. Dorar el ajo laminado en el aceite.\n3. Añadir las espinacas y saltear hasta que se reduzcan.\n4. Rectificar de sal y servir.",
@@ -631,13 +631,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Salpimentar los filetes.\n2. Hacerlos en la plancha caliente con un poco de aceite 3-4 minutos por cada lado.\n3. Opcional: pasarlos por huevo y pan rallado y freírlos para hacerlos empanados.",
@@ -657,13 +657,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Salar los filetes.\n2. Hacerlos en la plancha caliente 2-3 minutos por cada lado.\n3. Servir con ensalada o patatas.",
@@ -683,13 +683,13 @@
         },
         {
           "name": "Sal gruesa",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 10.0,
+          "unit": "GRAM"
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         }
       ],
       "preparation": "1. Sacar la carne de la nevera un rato antes.\n2. Hacerla en la plancha muy caliente al punto deseado.\n3. Servir con sal gruesa por encima.",
@@ -709,13 +709,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Salar las chuletas.\n2. Hacerlas en la plancha caliente 4 minutos por cada lado.\n3. Servir con patatas o ensalada.",
@@ -735,13 +735,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Salar las chuletillas.\n2. Hacerlas en la plancha muy caliente 2 minutos por cada lado.\n3. Servir recién hechas.",
@@ -786,13 +786,13 @@
         },
         {
           "name": "Aceite para freír",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 250.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Poner jamón y queso entre dos filetes y apretar bien.\n2. Pasar por harina, huevo batido y pan rallado.\n3. Freír en aceite caliente hasta que estén dorados por ambos lados.\n4. Escurrir sobre papel de cocina.",
@@ -827,13 +827,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Salar el conejo y dorarlo en el aceite.\n2. Añadir los ajos enteros machacados y el laurel.\n3. Echar el vino y cocer tapado 25-30 minutos a fuego lento.\n4. Destapar y dejar reducir la salsa.",
@@ -873,13 +873,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Precalentar el horno a 200º.\n2. Salar el pollo y rellenarlo con medio limón.\n3. Ponerlo en una bandeja sobre las patatas y la cebolla en rodajas.\n4. Regar con aceite y vino y hornear 1 hora y 15 minutos, dándole la vuelta a mitad.",
@@ -899,13 +899,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cortar el solomillo en medallones y salar.\n2. Hacerlos en la plancha caliente 3 minutos por cada lado.\n3. Opcional: terminar con una salsa de pimienta o de queso.",
@@ -935,8 +935,8 @@
         },
         {
           "name": "Harina",
-          "quantity": 1.0,
-          "unit": "TABLESPOON"
+          "quantity": 20.0,
+          "unit": "GRAM"
         },
         {
           "name": "Caldo",
@@ -945,13 +945,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cocer los huevos 10 minutos, pelarlos y partirlos por la mitad.\n2. Pochar la cebolla picada en el aceite y añadir la harina.\n3. Incorporar el tomate y el caldo y cocer 10 minutos.\n4. Añadir los huevos y calentar 5 minutos en la salsa.",
@@ -976,8 +976,8 @@
         },
         {
           "name": "Perejil",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 10.0,
+          "unit": "GRAM"
         },
         {
           "name": "Limón",
@@ -986,13 +986,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Salar el pescado.\n2. Hacerlo en la plancha caliente con un poco de aceite el tiempo justo según el grosor.\n3. Aliñar con ajo y perejil picados en aceite.\n4. Servir con limón.",
@@ -1032,8 +1032,8 @@
         },
         {
           "name": "Pimentón dulce",
-          "quantity": 1.0,
-          "unit": "TEASPOON"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Vino blanco",
@@ -1042,13 +1042,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Descongelar los lomos de merluza.\n2. Preparar un sofrito con la cebolla y el pimiento rojo cortados en tiras, el ajo y la hoja de laurel.\n3. Con el sofrito hecho, retirar del fuego y añadir el pimentón dulce y un chorrito de vino blanco.\n4. Salar los lomos, colocarlos en una cazuela de barro y cubrirlos con el sofrito.\n5. Hornear a 200º durante 15 minutos.",
@@ -1063,8 +1063,8 @@
       "ingredients": [
         {
           "name": "Redondo de ternera",
-          "quantity": 1.0,
-          "unit": "KILOGRAM"
+          "quantity": 1000.0,
+          "unit": "GRAM"
         },
         {
           "name": "Cebolla",
@@ -1093,13 +1093,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Salar el redondo y dorarlo entero en el aceite.\n2. Añadir la cebolla, la zanahoria y el ajo troceados y rehogar.\n3. Echar el vino y el caldo y cocer tapado 1 hora a fuego lento.\n4. Cortar en rodajas y triturar las verduras para hacer la salsa.",
@@ -1159,13 +1159,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Salar la carne y dorarla en el aceite.\n2. Añadir la cebolla, el pimiento, la zanahoria y el ajo picados y rehogar.\n3. Echar el tomate, el vino y el laurel y dejar evaporar el alcohol.\n4. Cubrir con agua y cocer 1 hora a fuego lento.\n5. Añadir las patatas troceadas y cocer 20 minutos más.",
@@ -1185,8 +1185,8 @@
         },
         {
           "name": "Especias para pinchos morunos",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 40.0,
+          "unit": "GRAM"
         },
         {
           "name": "Dientes de ajo",
@@ -1195,13 +1195,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 4.0,
-          "unit": "TABLESPOON"
+          "quantity": 60.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Mezclar la carne con el aceite, el ajo picado, las especias y la sal.\n2. Dejar macerar al menos 2 horas en la nevera.\n3. Ensartar la carne en brochetas.\n4. Hacerlas en la plancha caliente 8-10 minutos, girándolas.",
@@ -1226,8 +1226,8 @@
         },
         {
           "name": "Tomate frito",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 40.0,
+          "unit": "GRAM"
         },
         {
           "name": "Mayonesa",
@@ -1236,8 +1236,8 @@
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cocer los huevos 10 minutos y enfriarlos en agua fría.\n2. Pelarlos, partirlos por la mitad y sacar las yemas.\n3. Mezclar las yemas con el atún y el tomate y rellenar las claras.\n4. Cubrir con mayonesa y servir fríos.",
@@ -1282,13 +1282,13 @@
         },
         {
           "name": "Aceite para freír",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 250.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 1.0,
-          "unit": "PINCH"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Triturar el pollo y, por otro lado, poner el pan de molde a remojo en la leche.\n2. Mezclar ambos en un bol y dejar macerar una hora.\n3. Formar bolas y rebozarlas en harina, huevo y pan rallado.\n4. Freírlas hasta que estén doraditas.",
@@ -1338,8 +1338,8 @@
         },
         {
           "name": "Pimentón dulce",
-          "quantity": 1.0,
-          "unit": "TEASPOON"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Hoja de laurel",
@@ -1348,13 +1348,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Poner las lentejas en la olla con agua fría, el laurel y las verduras troceadas.\n2. Hacer un sofrito con la cebolla, el ajo y el pimentón y añadirlo.\n3. Añadir el chorizo en rodajas y cocer 30 minutos.\n4. Añadir las patatas troceadas y cocer 15 minutos más.\n5. Rectificar de sal.",
@@ -1419,8 +1419,8 @@
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Poner los garbanzos a remojo la noche anterior.\n2. Cocer las carnes y los huesos en agua, quitando la espuma.\n3. Añadir los garbanzos y cocer 2 horas a fuego lento (40 minutos en olla exprés).\n4. Añadir las patatas y zanahorias y cocer 20 minutos.\n5. Cocer el repollo aparte.\n6. Separar el caldo para la sopa y servir los vuelcos.",
@@ -1455,8 +1455,8 @@
         },
         {
           "name": "Leche",
-          "quantity": 1.0,
-          "unit": "LITER"
+          "quantity": 1000.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Harina",
@@ -1476,12 +1476,12 @@
         {
           "name": "Nuez moscada",
           "quantity": 1.0,
-          "unit": "PINCH"
+          "unit": "GRAM"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cocer las placas según el envase y extenderlas sobre un paño.\n2. Pochar la cebolla, añadir la carne y el tomate y cocinar 15 minutos.\n3. Rellenar y enrollar las placas y colocarlas en una fuente.\n4. Hacer la bechamel con la mantequilla, la harina, la leche, la sal y la nuez moscada.\n5. Cubrir con la bechamel y el queso y gratinar a 200º 15 minutos.",
@@ -1521,13 +1521,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Precalentar el horno a 200º.\n2. Colocar las patatas y la cebolla en rodajas en la bandeja.\n3. Poner encima los cuartos salados con los ajos.\n4. Regar con aceite y vino y hornear 1 hora, dándoles la vuelta a mitad.",
@@ -1552,8 +1552,8 @@
         },
         {
           "name": "Pan rallado",
-          "quantity": 3.0,
-          "unit": "TABLESPOON"
+          "quantity": 60.0,
+          "unit": "GRAM"
         },
         {
           "name": "Dientes de ajo",
@@ -1562,8 +1562,8 @@
         },
         {
           "name": "Perejil",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 10.0,
+          "unit": "GRAM"
         },
         {
           "name": "Harina",
@@ -1592,13 +1592,13 @@
         },
         {
           "name": "Aceite para freír",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 250.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Mezclar la carne con el huevo, el pan rallado, el ajo y el perejil picados y la sal.\n2. Formar las albóndigas, pasarlas por harina y freírlas.\n3. Pochar la cebolla, añadir el tomate y el vino y cocer 10 minutos.\n4. Echar las albóndigas en la salsa y cocer 15 minutos.\n5. Acompañar con patatas fritas o pisto.",
@@ -1638,13 +1638,13 @@
         },
         {
           "name": "Aceite para freír",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 250.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Sofreír el ajo en un poco de aceite y añadir el arroz.\n2. Cubrir con el doble de agua con sal y cocer 18 minutos.\n3. Freír los huevos y los plátanos partidos a lo largo.\n4. Servir el arroz con el tomate caliente, el huevo y el plátano.",
@@ -1689,8 +1689,8 @@
         },
         {
           "name": "Pimentón dulce",
-          "quantity": 1.0,
-          "unit": "TEASPOON"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Hoja de laurel",
@@ -1699,13 +1699,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Poner las alubias a remojo la noche anterior.\n2. Ponerlas en la olla con agua fría, la cebolla, el pimiento y el laurel.\n3. Cocer a fuego lento 1 hora y media (30 minutos en olla exprés), asustándolas con agua fría.\n4. Añadir el chorizo, la morcilla y un sofrito de ajo y pimentón y cocer 20 minutos más.\n5. Rectificar de sal.",
@@ -1760,23 +1760,23 @@
         },
         {
           "name": "Caldo de pescado",
-          "quantity": 1.2,
-          "unit": "LITER"
+          "quantity": 1200.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Colorante o azafrán",
           "quantity": 1.0,
-          "unit": "PINCH"
+          "unit": "GRAM"
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 4.0,
-          "unit": "TABLESPOON"
+          "quantity": 60.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Dorar el pollo salado en la paellera con el aceite.\n2. Añadir el calamar, el pimiento y el ajo y sofreír.\n3. Incorporar el tomate rallado y sofreír 5 minutos.\n4. Echar el arroz, rehogar y añadir el caldo caliente con el colorante.\n5. Cocer 18 minutos, añadiendo las gambas y los mejillones a mitad.\n6. Dejar reposar 5 minutos tapada con un paño.",
@@ -1816,28 +1816,28 @@
         },
         {
           "name": "Caldo de pescado",
-          "quantity": 1.0,
-          "unit": "LITER"
+          "quantity": 1000.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Colorante o azafrán",
           "quantity": 1.0,
-          "unit": "PINCH"
+          "unit": "GRAM"
         },
         {
           "name": "Alioli",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 30.0,
+          "unit": "GRAM"
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 4.0,
-          "unit": "TABLESPOON"
+          "quantity": 60.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Dorar los fideos en la paellera con el aceite y reservar.\n2. Sofreír el calamar, el ajo y el tomate rallado.\n3. Añadir los fideos y el caldo caliente con el colorante.\n4. Cocer 10 minutos, añadiendo las gambas a mitad.\n5. Dejar reposar y servir con alioli.",
@@ -1867,13 +1867,13 @@
         },
         {
           "name": "Aceite para freír",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 250.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Pelar y cortar las patatas en láminas finas y la cebolla en juliana.\n2. Freírlas a fuego medio hasta que estén tiernas y escurrir.\n3. Batir los huevos con sal y mezclar con las patatas.\n4. Cuajar en la sartén por un lado, darle la vuelta con un plato y cuajar por el otro.",
@@ -1893,13 +1893,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 1.0,
-          "unit": "TABLESPOON"
+          "quantity": 15.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Batir 2 huevos por persona con una pizca de sal.\n2. Echarlos en la sartén caliente con un poco de aceite.\n3. Cuajar y doblar la tortilla por la mitad.\n4. Servir al momento.",
@@ -1924,13 +1924,13 @@
         },
         {
           "name": "Aceite para freír",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 250.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Pelar y cortar las patatas en bastones.\n2. Freírlas en aceite abundante hasta que estén doradas y salarlas.\n3. Freír los huevos en aceite bien caliente, echando aceite por encima de la yema.\n4. Servir los huevos sobre las patatas.",
@@ -1955,18 +1955,18 @@
         },
         {
           "name": "Leche",
-          "quantity": 0.5,
-          "unit": "LITER"
+          "quantity": 500.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Levadura Royal",
-          "quantity": 1.0,
-          "unit": "TEASPOON"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Sal",
-          "quantity": 1.0,
-          "unit": "PINCH"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Pimientos rojos",
@@ -1984,29 +1984,29 @@
           "unit": "GRAM"
         },
         {
-          "name": "Cebolla grande",
+          "name": "Cebolla",
           "quantity": 1.0,
           "unit": "UNIT"
         },
         {
-          "name": "Bote de tomate frito",
-          "quantity": 1.0,
-          "unit": "UNIT"
+          "name": "Tomate frito",
+          "quantity": 400.0,
+          "unit": "GRAM"
         },
         {
           "name": "Azúcar",
-          "quantity": 1.0,
-          "unit": "PINCH"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
-          "name": "Huevo para pintar",
+          "name": "Huevo",
           "quantity": 1.0,
           "unit": "UNIT"
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         }
       ],
       "preparation": "Relleno\n1. Poner un poco de aceite en una sartén y pochar la cebolla picada.\n2. Echar los pimientos verdes troceados, rehogar un poco y añadir los rojos.\n3. Con la verdura pochada, echar el magro de cerdo con un poco de sal.\n4. Una vez hecho el magro, añadir el bote de tomate y una pizca de azúcar y dejar enfriar.\n\nMasa\n1. En un bol mezclar y amasar la harina con la mantequilla hasta que parezca miga de pan.\n2. Añadir la sal y la levadura.\n3. Ir echando la leche hasta que la masa se pegue en las manos y dejar reposar una hora.\n\nMontaje\n1. Dividir la masa en dos y estirar cada parte.\n2. Poner una parte en la bandeja con papel de horno o engrasada y echar el relleno.\n3. Cubrir con la otra parte, enroscar la orilla y pintar con huevo batido.\n4. Hornear en la segunda bandeja por abajo con el horno a dos resistencias a 200º hasta que esté dorada.",
@@ -2036,8 +2036,8 @@
         },
         {
           "name": "Pimentón dulce",
-          "quantity": 1.0,
-          "unit": "TEASPOON"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Vino blanco",
@@ -2046,13 +2046,13 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Lavar y trocear la asadura en dados.\n2. Pochar la cebolla en juliana y el ajo en el aceite.\n3. Añadir la asadura salada y dorarla.\n4. Añadir el pimentón y el vino y cocer 15 minutos a fuego lento.",
@@ -2097,13 +2097,13 @@
         },
         {
           "name": "Kétchup y mostaza",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 30.0,
+          "unit": "GRAM"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Salar la carne y formar 4 hamburguesas.\n2. Hacerlas en la plancha caliente 4 minutos por cada lado y poner el queso encima al final.\n3. Tostar los panes.\n4. Montar con lechuga, tomate, cebolla y salsas al gusto.",
@@ -2148,8 +2148,8 @@
         },
         {
           "name": "Mayonesa",
-          "quantity": 4.0,
-          "unit": "TABLESPOON"
+          "quantity": 80.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Cocer los huevos 10 minutos y cortarlos en rodajas.\n2. Untar el pan con mayonesa.\n3. Montar con lechuga, tomate, huevo, atún y espárragos.\n4. Cerrar, cortar en triángulos y servir.",
@@ -2195,8 +2195,8 @@
       "ingredients": [
         {
           "name": "Alitas de pollo",
-          "quantity": 1.0,
-          "unit": "KILOGRAM"
+          "quantity": 1000.0,
+          "unit": "GRAM"
         },
         {
           "name": "Dientes de ajo",
@@ -2204,24 +2204,24 @@
           "unit": "UNIT"
         },
         {
-          "name": "Pimentón",
-          "quantity": 1.0,
-          "unit": "TEASPOON"
+          "name": "Pimentón dulce",
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Orégano",
-          "quantity": 1.0,
-          "unit": "TEASPOON"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 3.0,
-          "unit": "TABLESPOON"
+          "quantity": 45.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Precalentar el horno a 200º.\n2. Mezclar las alitas con el aceite, el ajo picado, las especias y la sal.\n3. Colocarlas en una bandeja sin amontonar.\n4. Hornear 40 minutos, dándoles la vuelta a mitad.",
@@ -2261,13 +2261,13 @@
         },
         {
           "name": "Aceite para freír",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 250.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sal",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Salar el pescado y los calamares y pasarlos por harina sacudiendo el exceso.\n2. Freír por tandas en aceite muy caliente.\n3. Freír las croquetas.\n4. Escurrir sobre papel de cocina y servir con limón.",
@@ -2317,8 +2317,8 @@
         },
         {
           "name": "Aceite de oliva",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 10.0,
+          "unit": "MILLILITER"
         }
       ],
       "preparation": "1. Cortar los embutidos y el queso en lonchas finas.\n2. Disponerlos en una tabla.\n3. Servir con pan tostado con tomate y aceite.",
@@ -2352,7 +2352,7 @@
           "unit": "GRAM"
         },
         {
-          "name": "Aceite",
+          "name": "Aceite de oliva",
           "quantity": 125.0,
           "unit": "MILLILITER"
         },
@@ -2363,8 +2363,8 @@
         },
         {
           "name": "Ralladura de limón o naranja",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Precalentar el horno a 180º.\n2. Echar en un bol todos los ingredientes usando el vaso de yogur como medida: 3 de harina, 2 de azúcar y 1 de aceite.\n3. Mezclar con batidora eléctrica o varillas hasta tener una masa homogénea.\n4. Verter la masa en un molde engrasado con aceite.\n5. Hornear en la parte central del horno 35 minutos.\n6. Pinchar con un palillo: si sale limpio, el bizcocho está listo.",
@@ -2379,11 +2379,11 @@
       "ingredients": [
         {
           "name": "Leche",
-          "quantity": 1.0,
-          "unit": "LITER"
+          "quantity": 1000.0,
+          "unit": "MILLILITER"
         },
         {
-          "name": "Yemas de huevo",
+          "name": "Huevos",
           "quantity": 6.0,
           "unit": "UNIT"
         },
@@ -2394,8 +2394,8 @@
         },
         {
           "name": "Maicena",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 40.0,
+          "unit": "GRAM"
         },
         {
           "name": "Rama de canela",
@@ -2414,8 +2414,8 @@
         },
         {
           "name": "Canela molida",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 2.0,
+          "unit": "GRAM"
         }
       ],
       "preparation": "1. Calentar la leche con la canela y la piel de limón y dejar infusionar.\n2. Batir las yemas con el azúcar y la maicena.\n3. Añadir la leche colada poco a poco sin dejar de remover.\n4. Cocinar a fuego suave removiendo hasta que espese, sin que hierva.\n5. Repartir en cuencos con una galleta y canela y enfriar.",
@@ -2497,8 +2497,8 @@
         },
         {
           "name": "Leche",
-          "quantity": 1.0,
-          "unit": "LITER"
+          "quantity": 1000.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Azúcar",
@@ -2522,13 +2522,13 @@
         },
         {
           "name": "Canela molida",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 2.0,
+          "unit": "GRAM"
         },
         {
           "name": "Aceite para freír",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 250.0,
+          "unit": "MILLILITER"
         }
       ],
       "preparation": "1. Calentar la leche con la canela, la piel de limón y 50 g de azúcar y dejar templar.\n2. Cortar el pan en rebanadas gruesas y empaparlas en la leche.\n3. Pasarlas por huevo batido y freírlas en aceite caliente.\n4. Escurrir y rebozar en azúcar con canela.",
@@ -2562,14 +2562,14 @@
           "unit": "MILLILITER"
         },
         {
-          "name": "Aceite",
+          "name": "Aceite de oliva",
           "quantity": 100.0,
           "unit": "MILLILITER"
         },
         {
           "name": "Anís",
-          "quantity": 2.0,
-          "unit": "TABLESPOON"
+          "quantity": 30.0,
+          "unit": "MILLILITER"
         },
         {
           "name": "Sobre de levadura",
@@ -2578,18 +2578,18 @@
         },
         {
           "name": "Ralladura de limón",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 5.0,
+          "unit": "GRAM"
         },
         {
           "name": "Azúcar glas",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 10.0,
+          "unit": "GRAM"
         },
         {
           "name": "Aceite para freír",
-          "quantity": 0.0,
-          "unit": "TO_TASTE"
+          "quantity": 250.0,
+          "unit": "MILLILITER"
         }
       ],
       "preparation": "1. Batir los huevos con el azúcar y añadir la leche, el aceite, el anís y la ralladura.\n2. Incorporar la harina con la levadura hasta tener una masa que no se pegue.\n3. Formar las rosquillas con un agujero en el centro.\n4. Freírlas en aceite no muy caliente hasta que estén doradas.\n5. Escurrir y espolvorear con azúcar glas.",

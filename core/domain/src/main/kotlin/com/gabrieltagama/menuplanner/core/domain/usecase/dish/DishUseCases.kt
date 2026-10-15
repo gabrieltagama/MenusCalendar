@@ -11,8 +11,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Use cases of the recipe book: query, save (with validation) and delete (blocked while the
- * dish is planned in the calendar).
+ * Use cases of the recipe book: query, save (with validation, ingredients converted to standard
+ * units) and delete (blocked while the dish is planned in the calendar).
  */
 class ObserveDishesUseCase @Inject constructor(private val repository: DishRepository) {
     operator fun invoke(type: DishType? = null): Flow<List<Dish>> =
@@ -25,8 +25,8 @@ class GetDishUseCase @Inject constructor(private val repository: DishRepository)
 }
 
 class SaveDishUseCase @Inject constructor(
-    private val repository: DishRepository,
-    private val clock: Clock
+    private val clock: Clock,
+    private val standardizeRecipeBook: StandardizeRecipeBookUseCase
 ) {
     suspend operator fun invoke(dish: Dish): Outcome<Dish> {
         validate(dish)?.let { return Outcome.Failure(it) }
@@ -37,8 +37,7 @@ class SaveDishUseCase @Inject constructor(
             ingredients = dish.ingredients.map { it.copy(name = it.name.trim()) },
             updatedAt = Instant.now(clock)
         )
-        repository.upsert(normalized)
-        return Outcome.Success(normalized)
+        return Outcome.Success(standardizeRecipeBook.save(normalized))
     }
 
     private fun validate(dish: Dish): DomainError? {

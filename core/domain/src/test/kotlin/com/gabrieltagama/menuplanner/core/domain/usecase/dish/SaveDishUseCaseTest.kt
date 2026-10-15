@@ -24,7 +24,7 @@ class SaveDishUseCaseTest {
     @Before
     fun setUp() {
         repository = FakeDishRepository()
-        useCase = SaveDishUseCase(repository, TestDishes.fixedClock)
+        useCase = SaveDishUseCase(TestDishes.fixedClock, StandardizeRecipeBookUseCase(repository))
     }
 
     @Test

@@ -11,6 +11,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.BackupResult
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -29,7 +30,7 @@ class BackupUseCasesTest {
 
     private fun backUp(cloud: FakeCloudBackupRepository) = BackUpRecipesUseCase(cloud, share, dishes)
 
-    private fun restore(cloud: FakeCloudBackupRepository) = RestoreRecipesUseCase(cloud, share)
+    private fun restore(cloud: FakeCloudBackupRepository) = RestoreRecipesUseCase(cloud, share, StandardizeRecipeBookUseCase(dishes))
 
     private fun connect(cloud: FakeCloudBackupRepository) =
         ConnectCloudAccountUseCase(cloud, restore(cloud), backUp(cloud), scheduler)

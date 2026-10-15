@@ -13,6 +13,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.DeleteDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.GetDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.SaveDishUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
 import com.gabrieltagama.menuplanner.feature.dishes.testing.FakeDishRepository
 import java.time.Clock
 import java.time.Instant
@@ -48,7 +49,7 @@ class DishEditorViewModelTest {
         description = "Jugosa",
         ingredients = listOf(
             Ingredient(name = "Patata", quantity = 500.0, unit = MeasureUnit.GRAM),
-            Ingredient(name = "Aceite", quantity = 0.25, unit = MeasureUnit.LITER)
+            Ingredient(name = "Aceite", quantity = 250.0, unit = MeasureUnit.MILLILITER)
         ),
         preparation = "Freír",
         type = DishType.MAIN,
@@ -136,7 +137,7 @@ class DishEditorViewModelTest {
         assertEquals(Heaviness.VERY_LOW, saved.heaviness)
         assertEquals(Rating.FIVE, saved.rating)
         assertEquals(MealTime.LUNCH, saved.mealTime)
-        assertEquals(listOf(Ingredient(name = "Tomate", quantity = 1.5, unit = MeasureUnit.KILOGRAM)), saved.ingredients)
+        assertEquals(listOf(Ingredient(name = "Tomate", quantity = 1500.0, unit = MeasureUnit.GRAM)), saved.ingredients)
         assertEquals(fixedInstant, saved.updatedAt)
     }
 
@@ -154,7 +155,7 @@ class DishEditorViewModelTest {
         assertEquals(existingDish.type, state.type)
         assertEquals(existingDish.heaviness, state.heaviness)
         assertEquals(existingDish.preparation, state.preparation)
-        assertEquals(listOf("500", "0,25"), state.ingredients.map { it.quantityText })
+        assertEquals(listOf("500", "250"), state.ingredients.map { it.quantityText })
         assertEquals(listOf("Patata", "Aceite"), state.ingredients.map { it.name })
         assertEquals(state.ingredients.size, state.ingredients.map { it.key }.toSet().size)
     }
@@ -218,7 +219,7 @@ class DishEditorViewModelTest {
     private fun createViewModel(dishId: String?): DishEditorViewModel = DishEditorViewModel(
         savedStateHandle = if (dishId == null) SavedStateHandle() else SavedStateHandle(mapOf("dishId" to dishId)),
         getDish = GetDishUseCase(repository),
-        saveDish = SaveDishUseCase(repository, clock),
+        saveDish = SaveDishUseCase(clock, StandardizeRecipeBookUseCase(repository)),
         deleteDish = DeleteDishUseCase(repository)
     )
 

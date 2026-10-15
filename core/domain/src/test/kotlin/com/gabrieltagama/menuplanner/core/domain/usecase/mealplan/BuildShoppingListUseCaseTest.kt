@@ -17,7 +17,7 @@ import org.junit.Test
 
 /**
  * Tests that BuildShoppingListUseCase adds up the ingredients of the starters, mains and single
- * dishes of one month, merging compatible units and leaving desserts and other months out.
+ * dishes of one month in standard units, one line per product, leaving desserts and other months out.
  */
 class BuildShoppingListUseCaseTest {
     private val october = YearMonth.of(2026, 10)
@@ -62,7 +62,7 @@ class BuildShoppingListUseCaseTest {
     }
 
     @Test
-    fun `adds up every planned day and merges grams with kilograms and millilitres with litres`() {
+    fun `adds up every planned day in standard units with one line per product`() {
         val items = build(
             day(LocalDate.of(2026, 10, 1), DailyMenu.Courses(starter = starter, main = main)),
             day(LocalDate.of(2026, 10, 2), DailyMenu.Courses(starter = starter, main = main)),
@@ -73,9 +73,9 @@ class BuildShoppingListUseCaseTest {
             listOf(
                 ShoppingItem(name = "Aceite", quantity = 200.0, unit = MeasureUnit.MILLILITER),
                 ShoppingItem(name = "Arroz", quantity = 400.0, unit = MeasureUnit.GRAM),
-                ShoppingItem(name = "Orégano", quantity = null, unit = MeasureUnit.PINCH),
+                ShoppingItem(name = "Orégano", quantity = 4.0, unit = MeasureUnit.GRAM),
                 ShoppingItem(name = "Pollo", quantity = 2.0, unit = MeasureUnit.UNIT),
-                ShoppingItem(name = "Sal", quantity = null, unit = MeasureUnit.TO_TASTE),
+                ShoppingItem(name = "Sal", quantity = 15.0, unit = MeasureUnit.GRAM),
                 ShoppingItem(name = "Tomate", quantity = 3.0, unit = MeasureUnit.KILOGRAM)
             ),
             items
@@ -97,8 +97,8 @@ class BuildShoppingListUseCaseTest {
     }
 
     @Test
-    fun `keeps incompatible units of the same ingredient in separate lines`() {
-        val eggsByUnit = dish(type = DishType.SINGLE, ingredients = listOf(Ingredient("Huevo", 2.0, MeasureUnit.UNIT)))
+    fun `weighs counted units when the same product is also weighed`() {
+        val eggsByUnit = dish(type = DishType.SINGLE, ingredients = listOf(Ingredient("Huevos", 2.0, MeasureUnit.UNIT)))
         val eggsByWeight = dish(type = DishType.SINGLE, ingredients = listOf(Ingredient("Huevo", 120.0, MeasureUnit.GRAM)))
 
         val items = build(
@@ -106,6 +106,40 @@ class BuildShoppingListUseCaseTest {
             day(LocalDate.of(2026, 10, 7), DailyMenu.Single(single = eggsByWeight))
         )
 
-        assertEquals(setOf(MeasureUnit.UNIT, MeasureUnit.GRAM), items.map { it.unit }.toSet())
+        assertEquals(listOf(ShoppingItem(name = "Huevos", quantity = 240.0, unit = MeasureUnit.GRAM)), items)
+    }
+
+    @Test
+    fun `merges spoons pinches and plurals of the same product into one line`() {
+        val stew = dish(
+            type = DishType.SINGLE,
+            ingredients = listOf(
+                Ingredient("Aceite de oliva", 2.0, MeasureUnit.TABLESPOON),
+                Ingredient("Harina", 1.0, MeasureUnit.TABLESPOON),
+                Ingredient("Calabacines", 2.0, MeasureUnit.UNIT)
+            )
+        )
+        val salad = dish(
+            type = DishType.SINGLE,
+            ingredients = listOf(
+                Ingredient("aceite de oliva", 0.0, MeasureUnit.TO_TASTE),
+                Ingredient("Harina", 100.0, MeasureUnit.GRAM),
+                Ingredient("Calabacín", 1.0, MeasureUnit.UNIT)
+            )
+        )
+
+        val items = build(
+            day(LocalDate.of(2026, 10, 8), DailyMenu.Single(single = stew)),
+            day(LocalDate.of(2026, 10, 9), DailyMenu.Single(single = salad))
+        )
+
+        assertEquals(
+            listOf(
+                ShoppingItem(name = "Aceite de oliva", quantity = 40.0, unit = MeasureUnit.MILLILITER),
+                ShoppingItem(name = "Calabacines", quantity = 3.0, unit = MeasureUnit.UNIT),
+                ShoppingItem(name = "Harina", quantity = 120.0, unit = MeasureUnit.GRAM)
+            ),
+            items
+        )
     }
 }

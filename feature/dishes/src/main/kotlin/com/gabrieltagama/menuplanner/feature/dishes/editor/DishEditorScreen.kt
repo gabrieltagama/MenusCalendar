@@ -359,7 +359,7 @@ private fun IngredientRow(ingredient: IngredientForm, showErrors: Boolean, actio
                 )
                 EnumDropdown(
                     label = stringResource(R.string.dish_editor_ingredient_unit),
-                    options = MeasureUnit.entries,
+                    options = MeasureUnit.STANDARD,
                     selected = ingredient.unit,
                     optionLabel = { it.label() },
                     onSelect = { actions.onIngredientUnitChange(ingredient.key, it) },
