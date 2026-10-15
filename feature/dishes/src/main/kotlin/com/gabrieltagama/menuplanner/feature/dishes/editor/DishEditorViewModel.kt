@@ -8,7 +8,9 @@ import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.DeleteDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.GetDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.SaveDishUseCase
@@ -61,6 +63,10 @@ class DishEditorViewModel @Inject constructor(
     fun onTypeChange(value: DishType) = _uiState.update { it.copy(type = value) }
 
     fun onHeavinessChange(value: Heaviness) = _uiState.update { it.copy(heaviness = value) }
+
+    fun onRatingChange(value: Rating) = _uiState.update { it.copy(rating = value) }
+
+    fun onMealTimeChange(value: MealTime) = _uiState.update { it.copy(mealTime = value) }
 
     fun onPreparationChange(value: String) = _uiState.update { it.copy(preparation = value) }
 
@@ -127,6 +133,8 @@ class DishEditorViewModel @Inject constructor(
                 description = dish.description,
                 type = dish.type,
                 heaviness = dish.heaviness,
+                rating = dish.rating,
+                mealTime = dish.mealTime,
                 ingredients = dish.ingredients.map { ingredient -> ingredient.toForm(newKey()) },
                 preparation = dish.preparation
             )
@@ -140,6 +148,8 @@ class DishEditorViewModel @Inject constructor(
             description = state.description,
             type = state.type,
             heaviness = state.heaviness,
+            rating = state.rating,
+            mealTime = state.mealTime,
             ingredients = state.ingredients.mapNotNull { it.toDomain() },
             preparation = state.preparation
         )

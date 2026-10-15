@@ -14,9 +14,10 @@ import kotlin.random.Random
 import kotlinx.coroutines.flow.first
 
 /**
- * Fills every empty day of a month with a random menu built by MenuPicker. Days already planned
- * are never modified; the last days of the previous month are taken into account so the
- * no-repeat and heavy-streak rules also hold across the month boundary.
+ * Fills every empty day of a month with a random menu built by MenuPicker, using only dishes
+ * served at lunch (MealTime LUNCH or ANY). Days already planned are never modified; the last
+ * days of the previous month are taken into account so the no-repeat and heavy-streak rules also
+ * hold across the month boundary.
  */
 class AutoFillMonthUseCase @Inject constructor(
     private val dishRepository: DishRepository,
@@ -25,7 +26,8 @@ class AutoFillMonthUseCase @Inject constructor(
     private val clock: Clock
 ) {
     suspend operator fun invoke(month: YearMonth): AutoFillResult {
-        val picker = MenuPicker(dishRepository.observeDishes().first(), random)
+        val lunchDishes = dishRepository.observeDishes().first().filter { it.mealTime.isServedAtLunch }
+        val picker = MenuPicker(lunchDishes, random)
         val history = loadHistory(month)
         val emptyDays = month.days().filterNot(history::containsKey)
         val picks = mutableListOf<MenuPick>()

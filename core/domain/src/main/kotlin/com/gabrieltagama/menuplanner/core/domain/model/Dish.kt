@@ -15,5 +15,7 @@ data class Dish(
     val preparation: String = "",
     val type: DishType,
     val heaviness: Heaviness,
+    val rating: Rating = Rating.THREE,
+    val mealTime: MealTime = MealTime.ANY,
     val updatedAt: Instant = Instant.now()
 )

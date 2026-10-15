@@ -5,7 +5,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.feature.dishes.testing.FakeDishRepository
 import com.gabrieltagama.menuplanner.feature.dishes.testing.MainDispatcherRule
@@ -17,7 +19,8 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * DishListViewModel over the real ObserveDishesUseCase: loading, type and heaviness filters,
+ * DishListViewModel over the real ObserveDishesUseCase: loading, type, heaviness, minimum rating
+ * and meal time filters,
  * accent- and case-insensitive search by name or ingredient and alphabetical ordering.
  */
 class DishListViewModelTest {
@@ -123,6 +126,24 @@ class DishListViewModelTest {
 
             val state = awaitItemMatching { it.selectedHeaviness == Heaviness.VERY_HIGH && it.selectedType == DishType.SINGLE }
             assertEquals(listOf(lentils), state.dishes)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `filters by minimum rating and meal time`() = runTest {
+        val stew = Dish(id = "stew", name = "Cocido", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH, rating = Rating.FIVE, mealTime = MealTime.ANY)
+        val soup = Dish(id = "soup", name = "Sopa", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW, rating = Rating.FOUR, mealTime = MealTime.DINNER)
+        repository.upsert(stew)
+        repository.upsert(soup)
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+
+            viewModel.onMinRatingSelect(Rating.FOUR)
+            viewModel.onMealTimeSelect(MealTime.LUNCH)
+
+            val state = awaitItemMatching { it.selectedMinRating == Rating.FOUR && it.selectedMealTime == MealTime.LUNCH }
+            assertEquals(listOf(stew), state.dishes)
             cancelAndIgnoreRemainingEvents()
         }
     }

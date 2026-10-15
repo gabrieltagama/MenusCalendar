@@ -10,6 +10,8 @@ import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
@@ -34,8 +36,8 @@ class ShareDocumentCodecTest {
             Ingredient("Salt", 0.0, MeasureUnit.TO_TASTE)
         )
     )
-    private val main = TestData.dish(id = "main-1", name = "Paella", type = DishType.MAIN, heaviness = Heaviness.VERY_HIGH, updatedAt = TestData.NEW_INSTANT)
-    private val dessert = TestData.dish(id = "dessert-1", name = "Flan", type = DishType.DESSERT)
+    private val main = TestData.dish(id = "main-1", name = "Paella", type = DishType.MAIN, heaviness = Heaviness.VERY_HIGH, rating = Rating.FIVE, mealTime = MealTime.LUNCH, updatedAt = TestData.NEW_INSTANT)
+    private val dessert = TestData.dish(id = "dessert-1", name = "Flan", type = DishType.DESSERT, rating = Rating.ONE, mealTime = MealTime.DINNER)
     private val single = TestData.dish(id = "single-1", name = "Lasagna", type = DishType.SINGLE)
 
     private val coursesDay = TestData.coursesDay(LocalDate.of(2026, 3, 10), starter.id, main.id, dessert.id, TestData.NEW_INSTANT)
@@ -124,6 +126,25 @@ class ShareDocumentCodecTest {
         assertEquals(Outcome.Failure(DomainError.InvalidImportFile), ShareDocumentMapper.toImportContent(documentWith(dishDto(heaviness = "LIGHT"))))
 
     @Test
+    fun `unknown rating is InvalidImportFile`() =
+        assertEquals(Outcome.Failure(DomainError.InvalidImportFile), ShareDocumentMapper.toImportContent(documentWith(dishDto(rating = "SIX"))))
+
+    @Test
+    fun `unknown meal time is InvalidImportFile`() =
+        assertEquals(Outcome.Failure(DomainError.InvalidImportFile), ShareDocumentMapper.toImportContent(documentWith(dishDto(mealTime = "BREAKFAST"))))
+
+    @Test
+    fun `dish without rating and meal time imports with defaults`() {
+        val text = """{"exportedAt":"2026-05-01T00:00:00Z","dishes":[{"id":"d1","name":"Soup","description":"","ingredients":[],"preparation":"","type":"STARTER","heaviness":"VERY_LOW","updatedAt":"2026-01-01T00:00:00Z"}],"mealDays":[]}"""
+
+        val document = (codec.decode(text) as Outcome.Success).value
+        val dish = (ShareDocumentMapper.toImportContent(document) as Outcome.Success).value.dishes.single()
+
+        assertEquals(Rating.THREE, dish.rating)
+        assertEquals(MealTime.ANY, dish.mealTime)
+    }
+
+    @Test
     fun `unknown measure unit is InvalidImportFile`() {
         val dto = dishDto(ingredients = listOf(IngredientDto("Flour", 1.0, "OUNCE")))
 
@@ -200,6 +221,8 @@ class ShareDocumentCodecTest {
         name: String = "Dish",
         type: String = "MAIN",
         heaviness: String = "MEDIUM",
+        rating: String = "THREE",
+        mealTime: String = "ANY",
         ingredients: List<IngredientDto> = emptyList(),
         updatedAt: String = "2026-01-01T00:00:00Z"
     ) = DishDto(
@@ -210,6 +233,8 @@ class ShareDocumentCodecTest {
         preparation = "",
         type = type,
         heaviness = heaviness,
+        rating = rating,
+        mealTime = mealTime,
         updatedAt = updatedAt
     )
 

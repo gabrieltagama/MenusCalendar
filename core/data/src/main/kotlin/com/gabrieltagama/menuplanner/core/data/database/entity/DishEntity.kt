@@ -17,5 +17,7 @@ internal data class DishEntity(
     val preparation: String,
     val type: String,
     val heaviness: String,
+    @ColumnInfo(defaultValue = "THREE") val rating: String,
+    @ColumnInfo(name = "meal_time", defaultValue = "ANY") val mealTime: String,
     @ColumnInfo(name = "updated_at") val updatedAt: Long
 )

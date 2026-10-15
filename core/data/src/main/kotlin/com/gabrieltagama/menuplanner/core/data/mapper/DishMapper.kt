@@ -7,7 +7,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import java.time.Instant
 
 /**
@@ -22,6 +24,8 @@ internal fun DishWithIngredients.toDomain(): Dish = Dish(
     preparation = dish.preparation,
     type = DishType.valueOf(dish.type),
     heaviness = Heaviness.valueOf(dish.heaviness),
+    rating = Rating.valueOf(dish.rating),
+    mealTime = MealTime.valueOf(dish.mealTime),
     updatedAt = Instant.ofEpochMilli(dish.updatedAt)
 )
 
@@ -32,6 +36,8 @@ internal fun Dish.toEntity(): DishEntity = DishEntity(
     preparation = preparation,
     type = type.name,
     heaviness = heaviness.name,
+    rating = rating.name,
+    mealTime = mealTime.name,
     updatedAt = updatedAt.toEpochMilli()
 )
 

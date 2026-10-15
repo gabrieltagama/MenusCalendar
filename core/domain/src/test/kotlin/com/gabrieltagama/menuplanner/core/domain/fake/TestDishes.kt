@@ -4,6 +4,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -25,6 +27,8 @@ object TestDishes {
         ingredients: List<Ingredient> = emptyList(),
         description: String = "",
         preparation: String = "",
+        rating: Rating = Rating.THREE,
+        mealTime: MealTime = MealTime.ANY,
         updatedAt: Instant = OLD_INSTANT
     ) = Dish(
         id = id,
@@ -34,6 +38,8 @@ object TestDishes {
         preparation = preparation,
         type = type,
         heaviness = heaviness,
+        rating = rating,
+        mealTime = mealTime,
         updatedAt = updatedAt
     )
 }

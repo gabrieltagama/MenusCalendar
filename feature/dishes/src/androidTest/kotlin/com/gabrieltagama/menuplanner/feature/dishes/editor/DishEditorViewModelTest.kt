@@ -7,7 +7,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.DeleteDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.GetDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.SaveDishUseCase
@@ -51,6 +53,8 @@ class DishEditorViewModelTest {
         preparation = "Freír",
         type = DishType.MAIN,
         heaviness = Heaviness.VERY_HIGH,
+        rating = Rating.FOUR,
+        mealTime = MealTime.DINNER,
         updatedAt = Instant.parse("2020-01-01T00:00:00Z")
     )
 
@@ -65,6 +69,8 @@ class DishEditorViewModelTest {
         assertFalse(state.isLoading)
         assertTrue(state.canSubmit)
         assertEquals("", state.name)
+        assertEquals(Rating.THREE, state.rating)
+        assertEquals(MealTime.ANY, state.mealTime)
     }
 
     @Test
@@ -113,6 +119,8 @@ class DishEditorViewModelTest {
         viewModel.onNameChange("  Gazpacho  ")
         viewModel.onTypeChange(DishType.STARTER)
         viewModel.onHeavinessChange(Heaviness.VERY_LOW)
+        viewModel.onRatingChange(Rating.FIVE)
+        viewModel.onMealTimeChange(MealTime.LUNCH)
         viewModel.onAddIngredient()
         val key = viewModel.uiState.value.ingredients.single().key
         viewModel.onIngredientNameChange(key, "Tomate")
@@ -126,6 +134,8 @@ class DishEditorViewModelTest {
         assertEquals("Gazpacho", saved.name)
         assertEquals(DishType.STARTER, saved.type)
         assertEquals(Heaviness.VERY_LOW, saved.heaviness)
+        assertEquals(Rating.FIVE, saved.rating)
+        assertEquals(MealTime.LUNCH, saved.mealTime)
         assertEquals(listOf(Ingredient(name = "Tomate", quantity = 1.5, unit = MeasureUnit.KILOGRAM)), saved.ingredients)
         assertEquals(fixedInstant, saved.updatedAt)
     }
@@ -138,6 +148,8 @@ class DishEditorViewModelTest {
 
         assertTrue(state.isEditMode)
         assertEquals(existingDish.name, state.name)
+        assertEquals(Rating.FOUR, state.rating)
+        assertEquals(MealTime.DINNER, state.mealTime)
         assertEquals(existingDish.description, state.description)
         assertEquals(existingDish.type, state.type)
         assertEquals(existingDish.heaviness, state.heaviness)
