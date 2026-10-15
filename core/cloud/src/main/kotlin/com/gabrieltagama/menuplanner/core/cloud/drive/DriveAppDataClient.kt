@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.core.cloud.drive
 
+import com.gabrieltagama.menuplanner.core.domain.common.IoDispatcher
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
@@ -7,7 +8,7 @@ import java.net.URLEncoder
 import java.time.DateTimeException
 import java.time.Instant
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -24,7 +25,7 @@ import kotlinx.serialization.json.putJsonArray
  * HttpURLConnection so no extra HTTP library is needed. HTTP 401 surfaces as
  * DriveUnauthorizedException; any other HTTP, network or unexpected response error as IOException.
  */
-internal class DriveAppDataClient @Inject constructor() {
+internal class DriveAppDataClient @Inject constructor(@param:IoDispatcher private val ioDispatcher: CoroutineDispatcher) {
 
     suspend fun accountEmail(token: String): String =
         parsed(send(token, GET, "$API/about?fields=${encoded("user(emailAddress)")}")) { root ->
@@ -69,7 +70,7 @@ internal class DriveAppDataClient @Inject constructor() {
         return RequestBody(contentType = "multipart/related; boundary=$BOUNDARY", bytes = text.toByteArray(Charsets.UTF_8))
     }
 
-    private suspend fun send(token: String, method: String, url: String, body: RequestBody? = null): String = withContext(Dispatchers.IO) {
+    private suspend fun send(token: String, method: String, url: String, body: RequestBody? = null): String = withContext(ioDispatcher) {
         val connection = URI(url).toURL().openConnection() as HttpURLConnection
         try {
             connection.requestMethod = method

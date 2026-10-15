@@ -7,6 +7,7 @@ import com.gabrieltagama.menuplanner.core.cloud.auth.GoogleDriveAuthorizer
 import com.gabrieltagama.menuplanner.core.cloud.drive.DriveAppDataClient
 import com.gabrieltagama.menuplanner.core.cloud.drive.DriveUnauthorizedException
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.IoDispatcher
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.repository.CloudBackupRepository
@@ -14,7 +15,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +32,8 @@ import kotlinx.coroutines.withContext
 internal class GoogleDriveBackupRepository @Inject constructor(
     @ApplicationContext context: Context,
     private val authorizer: GoogleDriveAuthorizer,
-    private val drive: DriveAppDataClient
+    private val drive: DriveAppDataClient,
+    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : CloudBackupRepository {
 
     private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
@@ -88,7 +90,7 @@ internal class GoogleDriveBackupRepository @Inject constructor(
         }
 
     private suspend fun save(change: SharedPreferences.Editor.() -> Unit) =
-        withContext(Dispatchers.IO) { preferences.edit(action = change) }
+        withContext(ioDispatcher) { preferences.edit(action = change) }
 
     private fun readAccount(): CloudAccount =
         preferences.getString(KEY_EMAIL, null)?.let(CloudAccount::Connected) ?: CloudAccount.Disconnected

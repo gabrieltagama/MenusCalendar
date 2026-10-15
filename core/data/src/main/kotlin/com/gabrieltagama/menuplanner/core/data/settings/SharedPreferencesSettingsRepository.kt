@@ -2,12 +2,13 @@ package com.gabrieltagama.menuplanner.core.data.settings
 
 import android.content.Context
 import androidx.core.content.edit
+import com.gabrieltagama.menuplanner.core.domain.common.IoDispatcher
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
 import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +21,8 @@ import kotlinx.coroutines.withContext
  */
 @Singleton
 internal class SharedPreferencesSettingsRepository @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext context: Context,
+    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : SettingsRepository {
 
     private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
@@ -33,12 +35,12 @@ internal class SharedPreferencesSettingsRepository @Inject constructor(
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         this.mode.value = mode
-        withContext(Dispatchers.IO) { preferences.edit { putString(KEY_THEME_MODE, mode.name) } }
+        withContext(ioDispatcher) { preferences.edit { putString(KEY_THEME_MODE, mode.name) } }
     }
 
     override suspend fun completeOnboarding() {
         onboardingCompleted.value = true
-        withContext(Dispatchers.IO) { preferences.edit { putBoolean(KEY_ONBOARDING_COMPLETED, true) } }
+        withContext(ioDispatcher) { preferences.edit { putBoolean(KEY_ONBOARDING_COMPLETED, true) } }
     }
 
     private fun readThemeMode(): ThemeMode =
