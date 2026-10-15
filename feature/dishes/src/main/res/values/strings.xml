@@ -4,7 +4,7 @@
     <string name="dishes_filter_all_types">Todos</string>
     <string name="dishes_filter_all_heaviness">Todas</string>
     <string name="dishes_filter_all_ratings">Todas</string>
-    <string name="dishes_filter_min_rating">%1$s o más</string>
+    <string name="dishes_filter_selected_count">%1$s (%2$d)</string>
     <string name="dishes_filter_all_meal_times">Todos</string>
     <string name="dishes_search_hint">Buscar por plato o ingrediente</string>
     <string name="dishes_clear_search">Borrar búsqueda</string>

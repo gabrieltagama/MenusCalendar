@@ -11,8 +11,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * DishFilter: name and ingredient search (case- and accent-insensitive), type, heaviness,
- * minimum rating and meal time filters, their combination and alphabetical ordering.
+ * DishFilter: name and ingredient search (case- and accent-insensitive), multiple-selection type,
+ * heaviness, rating and meal time filters (empty set = no filter), their combination and
+ * alphabetical ordering.
  */
 class DishFilterTest {
 
@@ -49,21 +50,21 @@ class DishFilterTest {
 
     @Test
     fun `filters by type`() =
-        assertEquals(listOf(salad, puree), DishFilter.apply(dishes, DishFilterCriteria(type = DishType.STARTER)))
+        assertEquals(listOf(salad, puree), DishFilter.apply(dishes, DishFilterCriteria(types = setOf(DishType.STARTER))))
 
     @Test
     fun `filters by heaviness`() =
-        assertEquals(listOf(flan, chicken), DishFilter.apply(dishes, DishFilterCriteria(heaviness = Heaviness.MEDIUM)))
+        assertEquals(listOf(flan, chicken), DishFilter.apply(dishes, DishFilterCriteria(heaviness = setOf(Heaviness.MEDIUM))))
 
     @Test
     fun `combines type and heaviness`() {
         assertEquals(
             listOf(chicken),
-            DishFilter.apply(dishes, DishFilterCriteria(type = DishType.MAIN, heaviness = Heaviness.MEDIUM))
+            DishFilter.apply(dishes, DishFilterCriteria(types = setOf(DishType.MAIN), heaviness = setOf(Heaviness.MEDIUM)))
         )
         assertEquals(
             emptyList<Dish>(),
-            DishFilter.apply(dishes, DishFilterCriteria(type = DishType.STARTER, heaviness = Heaviness.VERY_HIGH))
+            DishFilter.apply(dishes, DishFilterCriteria(types = setOf(DishType.STARTER), heaviness = setOf(Heaviness.VERY_HIGH)))
         )
     }
 
@@ -71,7 +72,7 @@ class DishFilterTest {
     fun `combines query with type and heaviness`() =
         assertEquals(
             listOf(puree),
-            DishFilter.apply(dishes, DishFilterCriteria(query = "caldo", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW))
+            DishFilter.apply(dishes, DishFilterCriteria(query = "caldo", types = setOf(DishType.STARTER), heaviness = setOf(Heaviness.VERY_LOW)))
         )
 
     private val rated = listOf(
@@ -83,29 +84,37 @@ class DishFilterTest {
     )
 
     @Test
-    fun `minimum rating keeps dishes with at least that many stars`() {
-        assertEquals(listOf("salad", "puree"), DishFilter.apply(rated, DishFilterCriteria(minRating = Rating.FOUR)).map(Dish::id))
-        assertEquals(listOf("puree"), DishFilter.apply(rated, DishFilterCriteria(minRating = Rating.FIVE)).map(Dish::id))
-        assertEquals(5, DishFilter.apply(rated, DishFilterCriteria(minRating = Rating.ONE)).size)
+    fun `several types keep dishes of any of them`() =
+        assertEquals(listOf(flan, chicken), DishFilter.apply(dishes, DishFilterCriteria(types = setOf(DishType.MAIN, DishType.DESSERT))))
+
+    @Test
+    fun `several heaviness values keep dishes of any of them`() =
+        assertEquals(listOf(salad, lentils, puree), DishFilter.apply(dishes, DishFilterCriteria(heaviness = setOf(Heaviness.VERY_LOW, Heaviness.VERY_HIGH))))
+
+    @Test
+    fun `ratings filter keeps only the selected star values`() {
+        assertEquals(listOf("salad", "puree"), DishFilter.apply(rated, DishFilterCriteria(ratings = setOf(Rating.FOUR, Rating.FIVE))).map(Dish::id))
+        assertEquals(listOf("flan", "chicken"), DishFilter.apply(rated, DishFilterCriteria(ratings = setOf(Rating.ONE, Rating.THREE))).map(Dish::id))
     }
 
     @Test
-    fun `lunch filter includes dishes served at any time`() =
-        assertEquals(listOf("lentils", "chicken", "puree"), DishFilter.apply(rated, DishFilterCriteria(mealTime = MealTime.LUNCH)).map(Dish::id))
+    fun `meal time filter matches exactly`() {
+        assertEquals(listOf("salad", "flan"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.DINNER))).map(Dish::id))
+        assertEquals(listOf("lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.ANY))).map(Dish::id))
+    }
 
     @Test
-    fun `dinner filter includes dishes served at any time`() =
-        assertEquals(listOf("salad", "flan", "lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTime = MealTime.DINNER)).map(Dish::id))
+    fun `dinner and any together keep both`() =
+        assertEquals(listOf("salad", "flan", "lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.DINNER, MealTime.ANY))).map(Dish::id))
 
     @Test
-    fun `any filter keeps only dishes served at any time`() =
-        assertEquals(listOf("lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTime = MealTime.ANY)).map(Dish::id))
-
-    @Test
-    fun `combines minimum rating and meal time with type`() =
+    fun `combines ratings and meal times with types`() =
         assertEquals(
             listOf("puree"),
-            DishFilter.apply(rated, DishFilterCriteria(type = DishType.STARTER, minRating = Rating.FOUR, mealTime = MealTime.LUNCH)).map(Dish::id)
+            DishFilter.apply(
+                rated,
+                DishFilterCriteria(types = setOf(DishType.STARTER), ratings = setOf(Rating.FOUR, Rating.FIVE), mealTimes = setOf(MealTime.LUNCH))
+            ).map(Dish::id)
         )
 
     private fun dish(id: String, name: String, type: DishType, heaviness: Heaviness, vararg ingredients: String) = Dish(

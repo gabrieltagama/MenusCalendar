@@ -19,9 +19,9 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * DishListViewModel over the real ObserveDishesUseCase: loading, type, heaviness, minimum rating
- * and meal time filters,
- * accent- and case-insensitive search by name or ingredient and alphabetical ordering.
+ * DishListViewModel over the real ObserveDishesUseCase: loading, multiple-selection type,
+ * heaviness, rating and meal time filters, accent- and case-insensitive search by name or
+ * ingredient and alphabetical ordering.
  */
 class DishListViewModelTest {
 
@@ -52,9 +52,9 @@ class DishListViewModelTest {
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
 
-            viewModel.onTypeSelect(DishType.STARTER)
+            viewModel.onTypesChange(setOf(DishType.STARTER))
 
-            val state = awaitItemMatching { it.selectedType == DishType.STARTER }
+            val state = awaitItemMatching { it.selectedTypes == setOf(DishType.STARTER) }
             assertEquals(listOf(salad, puree), state.dishes)
             cancelAndIgnoreRemainingEvents()
         }
@@ -63,12 +63,12 @@ class DishListViewModelTest {
     @Test
     fun `clearing the type filter shows every dish again`() = runTest {
         viewModel.uiState.test {
-            viewModel.onTypeSelect(DishType.DESSERT)
-            awaitItemMatching { it.selectedType == DishType.DESSERT && !it.isLoading }
+            viewModel.onTypesChange(setOf(DishType.DESSERT))
+            awaitItemMatching { it.selectedTypes == setOf(DishType.DESSERT) && !it.isLoading }
 
-            viewModel.onTypeSelect(null)
+            viewModel.onTypesChange(emptySet())
 
-            val state = awaitItemMatching { it.selectedType == null && it.dishes.size == 4 }
+            val state = awaitItemMatching { it.selectedTypes.isEmpty() && it.dishes.size == 4 }
             assertEquals(4, state.dishes.size)
             cancelAndIgnoreRemainingEvents()
         }
@@ -105,10 +105,10 @@ class DishListViewModelTest {
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
 
-            viewModel.onTypeSelect(DishType.MAIN)
+            viewModel.onTypesChange(setOf(DishType.MAIN))
             viewModel.onQueryChange("pu")
 
-            val state = awaitItemMatching { it.selectedType == DishType.MAIN && it.dishes.isEmpty() }
+            val state = awaitItemMatching { it.selectedTypes == setOf(DishType.MAIN) && it.dishes.isEmpty() }
             assertTrue(state.hasDishes)
             cancelAndIgnoreRemainingEvents()
         }
@@ -121,29 +121,31 @@ class DishListViewModelTest {
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
 
-            viewModel.onHeavinessSelect(Heaviness.VERY_HIGH)
-            viewModel.onTypeSelect(DishType.SINGLE)
+            viewModel.onHeavinessChange(setOf(Heaviness.VERY_HIGH))
+            viewModel.onTypesChange(setOf(DishType.SINGLE))
 
-            val state = awaitItemMatching { it.selectedHeaviness == Heaviness.VERY_HIGH && it.selectedType == DishType.SINGLE }
+            val state = awaitItemMatching { it.selectedHeaviness == setOf(Heaviness.VERY_HIGH) && it.selectedTypes == setOf(DishType.SINGLE) }
             assertEquals(listOf(lentils), state.dishes)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `filters by minimum rating and meal time`() = runTest {
+    fun `filters by several ratings and meal times`() = runTest {
         val stew = Dish(id = "stew", name = "Cocido", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH, rating = Rating.FIVE, mealTime = MealTime.ANY)
         val soup = Dish(id = "soup", name = "Sopa", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW, rating = Rating.FOUR, mealTime = MealTime.DINNER)
-        repository.upsert(stew)
-        repository.upsert(soup)
+        val toast = Dish(id = "toast", name = "Tostada", type = DishType.SINGLE, heaviness = Heaviness.VERY_LOW, rating = Rating.FOUR, mealTime = MealTime.LUNCH)
+        listOf(stew, soup, toast).forEach { repository.upsert(it) }
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
 
-            viewModel.onMinRatingSelect(Rating.FOUR)
-            viewModel.onMealTimeSelect(MealTime.LUNCH)
+            viewModel.onRatingsChange(setOf(Rating.FOUR, Rating.FIVE))
+            viewModel.onMealTimesChange(setOf(MealTime.DINNER, MealTime.ANY))
 
-            val state = awaitItemMatching { it.selectedMinRating == Rating.FOUR && it.selectedMealTime == MealTime.LUNCH }
-            assertEquals(listOf(stew), state.dishes)
+            val state = awaitItemMatching {
+                it.selectedRatings == setOf(Rating.FOUR, Rating.FIVE) && it.selectedMealTimes == setOf(MealTime.DINNER, MealTime.ANY)
+            }
+            assertEquals(listOf(stew, soup), state.dishes)
             cancelAndIgnoreRemainingEvents()
         }
     }

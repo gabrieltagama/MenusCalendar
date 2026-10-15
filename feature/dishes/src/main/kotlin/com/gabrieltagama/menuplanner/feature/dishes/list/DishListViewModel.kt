@@ -19,19 +19,19 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
 /**
- * Recipe book table: observes every dish and applies search, type, heaviness, minimum rating and
- * meal time filters through [DishFilter]. The selected filters live in one DishFilterCriteria
- * (without query); the raw query is exposed on its own synchronous StateFlow so the text field
- * never lags behind typing, and the state carries the applied query.
+ * Recipe book table: observes every dish and applies search and the multiple-selection type,
+ * heaviness, rating and meal time filters through [DishFilter]. The selected filters live in one
+ * DishFilterCriteria (without query); the raw query is exposed on its own synchronous StateFlow
+ * so the text field never lags behind typing, and the state carries the applied query.
  */
 data class DishListUiState(
     val isLoading: Boolean = true,
     val hasDishes: Boolean = false,
     val query: String = "",
-    val selectedType: DishType? = null,
-    val selectedHeaviness: Heaviness? = null,
-    val selectedMinRating: Rating? = null,
-    val selectedMealTime: MealTime? = null,
+    val selectedTypes: Set<DishType> = emptySet(),
+    val selectedHeaviness: Set<Heaviness> = emptySet(),
+    val selectedRatings: Set<Rating> = emptySet(),
+    val selectedMealTimes: Set<MealTime> = emptySet(),
     val dishes: List<Dish> = emptyList()
 )
 
@@ -49,10 +49,10 @@ class DishListViewModel @Inject constructor(observeDishes: ObserveDishesUseCase)
                 isLoading = false,
                 hasDishes = dishes.isNotEmpty(),
                 query = query,
-                selectedType = criteria.type,
+                selectedTypes = criteria.types,
                 selectedHeaviness = criteria.heaviness,
-                selectedMinRating = criteria.minRating,
-                selectedMealTime = criteria.mealTime,
+                selectedRatings = criteria.ratings,
+                selectedMealTimes = criteria.mealTimes,
                 dishes = DishFilter.apply(dishes, criteria.copy(query = query))
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DishListUiState())
@@ -61,11 +61,11 @@ class DishListViewModel @Inject constructor(observeDishes: ObserveDishesUseCase)
         _query.value = value
     }
 
-    fun onTypeSelect(type: DishType?) = filters.update { it.copy(type = type) }
+    fun onTypesChange(types: Set<DishType>) = filters.update { it.copy(types = types) }
 
-    fun onHeavinessSelect(heaviness: Heaviness?) = filters.update { it.copy(heaviness = heaviness) }
+    fun onHeavinessChange(heaviness: Set<Heaviness>) = filters.update { it.copy(heaviness = heaviness) }
 
-    fun onMinRatingSelect(minRating: Rating?) = filters.update { it.copy(minRating = minRating) }
+    fun onRatingsChange(ratings: Set<Rating>) = filters.update { it.copy(ratings = ratings) }
 
-    fun onMealTimeSelect(mealTime: MealTime?) = filters.update { it.copy(mealTime = mealTime) }
+    fun onMealTimesChange(mealTimes: Set<MealTime>) = filters.update { it.copy(mealTimes = mealTimes) }
 }

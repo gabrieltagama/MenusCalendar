@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,16 +74,16 @@ import com.gabrieltagama.menuplanner.feature.dishes.R
 
 /**
  * Recipe book: stateful route bound to [DishListViewModel] and a stateless screen with a search
- * field (dish or ingredient name), one scrollable row of dropdown filter chips (type, heaviness,
- * minimum rating, meal time) and a list of dish cards with type avatar, ingredient count and
+ * field (dish or ingredient name), one scrollable row of multiple-selection filter chips (type,
+ * heaviness, rating, meal time; the menu stays open while ticking options) and a list of dish cards with type avatar, ingredient count and
  * heaviness chip. The FAB collapses while scrolling. Bottom insets are left to the app shell, which draws the NavigationBar below.
  */
 data class DishListActions(
     val onQueryChange: (String) -> Unit,
-    val onTypeSelect: (DishType?) -> Unit,
-    val onHeavinessSelect: (Heaviness?) -> Unit,
-    val onMinRatingSelect: (Rating?) -> Unit,
-    val onMealTimeSelect: (MealTime?) -> Unit,
+    val onTypesChange: (Set<DishType>) -> Unit,
+    val onHeavinessChange: (Set<Heaviness>) -> Unit,
+    val onRatingsChange: (Set<Rating>) -> Unit,
+    val onMealTimesChange: (Set<MealTime>) -> Unit,
     val onOpenDish: (String?) -> Unit
 )
 
@@ -98,10 +99,10 @@ fun DishListScreenRoute(
         query = query,
         actions = DishListActions(
             onQueryChange = viewModel::onQueryChange,
-            onTypeSelect = viewModel::onTypeSelect,
-            onHeavinessSelect = viewModel::onHeavinessSelect,
-            onMinRatingSelect = viewModel::onMinRatingSelect,
-            onMealTimeSelect = viewModel::onMealTimeSelect,
+            onTypesChange = viewModel::onTypesChange,
+            onHeavinessChange = viewModel::onHeavinessChange,
+            onRatingsChange = viewModel::onRatingsChange,
+            onMealTimesChange = viewModel::onMealTimesChange,
             onOpenDish = onOpenDish
         )
     )
@@ -172,64 +173,75 @@ private fun FilterRow(state: DishListUiState, actions: DishListActions) = Row(
     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp)
 ) {
-    DropdownFilterChip(
+    MultiSelectFilterChip(
         title = stringResource(R.string.dishes_column_type),
         allLabel = stringResource(R.string.dishes_filter_all_types),
         options = DishType.entries,
-        selected = state.selectedType,
+        selected = state.selectedTypes,
         optionLabel = { it.shortLabel() },
-        onSelect = actions.onTypeSelect
+        onChange = actions.onTypesChange
     )
-    DropdownFilterChip(
+    MultiSelectFilterChip(
         title = stringResource(R.string.dishes_column_heaviness),
         allLabel = stringResource(R.string.dishes_filter_all_heaviness),
         options = Heaviness.entries,
         selected = state.selectedHeaviness,
         optionLabel = { it.label() },
-        onSelect = actions.onHeavinessSelect
+        onChange = actions.onHeavinessChange
     )
-    DropdownFilterChip(
+    MultiSelectFilterChip(
         title = stringResource(R.string.dishes_column_rating),
         allLabel = stringResource(R.string.dishes_filter_all_ratings),
         options = Rating.entries.reversed(),
-        selected = state.selectedMinRating,
-        optionLabel = { stringResource(R.string.dishes_filter_min_rating, it.label()) },
-        onSelect = actions.onMinRatingSelect
+        selected = state.selectedRatings,
+        optionLabel = { it.label() },
+        onChange = actions.onRatingsChange
     )
-    DropdownFilterChip(
+    MultiSelectFilterChip(
         title = stringResource(R.string.dishes_column_meal_time),
         allLabel = stringResource(R.string.dishes_filter_all_meal_times),
         options = MealTime.entries,
-        selected = state.selectedMealTime,
+        selected = state.selectedMealTimes,
         optionLabel = { it.label() },
-        onSelect = actions.onMealTimeSelect
+        onChange = actions.onMealTimesChange
     )
 }
 
 @Composable
-private fun <T : Any> DropdownFilterChip(
+private fun <T : Any> MultiSelectFilterChip(
     title: String,
     allLabel: String,
     options: List<T>,
-    selected: T?,
+    selected: Set<T>,
     optionLabel: @Composable (T) -> String,
-    onSelect: (T?) -> Unit
+    onChange: (Set<T>) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val choose: (T?) -> Unit = { option ->
-        onSelect(option)
-        expanded = false
+    val chipLabel = when (selected.size) {
+        0 -> title
+        1 -> optionLabel(selected.first())
+        else -> stringResource(R.string.dishes_filter_selected_count, title, selected.size)
     }
     Box {
         FilterChip(
-            selected = selected != null,
+            selected = selected.isNotEmpty(),
             onClick = { expanded = true },
-            label = { Text(selected?.let { optionLabel(it) } ?: title) },
+            label = { Text(chipLabel) },
             trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp)) }
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text(allLabel) }, onClick = { choose(null) })
-            options.forEach { option -> DropdownMenuItem(text = { Text(optionLabel(option)) }, onClick = { choose(option) }) }
+            DropdownMenuItem(
+                text = { Text(allLabel) },
+                leadingIcon = { Checkbox(checked = selected.isEmpty(), onCheckedChange = null) },
+                onClick = { onChange(emptySet()) }
+            )
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(optionLabel(option)) },
+                    leadingIcon = { Checkbox(checked = option in selected, onCheckedChange = null) },
+                    onClick = { onChange(if (option in selected) selected - option else selected + option) }
+                )
+            }
         }
     }
 }
@@ -281,10 +293,10 @@ private fun DishType.shortLabel(): String = stringResource(
 
 private val previewActions = DishListActions(
     onQueryChange = {},
-    onTypeSelect = {},
-    onHeavinessSelect = {},
-    onMinRatingSelect = {},
-    onMealTimeSelect = {},
+    onTypesChange = {},
+    onHeavinessChange = {},
+    onRatingsChange = {},
+    onMealTimesChange = {},
     onOpenDish = {}
 )
 
