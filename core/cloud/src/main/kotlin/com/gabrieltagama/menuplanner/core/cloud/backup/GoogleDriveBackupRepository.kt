@@ -62,7 +62,7 @@ internal class GoogleDriveBackupRepository @Inject constructor(
         drive.findBackups(token).firstOrNull()?.let { drive.download(token, it.id) }
     }
 
-    override suspend fun lastUploadedFingerprint(): String? = preferences.getString(KEY_FINGERPRINT, null)
+    override suspend fun lastUploadedFingerprint(): String? = withContext(ioDispatcher) { preferences.getString(KEY_FINGERPRINT, null) }
 
     override suspend fun disconnect() {
         (state.value as? CloudAccount.Connected)?.let { authorizer.revoke(it.email) }

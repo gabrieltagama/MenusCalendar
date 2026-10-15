@@ -25,7 +25,9 @@ import kotlinx.coroutines.launch
 /**
  * Settings screen state: the chosen theme mode and the optional Google recipe backup, which can
  * be linked, run or restored on demand and unlinked. Backup results surface as a nullable
- * [BackupMessage] in [BackupUiState].
+ * [BackupMessage] in [BackupUiState]. Buttons are ignored while an operation runs (the Google
+ * authorization result continues the connection already in progress), and the busy flag is
+ * always cleared, even when an operation fails unexpectedly.
  */
 data class BackupUiState(
     val isBusy: Boolean = false,
@@ -66,24 +68,33 @@ class SettingsViewModel @Inject constructor(
 
     fun onGoogleAuthorization(accessToken: String?) {
         if (accessToken == null) showMessage(BackupMessage.ConnectionCancelled)
-        else runBusy { connectCloudAccount(accessToken).toMessage(BackupMessage::Restored) }
+        else perform { connectCloudAccount(accessToken).toMessage(BackupMessage::Restored) }
     }
 
-    fun onBackUpNow() = runBusy { backUpRecipes(onlyIfChanged = false).toMessage { BackupMessage.BackedUp } }
+    fun onBackUpNow() = performIfIdle { backUpRecipes(onlyIfChanged = false).toMessage { BackupMessage.BackedUp } }
 
-    fun onRestore() = runBusy { restoreRecipes().toMessage(BackupMessage::Restored) }
+    fun onRestore() = performIfIdle { restoreRecipes().toMessage(BackupMessage::Restored) }
 
-    fun onDisconnect() = runBusy {
+    fun onDisconnect() = performIfIdle {
         disconnectCloudAccount()
         BackupMessage.Disconnected
     }
 
     fun onMessageShown() = _backupState.update { it.copy(message = null) }
 
-    private fun runBusy(action: suspend () -> BackupMessage) {
+    private fun performIfIdle(action: suspend () -> BackupMessage) {
+        if (!_backupState.value.isBusy) perform(action)
+    }
+
+    private fun perform(action: suspend () -> BackupMessage) {
+        _backupState.update { it.copy(isBusy = true, message = null) }
         viewModelScope.launch {
-            _backupState.update { it.copy(isBusy = true, message = null) }
-            showMessage(action())
+            try {
+                val message = action()
+                _backupState.update { it.copy(message = message) }
+            } finally {
+                _backupState.update { it.copy(isBusy = false) }
+            }
         }
     }
 
