@@ -1,11 +1,9 @@
 package com.gabrieltagama.menuplanner.feature.calendar.day
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
@@ -15,18 +13,18 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCa
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetMealDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveMealDayUseCase
+import com.gabrieltagama.menuplanner.feature.calendar.common.EditorForm
+import com.gabrieltagama.menuplanner.feature.calendar.common.PlanEditorViewModel
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.DayEditorRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.random.Random
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,8 +32,9 @@ import kotlinx.coroutines.launch
 /**
  * Editor of the lunch of one day. The form keeps a selection for every slot, so switching
  * between "starter + main" and "single dish" never loses what was picked; only the slots of the
- * active mode are saved. Options are observed per dish type. A slot can also be filled with a
- * random dish of its type, different from the current one when possible.
+ * active mode are saved. Options come from one dish flow grouped by type, already in Spanish
+ * order. Saving, clearing and the random pick are shared with the dinner editor
+ * (PlanEditorViewModel).
  */
 enum class MenuMode { COURSES, SINGLE }
 
@@ -43,11 +42,14 @@ data class DayEditorForm(
     val mode: MenuMode = MenuMode.COURSES,
     val selections: Map<MenuSlot, Dish> = emptyMap(),
     val hasSavedDay: Boolean = false,
-    val isLoading: Boolean = true,
-    val isSaving: Boolean = false,
-    val showClearConfirm: Boolean = false,
-    val error: DomainError? = null
-)
+    override val isLoading: Boolean = true,
+    override val isSaving: Boolean = false,
+    override val showClearConfirm: Boolean = false,
+    override val error: DomainError? = null
+) : EditorForm<DayEditorForm> {
+    override fun withStatus(isSaving: Boolean, showClearConfirm: Boolean, error: DomainError?): DayEditorForm =
+        copy(isSaving = isSaving, showClearConfirm = showClearConfirm, error = error)
+}
 
 data class DayEditorUiState(
     val date: LocalDate,
@@ -90,25 +92,17 @@ class DayEditorViewModel @Inject constructor(
     private val getMealDay: GetMealDayUseCase,
     private val saveMealDay: SaveMealDayUseCase,
     private val clearMealDay: ClearMealDayUseCase,
-    private val random: Random
-) : ViewModel() {
+    random: Random
+) : PlanEditorViewModel<DayEditorForm, DayEditorEvent>(DayEditorForm(), DayEditorEvent.Close, random) {
 
     private val date: LocalDate = LocalDate.ofEpochDay(savedStateHandle.toRoute<DayEditorRoute>().epochDay)
 
-    private val form = MutableStateFlow(DayEditorForm())
-
-    private val options: Flow<Map<DishType, List<Dish>>> =
-        combine(DishType.entries.map { type -> observeDishes(type) }) { lists ->
-            DishType.entries.zip(lists) { type, dishes -> type to dishes.sortedBy { it.name.lowercase() } }.toMap()
-        }
+    private val options: Flow<Map<DishType, List<Dish>>> = observeDishes().map { dishes -> dishes.groupBy(Dish::type) }
 
     val uiState: StateFlow<DayEditorUiState> =
         combine(form, options) { currentForm, currentOptions ->
             DayEditorUiState(date = date, form = currentForm, options = currentOptions, isOptionsLoading = false)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DayEditorUiState(date = date))
-
-    private val _events = Channel<DayEditorEvent>(Channel.BUFFERED)
-    val events: Flow<DayEditorEvent> = _events.receiveAsFlow()
 
     init {
         viewModelScope.launch { fillForm(getMealDay(date)) }
@@ -122,37 +116,17 @@ class DayEditorViewModel @Inject constructor(
 
     fun onRandomDish(slot: MenuSlot) {
         val state = uiState.value
-        val current = state.selectionFor(slot)
-        val options = state.optionsFor(slot)
-        options.filterNot { it.id == current?.id }.ifEmpty { options }.randomOrNull(random)?.let { onDishSelect(slot, it) }
+        randomDish(state.optionsFor(slot), state.selectionFor(slot))?.let { onDishSelect(slot, it) }
     }
-
-    fun onClearRequest() = form.update { it.copy(showClearConfirm = true) }
-
-    fun onClearDismiss() = form.update { it.copy(showClearConfirm = false) }
-
-    fun onErrorShown() = form.update { it.copy(error = null) }
 
     fun onSave() {
         val state = uiState.value
         if (!state.canSave) return
         val menu = state.toMenu() ?: return
-        form.update { it.copy(isSaving = true) }
-        viewModelScope.launch {
-            when (val outcome = saveMealDay(date, menu)) {
-                is Outcome.Success -> _events.send(DayEditorEvent.Close)
-                is Outcome.Failure -> form.update { it.copy(isSaving = false, error = outcome.error) }
-            }
-        }
+        saveDay { saveMealDay(date, menu) }
     }
 
-    fun onClearConfirm() {
-        form.update { it.copy(showClearConfirm = false, isSaving = true) }
-        viewModelScope.launch {
-            clearMealDay(date)
-            _events.send(DayEditorEvent.Close)
-        }
-    }
+    override suspend fun clearDay() = clearMealDay(date)
 
     private fun fillForm(day: MealDay?) = form.update { current ->
         when (val menu = day?.menu) {

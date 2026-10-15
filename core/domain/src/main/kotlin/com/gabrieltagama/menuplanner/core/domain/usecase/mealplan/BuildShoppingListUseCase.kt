@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
+import com.gabrieltagama.menuplanner.core.domain.common.SpanishOrder
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
@@ -10,10 +11,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
 import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.MealPlanRepository
-import java.text.Collator
 import java.time.LocalDate
 import java.time.YearMonth
-import java.util.Locale
 import javax.inject.Inject
 
 /**
@@ -40,7 +39,7 @@ class BuildShoppingListUseCase @Inject constructor(
             .let(IngredientStandardizer::standardizeLines)
             .groupBy { IngredientKey.of(it.name) }
             .map { (_, lines) -> lines.toShoppingItem() }
-            .sortedWith(compareBy(spanishCollator()) { it.name })
+            .sortedWith(SpanishOrder.by(ShoppingItem::name))
 
     private suspend fun plannedDishes(dates: ClosedRange<LocalDate>, meals: Set<Meal>): List<Dish> =
         Meal.entries.filter { it in meals }.flatMap { dishesOf(it, dates) }
@@ -53,11 +52,7 @@ class BuildShoppingListUseCase @Inject constructor(
 
 private const val METRIC_FACTOR = 1000.0
 
-private val spanishLocale: Locale = Locale.forLanguageTag("es-ES")
-
 private val whitespace = Regex("\\s+")
-
-private fun spanishCollator(): Collator = Collator.getInstance(spanishLocale).apply { strength = Collator.PRIMARY }
 
 private fun List<Ingredient>.toShoppingItem(): ShoppingItem {
     val total = sumOf { it.quantity }

@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.SpanishOrder
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
@@ -9,14 +10,18 @@ import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /**
- * Use cases of the recipe book: query, save (with validation, ingredients converted to standard
- * units) and delete (blocked while the dish is planned in the calendar).
+ * Use cases of the recipe book: query (sorted by name in Spanish order), save (with validation,
+ * ingredients converted to standard units) and delete (blocked while the dish is planned in the
+ * calendar).
  */
 class ObserveDishesUseCase @Inject constructor(private val repository: DishRepository) {
+    private val byName: Comparator<Dish> = SpanishOrder.by(Dish::name)
+
     operator fun invoke(type: DishType? = null): Flow<List<Dish>> =
-        type?.let(repository::observeDishesByType) ?: repository.observeDishes()
+        (type?.let(repository::observeDishesByType) ?: repository.observeDishes()).map { it.sortedWith(byName) }
 }
 
 class GetDishUseCase @Inject constructor(private val repository: DishRepository) {

@@ -10,7 +10,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests that ObserveDishesUseCase returns every dish or only those of the requested type.
+ * Tests that ObserveDishesUseCase returns every dish or only those of the requested type, sorted
+ * by name in Spanish order (case and accents ignored).
  */
 class ObserveDishesUseCaseTest {
     private val starter = dish(id = "s", type = DishType.STARTER)
@@ -31,5 +32,13 @@ class ObserveDishesUseCaseTest {
     @Test
     fun `type without dishes emits empty list`() = runBlocking {
         assertTrue(useCase(DishType.SINGLE).first().isEmpty())
+    }
+
+    @Test
+    fun `dishes are sorted by name ignoring case and accents`() = runBlocking {
+        val names = listOf("ñoquis", "Arroz", "árbol de verduras", "Natillas", "bacalao")
+        val sorted = ObserveDishesUseCase(FakeDishRepository(names.map { dish(id = it, name = it) }))().first().map { it.name }
+
+        assertEquals(listOf("árbol de verduras", "Arroz", "bacalao", "Natillas", "ñoquis"), sorted)
     }
 }
