@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.fake
 
-import com.gabrieltagama.menuplanner.core.domain.repository.InitialDishesSource
+import com.gabrieltagama.menuplanner.core.domain.port.InitialDishesSource
 
 /**
  * In-memory InitialDishesSource with a canned JSON and the loaded flag, counting reads.

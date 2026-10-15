@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.core.domain.repository
+package com.gabrieltagama.menuplanner.core.domain.port
 
 /**
  * Port to the starter recipe book bundled with the app: its share JSON and a per-installation flag

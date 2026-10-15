@@ -5,7 +5,7 @@ import com.gabrieltagama.menuplanner.core.data.database.entity.DishWithIngredien
 import com.gabrieltagama.menuplanner.core.data.mapper.toDomain
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedMeal
-import com.gabrieltagama.menuplanner.core.domain.repository.PlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.PlanRepository
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.flow.Flow

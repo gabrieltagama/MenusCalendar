@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.fake
 
-import com.gabrieltagama.menuplanner.core.domain.repository.ShareFileStore
+import com.gabrieltagama.menuplanner.core.domain.port.ShareFileStore
 
 /**
  * In-memory ShareFileStore: written texts get a numbered location, files can be preset by

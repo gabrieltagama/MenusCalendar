@@ -8,7 +8,7 @@ import com.gabrieltagama.menuplanner.core.data.share.ShareDocumentCodec
 import com.gabrieltagama.menuplanner.core.data.share.ShareDocumentMapper
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.ImportContent
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MenuShareRepository
 import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject

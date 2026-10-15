@@ -2,8 +2,8 @@ package com.gabrieltagama.menuplanner.core.cloud.di
 
 import com.gabrieltagama.menuplanner.core.cloud.backup.GoogleDriveBackupRepository
 import com.gabrieltagama.menuplanner.core.cloud.backup.WorkManagerBackupScheduler
-import com.gabrieltagama.menuplanner.core.domain.repository.BackupScheduler
-import com.gabrieltagama.menuplanner.core.domain.repository.CloudBackupRepository
+import com.gabrieltagama.menuplanner.core.domain.port.BackupScheduler
+import com.gabrieltagama.menuplanner.core.domain.port.CloudBackupRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

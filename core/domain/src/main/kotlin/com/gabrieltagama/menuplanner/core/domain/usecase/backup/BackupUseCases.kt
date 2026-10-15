@@ -5,10 +5,10 @@ import com.gabrieltagama.menuplanner.core.domain.model.BackupResult
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.RecipesFingerprint
-import com.gabrieltagama.menuplanner.core.domain.repository.BackupScheduler
-import com.gabrieltagama.menuplanner.core.domain.repository.CloudBackupRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
+import com.gabrieltagama.menuplanner.core.domain.port.BackupScheduler
+import com.gabrieltagama.menuplanner.core.domain.port.CloudBackupRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MenuShareRepository
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow

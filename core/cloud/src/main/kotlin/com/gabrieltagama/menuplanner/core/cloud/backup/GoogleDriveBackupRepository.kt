@@ -10,7 +10,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.IoDispatcher
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
-import com.gabrieltagama.menuplanner.core.domain.repository.CloudBackupRepository
+import com.gabrieltagama.menuplanner.core.domain.port.CloudBackupRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject

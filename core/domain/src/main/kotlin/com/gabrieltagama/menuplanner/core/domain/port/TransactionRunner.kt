@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.core.domain.repository
+package com.gabrieltagama.menuplanner.core.domain.port
 
 /**
  * Port that runs a block of repository calls atomically: either every write inside it is kept or

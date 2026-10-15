@@ -7,7 +7,7 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toDomain
 import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
-import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 

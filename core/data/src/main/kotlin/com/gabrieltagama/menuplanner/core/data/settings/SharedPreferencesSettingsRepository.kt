@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 import com.gabrieltagama.menuplanner.core.domain.common.IoDispatcher
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
-import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton

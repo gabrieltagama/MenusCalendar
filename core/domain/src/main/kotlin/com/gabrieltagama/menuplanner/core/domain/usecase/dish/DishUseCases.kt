@@ -4,7 +4,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
-import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject

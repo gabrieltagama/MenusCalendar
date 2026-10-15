@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
-import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.InitialDishesSource
+import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.port.InitialDishesSource
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import javax.inject.Inject
 import javax.inject.Singleton

@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.core.domain.repository
+package com.gabrieltagama.menuplanner.core.domain.port
 
 /**
  * Port to the files exchanged when sharing. write stores an export and returns a location other

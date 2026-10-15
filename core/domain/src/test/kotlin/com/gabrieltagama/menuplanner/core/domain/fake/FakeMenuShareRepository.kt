@@ -2,7 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.fake
 
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.ImportContent
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MenuShareRepository
 
 /**
  * In-memory MenuShareRepository returning canned export texts and a canned decode result, and

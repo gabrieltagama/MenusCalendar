@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.fake
 
-import com.gabrieltagama.menuplanner.core.domain.repository.TransactionRunner
+import com.gabrieltagama.menuplanner.core.domain.port.TransactionRunner
 
 /**
  * TransactionRunner that runs the block directly and counts how many transactions were opened.

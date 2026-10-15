@@ -8,8 +8,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
-import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MealPlanRepository
 import java.text.Collator
 import java.time.LocalDate
 import java.time.YearMonth

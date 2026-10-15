@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
 import com.gabrieltagama.menuplanner.core.domain.common.IoDispatcher
-import com.gabrieltagama.menuplanner.core.domain.repository.ShareFileStore
+import com.gabrieltagama.menuplanner.core.domain.port.ShareFileStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.IOException

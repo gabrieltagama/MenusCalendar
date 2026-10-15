@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.data.database
 
 import androidx.room.withTransaction
-import com.gabrieltagama.menuplanner.core.domain.repository.TransactionRunner
+import com.gabrieltagama.menuplanner.core.domain.port.TransactionRunner
 import javax.inject.Inject
 
 /**

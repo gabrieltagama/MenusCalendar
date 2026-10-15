@@ -3,7 +3,7 @@ package com.gabrieltagama.menuplanner.core.data.initial
 import android.content.Context
 import androidx.core.content.edit
 import com.gabrieltagama.menuplanner.core.domain.common.IoDispatcher
-import com.gabrieltagama.menuplanner.core.domain.repository.InitialDishesSource
+import com.gabrieltagama.menuplanner.core.domain.port.InitialDishesSource
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher

@@ -3,9 +3,9 @@ package com.gabrieltagama.menuplanner.feature.calendar.testing
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedMeal
-import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.PlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.PlanRepository
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.flow.Flow

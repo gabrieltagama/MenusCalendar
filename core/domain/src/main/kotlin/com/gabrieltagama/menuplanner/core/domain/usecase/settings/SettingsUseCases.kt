@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.settings
 
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
-import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 

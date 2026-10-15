@@ -2,7 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
-import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import javax.inject.Inject
 
 /**
