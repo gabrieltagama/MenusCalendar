@@ -4,7 +4,9 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 
 /**
  * Immutable form state of the dish editor. Quantities are kept as raw text so the user can type
@@ -19,6 +21,8 @@ data class DishEditorUiState(
     val description: String = "",
     val type: DishType = DishType.MAIN,
     val heaviness: Heaviness = Heaviness.MEDIUM,
+    val rating: Rating = Rating.THREE,
+    val mealTime: MealTime = MealTime.ANY,
     val ingredients: List<IngredientForm> = emptyList(),
     val preparation: String = "",
     val showValidationErrors: Boolean = false,

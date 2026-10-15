@@ -11,7 +11,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate
@@ -53,6 +55,8 @@ internal object ShareDocumentMapper {
         preparation = preparation,
         type = type.name,
         heaviness = heaviness.name,
+        rating = rating.name,
+        mealTime = mealTime.name,
         updatedAt = updatedAt.toString()
     )
 
@@ -87,6 +91,8 @@ internal object ShareDocumentMapper {
         preparation = preparation,
         type = DishType.valueOf(type),
         heaviness = Heaviness.valueOf(heaviness),
+        rating = Rating.valueOf(rating),
+        mealTime = MealTime.valueOf(mealTime),
         updatedAt = Instant.parse(updatedAt)
     )
 

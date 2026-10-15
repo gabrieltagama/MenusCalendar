@@ -1,5 +1,7 @@
 package com.gabrieltagama.menuplanner.core.data.share.dto
 
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import kotlinx.serialization.Serializable
 
 /**
@@ -29,6 +31,8 @@ internal data class DishDto(
     val preparation: String,
     val type: String,
     val heaviness: String,
+    val rating: String = Rating.THREE.name,
+    val mealTime: String = MealTime.ANY.name,
     val updatedAt: String
 )
 

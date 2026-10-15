@@ -10,6 +10,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.ChronoUnit
@@ -24,7 +25,7 @@ import org.junit.Test
 /**
  * Property-style tests of AutoFillMonthUseCase (and MenuPicker) over many seeds: only empty days are
  * filled, menu shapes and desserts are mixed, no dish repeats within 7 days (also across the month
- * boundary), no VERY_HIGH main dish follows a heavy day, and the fallback order when dishes are scarce
+ * boundary), dinner-only dishes are never used, no VERY_HIGH main dish follows a heavy day, and the fallback order when dishes are scarce
  * is "repeat first, break the heavy rule last".
  */
 class AutoFillMonthUseCaseTest {
@@ -355,5 +356,23 @@ class AutoFillMonthUseCaseTest {
         val run = autoFill(listOf(starter, main, heavySingle), seed, planned)
 
         assertFalse("seed $seed: day 1 broke the heavy rule", run.plan.getValue(month.atDay(1)).isHeavy())
+    }
+
+    @Test
+    fun `dinner only dishes are never planned`() = seeds.forEach { seed ->
+        val dinnerOnly = DishType.entries.flatMap { type -> (1..5).map { dish(id = "$type-dinner-$it", type = type, mealTime = MealTime.DINNER) } }
+        val lunchCatalog = richCatalog.map { it.copy(mealTime = if (it.id.hashCode() % 2 == 0) MealTime.LUNCH else MealTime.ANY) }
+
+        val run = autoFill(lunchCatalog + dinnerOnly, seed)
+
+        assertEquals(31, run.result.filledDays)
+        assertTrue("seed $seed: a dinner-only dish was planned", run.plan.values.flatMap(DailyMenu::dishes).none { it.mealTime == MealTime.DINNER })
+    }
+
+    @Test
+    fun `days stay unfilled when every dish is dinner only`() = seeds.forEach { seed ->
+        val run = autoFill(richCatalog.map { it.copy(mealTime = MealTime.DINNER) }, seed)
+
+        assertEquals(AutoFillResult(filledDays = 0, repeatedDishDays = 0, heavyStreakDays = 0, unfilledDays = 31), run.result)
     }
 }

@@ -25,6 +25,8 @@
     <string name="dish_editor_description">Descripción</string>
     <string name="dish_editor_type">Tipo</string>
     <string name="dish_editor_heaviness">Pesadez</string>
+    <string name="dish_editor_rating">Valoración</string>
+    <string name="dish_editor_meal_time">Momento</string>
     <string name="dish_editor_section_basics">Datos básicos</string>
     <string name="dish_editor_section_classification">Clasificación</string>
     <string name="dish_editor_ingredients">Ingredientes</string>

@@ -5,6 +5,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.serialization.json.Json
@@ -30,6 +32,8 @@ internal object TestData {
         type: DishType = DishType.MAIN,
         heaviness: Heaviness = Heaviness.MEDIUM,
         ingredients: List<Ingredient> = emptyList(),
+        rating: Rating = Rating.THREE,
+        mealTime: MealTime = MealTime.ANY,
         updatedAt: Instant = OLD_INSTANT
     ) = Dish(
         id = id,
@@ -39,6 +43,8 @@ internal object TestData {
         preparation = "Prepare $name",
         type = type,
         heaviness = heaviness,
+        rating = rating,
+        mealTime = mealTime,
         updatedAt = updatedAt
     )
 

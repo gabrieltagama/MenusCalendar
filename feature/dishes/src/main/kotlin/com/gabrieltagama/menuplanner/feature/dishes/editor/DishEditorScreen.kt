@@ -62,7 +62,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessDot
 import com.gabrieltagama.menuplanner.core.ui.component.icon
@@ -76,7 +78,8 @@ import com.gabrieltagama.menuplanner.feature.dishes.R
  * Dish create/edit form: stateful route bound to [DishEditorViewModel] (events, snackbar) and a
  * stateless screen receiving the form state and one callback per user action. The form is split
  * into section cards (basics, classification, ingredients, preparation); type is chosen with
- * icon chips and heaviness with a color-coded segmented button.
+ * icon chips, heaviness with a color-coded segmented button, and rating and meal time with
+ * dropdowns.
  */
 data class DishEditorActions(
     val onBack: () -> Unit = {},
@@ -88,6 +91,8 @@ data class DishEditorActions(
     val onDescriptionChange: (String) -> Unit = {},
     val onTypeChange: (DishType) -> Unit = {},
     val onHeavinessChange: (Heaviness) -> Unit = {},
+    val onRatingChange: (Rating) -> Unit = {},
+    val onMealTimeChange: (MealTime) -> Unit = {},
     val onPreparationChange: (String) -> Unit = {},
     val onAddIngredient: () -> Unit = {},
     val onRemoveIngredient: (Long) -> Unit = {},
@@ -132,6 +137,8 @@ fun DishEditorScreenRoute(
             onDescriptionChange = viewModel::onDescriptionChange,
             onTypeChange = viewModel::onTypeChange,
             onHeavinessChange = viewModel::onHeavinessChange,
+            onRatingChange = viewModel::onRatingChange,
+            onMealTimeChange = viewModel::onMealTimeChange,
             onPreparationChange = viewModel::onPreparationChange,
             onAddIngredient = viewModel::onAddIngredient,
             onRemoveIngredient = viewModel::onRemoveIngredient,
@@ -216,6 +223,24 @@ private fun DishForm(state: DishEditorUiState, actions: DishEditorActions, modif
     SectionCard(title = stringResource(R.string.dish_editor_section_classification)) {
         TypeSelector(selected = state.type, onSelect = actions.onTypeChange)
         HeavinessSelector(selected = state.heaviness, onSelect = actions.onHeavinessChange)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            EnumDropdown(
+                label = stringResource(R.string.dish_editor_rating),
+                options = Rating.entries,
+                selected = state.rating,
+                optionLabel = { it.label() },
+                onSelect = actions.onRatingChange,
+                modifier = Modifier.weight(1f)
+            )
+            EnumDropdown(
+                label = stringResource(R.string.dish_editor_meal_time),
+                options = MealTime.entries,
+                selected = state.mealTime,
+                optionLabel = { it.label() },
+                onSelect = actions.onMealTimeChange,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
     SectionCard(title = stringResource(R.string.dish_editor_ingredients)) {
         IngredientsSection(state = state, actions = actions)
@@ -391,6 +416,8 @@ private fun DishEditorScreenPreview() = MenuPlannerTheme {
             description = "Jugosa, con cebolla",
             type = DishType.MAIN,
             heaviness = Heaviness.MEDIUM,
+            rating = Rating.FOUR,
+            mealTime = MealTime.LUNCH,
             ingredients = listOf(
                 IngredientForm(key = 0, name = "Patata", quantityText = "500", unit = MeasureUnit.GRAM),
                 IngredientForm(key = 1, name = "Huevo", quantityText = "6", unit = MeasureUnit.UNIT)

@@ -5,7 +5,9 @@ import androidx.compose.ui.res.stringResource
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.ui.R
 
 /**
@@ -29,6 +31,20 @@ fun Heaviness.label(): String = stringResource(
         Heaviness.VERY_HIGH -> R.string.heaviness_very_high
     }
 )
+
+@Composable
+fun MealTime.label(): String = stringResource(
+    when (this) {
+        MealTime.LUNCH -> R.string.meal_time_lunch
+        MealTime.DINNER -> R.string.meal_time_dinner
+        MealTime.ANY -> R.string.meal_time_any
+    }
+)
+
+fun Rating.label(): String = FILLED_STAR.repeat(stars) + EMPTY_STAR.repeat(Rating.entries.size - stars)
+
+private const val FILLED_STAR = "★"
+private const val EMPTY_STAR = "☆"
 
 @Composable
 fun MeasureUnit.label(): String = stringResource(

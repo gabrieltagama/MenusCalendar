@@ -9,6 +9,10 @@
     <string name="heaviness_medium">Media</string>
     <string name="heaviness_very_high">Muy alta</string>
 
+    <string name="meal_time_lunch">Comida</string>
+    <string name="meal_time_dinner">Cena</string>
+    <string name="meal_time_any">Indiferente</string>
+
     <string name="unit_gram">g</string>
     <string name="unit_kilogram">kg</string>
     <string name="unit_milliliter">ml</string>
