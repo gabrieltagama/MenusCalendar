@@ -7,11 +7,13 @@ import com.gabrieltagama.menuplanner.feature.calendar.R
 /**
  * Builds the Spanish summary shown after the month autofill, e.g. "Rellenados 18 días, 2 repiten
  * plato, 3 sin rellenar (faltan platos)". Texts come from [AutoFillTexts] so the composition can
- * be unit tested without Android resources; [ResourcesAutoFillTexts] reads the plurals.
+ * be unit tested without Android resources; [ResourcesAutoFillTexts] reads the plurals. The
+ * missing-dishes text depends on the view, because dinners need dinner dishes.
  */
 interface AutoFillTexts {
     val nothingToFill: String
     val notEnoughDishes: String
+    val notEnoughDinnerDishes: String
     fun filled(count: Int): String
     fun repeatedDish(count: Int): String
     fun heavyStreak(count: Int): String
@@ -20,9 +22,9 @@ interface AutoFillTexts {
 
 class AutoFillMessageFormatter(private val texts: AutoFillTexts) {
 
-    fun format(result: AutoFillResult): String = when {
+    fun format(result: AutoFillResult, view: PlanView = PlanView.LUNCH): String = when {
         result.filledDays == 0 && result.unfilledDays == 0 -> texts.nothingToFill
-        result.filledDays == 0 -> texts.notEnoughDishes
+        result.filledDays == 0 -> notEnoughDishes(view)
         else -> summaryParts(result).joinToString(SEPARATOR)
     }
 
@@ -33,6 +35,11 @@ class AutoFillMessageFormatter(private val texts: AutoFillTexts) {
         result.unfilledDays.takeIf { it > 0 }?.let(texts::unfilled)
     )
 
+    private fun notEnoughDishes(view: PlanView): String = when (view) {
+        PlanView.LUNCH -> texts.notEnoughDishes
+        PlanView.DINNER -> texts.notEnoughDinnerDishes
+    }
+
     private companion object {
         const val SEPARATOR = ", "
     }
@@ -41,6 +48,7 @@ class AutoFillMessageFormatter(private val texts: AutoFillTexts) {
 class ResourcesAutoFillTexts(private val resources: Resources) : AutoFillTexts {
     override val nothingToFill: String get() = resources.getString(R.string.calendar_autofill_nothing_to_fill)
     override val notEnoughDishes: String get() = resources.getString(R.string.calendar_autofill_not_enough_dishes)
+    override val notEnoughDinnerDishes: String get() = resources.getString(R.string.calendar_autofill_not_enough_dinner_dishes)
     override fun filled(count: Int): String = plural(R.plurals.calendar_autofill_filled, count)
     override fun repeatedDish(count: Int): String = plural(R.plurals.calendar_autofill_repeated_dish, count)
     override fun heavyStreak(count: Int): String = plural(R.plurals.calendar_autofill_heavy_streak, count)

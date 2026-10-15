@@ -3,35 +3,23 @@ package com.gabrieltagama.menuplanner.feature.calendar.day
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Casino
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material.icons.filled.DoNotDisturbOn
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -42,13 +30,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -71,9 +57,9 @@ import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
+import com.gabrieltagama.menuplanner.feature.calendar.common.DishPickerSheet
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
 import java.time.LocalDate
-import kotlinx.coroutines.launch
 
 /**
  * Day menu editor: stateful route bound to [DayEditorViewModel] (events, snackbar) and a
@@ -175,7 +161,8 @@ fun DayEditorScreen(
 
     pickingSlot?.let { slot ->
         DishPickerSheet(
-            slot = slot,
+            title = slot.label(),
+            noneLabel = if (slot.isRequired) null else stringResource(R.string.day_editor_no_dessert),
             options = state.optionsFor(slot),
             selected = state.selectionFor(slot),
             onSelect = { actions.onDishSelect(slot, it) },
@@ -277,99 +264,6 @@ private fun SlotCard(slot: MenuSlot, selected: Dish?, hasOptions: Boolean, onPic
         }
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DishPickerSheet(
-    slot: MenuSlot,
-    options: List<Dish>,
-    selected: Dish?,
-    onSelect: (Dish?) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
-    var query by rememberSaveable { mutableStateOf("") }
-    val visible = remember(options, query) { options.filter { it.name.contains(query.trim(), ignoreCase = true) } }
-    val choose: (Dish?) -> Unit = { dish ->
-        onSelect(dish)
-        scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
-    }
-
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        Column(modifier = Modifier.navigationBarsPadding()) {
-            Text(
-                text = slot.label(),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 24.dp)
-            )
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                placeholder = { Text(stringResource(R.string.day_editor_search_hint)) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (query.isNotEmpty())
-                        IconButton(onClick = { query = "" }) { Icon(Icons.Filled.Clear, contentDescription = null) }
-                },
-                singleLine = true,
-                shape = MaterialTheme.shapes.extraLarge
-            )
-            LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
-                if (!slot.isRequired)
-                    item(key = "none") {
-                        PickerRow(
-                            headline = stringResource(R.string.day_editor_no_dessert),
-                            leading = { Icon(Icons.Filled.DoNotDisturbOn, contentDescription = null) },
-                            isSelected = selected == null,
-                            onClick = { choose(null) }
-                        )
-                    }
-                items(items = visible, key = { it.id }) { dish ->
-                    PickerRow(
-                        headline = dish.name,
-                        leading = { DishTypeAvatar(type = dish.type, size = 36.dp) },
-                        trailing = { HeavinessChip(heaviness = dish.heaviness) },
-                        isSelected = dish.id == selected?.id,
-                        onClick = { choose(dish) }
-                    )
-                }
-                if (visible.isEmpty())
-                    item(key = "empty") {
-                        Text(
-                            text = stringResource(R.string.day_editor_no_matches),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(24.dp)
-                        )
-                    }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PickerRow(
-    headline: String,
-    leading: @Composable () -> Unit,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    trailing: @Composable () -> Unit = {}
-) = ListItem(
-    headlineContent = { Text(text = headline, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-    leadingContent = leading,
-    trailingContent = {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            trailing()
-            if (isSelected) Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-        }
-    },
-    colors = ListItemDefaults.colors(
-        containerColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow
-    ),
-    modifier = Modifier.clickable(onClick = onClick)
-)
 
 @Composable
 private fun MenuMode.label(): String = stringResource(

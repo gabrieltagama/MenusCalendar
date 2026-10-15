@@ -15,8 +15,8 @@ import java.time.Instant
 import javax.inject.Inject
 
 /**
- * JSON sharing of the recipe book and calendar. Export reads a consistent snapshot, the recipes
- * export leaves the calendar out; import is decoded and validated first and then merged inside a
+ * JSON sharing of the recipe book and calendar (lunches and dinners). Export reads a consistent
+ * snapshot, the recipes export leaves the calendar out; import is decoded and validated first and then merged inside a
  * single transaction.
  */
 internal class JsonMenuShareRepository @Inject constructor(
@@ -31,7 +31,8 @@ internal class JsonMenuShareRepository @Inject constructor(
             ShareDocumentMapper.toDocument(
                 dishes = database.dishDao().getAll().map(DishWithIngredients::toDomain),
                 mealDays = database.mealDayDao().getAll(),
-                exportedAt = Instant.now(clock)
+                exportedAt = Instant.now(clock),
+                dinnerDays = database.dinnerDayDao().getAll()
             )
         }
         return codec.encode(document)

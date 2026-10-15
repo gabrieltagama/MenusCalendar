@@ -69,6 +69,7 @@ fun DomainError.message(): String = when (this) {
     DomainError.DishNotFound -> stringResource(R.string.error_dish_not_found)
     DomainError.DishInUse -> stringResource(R.string.error_dish_in_use)
     is DomainError.WrongDishType -> stringResource(R.string.error_wrong_dish_type, expected.label())
+    DomainError.NotADinnerDish -> stringResource(R.string.error_not_a_dinner_dish)
     DomainError.InvalidImportFile -> stringResource(R.string.error_invalid_import_file)
     DomainError.UnsupportedImportVersion -> stringResource(R.string.error_unsupported_import_version)
     DomainError.CloudUnavailable -> stringResource(R.string.error_cloud_unavailable)

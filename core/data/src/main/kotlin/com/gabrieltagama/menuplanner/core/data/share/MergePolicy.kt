@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.core.data.share
 
+import com.gabrieltagama.menuplanner.core.data.database.entity.DinnerDayEntity
 import com.gabrieltagama.menuplanner.core.data.database.entity.MealDayEntity
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 
@@ -8,7 +9,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishType
  * when the incoming updatedAt is strictly newer, anything else is skipped. A meal day is
  * importable only when it has exactly one valid shape (single, or starter + main, never both)
  * and every referenced dish is known after the dishes have been merged and sits in the slot
- * matching its type, the same rule SaveMealDayUseCase applies.
+ * matching its type, the same rule SaveMealDayUseCase applies. A dinner is importable when its
+ * dish is known and is not a dessert.
  */
 internal enum class MergeDecision { ADD, UPDATE, SKIP }
 
@@ -22,6 +24,9 @@ internal object MergePolicy {
 
     fun isImportable(day: MealDayEntity, knownDishTypes: Map<String, DishType>): Boolean =
         hasValidShape(day) && day.slots().all { (dishId, expected) -> knownDishTypes[dishId] == expected }
+
+    fun isImportable(dinner: DinnerDayEntity, knownDishTypes: Map<String, DishType>): Boolean =
+        knownDishTypes[dinner.dishId]?.let { it != DishType.DESSERT } ?: false
 
     private fun hasValidShape(day: MealDayEntity): Boolean {
         val isSingle = day.singleId != null && day.starterId == null && day.mainId == null
@@ -38,6 +43,9 @@ internal object MergePolicy {
 }
 
 internal data class MergeCount(val added: Int, val updated: Int, val skipped: Int) {
+    operator fun plus(other: MergeCount): MergeCount =
+        MergeCount(added + other.added, updated + other.updated, skipped + other.skipped)
+
     companion object {
         fun of(decisions: List<MergeDecision>): MergeCount = MergeCount(
             added = decisions.count { it == MergeDecision.ADD },

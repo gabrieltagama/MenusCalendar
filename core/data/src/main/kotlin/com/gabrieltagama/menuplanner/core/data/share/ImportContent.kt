@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.core.data.share
 
+import com.gabrieltagama.menuplanner.core.data.database.entity.DinnerDayEntity
 import com.gabrieltagama.menuplanner.core.data.database.entity.MealDayEntity
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 
@@ -8,5 +9,6 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
  */
 internal data class ImportContent(
     val dishes: List<Dish>,
-    val mealDays: List<MealDayEntity>
+    val mealDays: List<MealDayEntity>,
+    val dinnerDays: List<DinnerDayEntity> = emptyList()
 )

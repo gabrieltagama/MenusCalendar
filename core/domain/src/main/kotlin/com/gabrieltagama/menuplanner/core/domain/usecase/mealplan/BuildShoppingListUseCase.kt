@@ -1,10 +1,12 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
+import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
+import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import java.text.Collator
 import java.time.YearMonth
@@ -13,23 +15,30 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 
 /**
- * Builds the shopping list of a month from the starters, mains and single dishes planned in it;
- * desserts are left out. A dish counts once per day it is planned. Every line is converted to its
- * standard unit and grouped by IngredientKey (ignoring case, accents and plurals), so each product
- * appears once with its total; the most used spelling names it. Grams and millilitres are shown
- * in kilograms and litres from 1000 upwards. The result is sorted alphabetically in Spanish order.
+ * Builds the shopping list of a month from the starters, mains and single dishes planned for
+ * lunch and the dishes planned for dinner; desserts are left out. A dish counts once per meal it
+ * is planned in. Every line is converted to its standard unit and grouped by IngredientKey
+ * (ignoring case, accents and plurals), so each product appears once with its total; the most
+ * used spelling names it. Grams and millilitres are shown in kilograms and litres from 1000
+ * upwards. The result is sorted alphabetically in Spanish order.
  */
-class BuildShoppingListUseCase @Inject constructor(private val repository: MealPlanRepository) {
+class BuildShoppingListUseCase @Inject constructor(
+    private val mealPlanRepository: MealPlanRepository,
+    private val dinnerPlanRepository: DinnerPlanRepository
+) {
 
     suspend operator fun invoke(month: YearMonth): List<ShoppingItem> =
-        repository.observeMonth(month).first()
-            .flatMap { it.menu.mainDishes }
+        plannedDishes(month)
             .flatMap { it.ingredients }
             .filter { it.name.isNotBlank() }
             .let(IngredientStandardizer::standardizeLines)
             .groupBy { IngredientKey.of(it.name) }
             .map { (_, lines) -> lines.toShoppingItem() }
             .sortedWith(compareBy(spanishCollator()) { it.name })
+
+    private suspend fun plannedDishes(month: YearMonth): List<Dish> =
+        mealPlanRepository.observeMonth(month).first().flatMap { it.menu.mainDishes } +
+            dinnerPlanRepository.observeMonth(month).first().map { it.dish }
 }
 
 private const val METRIC_FACTOR = 1000.0

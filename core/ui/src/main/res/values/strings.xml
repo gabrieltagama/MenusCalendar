@@ -29,6 +29,7 @@
     <string name="error_dish_not_found">El plato no existe</string>
     <string name="error_dish_in_use">No se puede borrar: el plato está en el calendario</string>
     <string name="error_wrong_dish_type">El plato elegido no es de tipo %1$s</string>
+    <string name="error_not_a_dinner_dish">Ese plato no se puede elegir para cenar</string>
     <string name="error_invalid_import_file">El archivo no es un JSON de MenuPlanner válido</string>
     <string name="error_unsupported_import_version">El archivo es de una versión no compatible</string>
     <string name="error_cloud_unavailable">No se ha podido conectar con Google Drive. Inténtalo de nuevo más tarde</string>

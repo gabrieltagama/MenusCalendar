@@ -17,6 +17,7 @@ sealed interface DomainError {
     data object DishNotFound : DomainError
     data object DishInUse : DomainError
     data class WrongDishType(val slot: MenuSlot, val expected: DishType) : DomainError
+    data object NotADinnerDish : DomainError
     data object InvalidImportFile : DomainError
     data object UnsupportedImportVersion : DomainError
     data object CloudUnavailable : DomainError

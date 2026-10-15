@@ -60,8 +60,26 @@ class MigrationTest {
     }
 
     @Test
+    fun migrate2To3KeepsDataAndAddsDinnerDays() {
+        helper.createDatabase(TEST_DB, 1).use(::insertVersion1Rows)
+        helper.runMigrationsAndValidate(TEST_DB, 2, true, Migrations.MIGRATION_1_2).close()
+
+        helper.runMigrationsAndValidate(TEST_DB, 3, true, Migrations.MIGRATION_2_3).use { db ->
+            db.execSQL("INSERT INTO dinner_days (date, dish_id, updated_at) VALUES (20000, 'd1', 1)")
+            db.query("SELECT COUNT(*) FROM meal_days WHERE single_id = 'd1'").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(1, cursor.getInt(0))
+            }
+            db.query("SELECT dish_id FROM dinner_days WHERE date = 20000").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals("d1", cursor.getString(0))
+            }
+        }
+    }
+
+    @Test
     fun registeredMigrationsMatchCurrentVersion() =
-        assertEquals(listOf(Migrations.MIGRATION_1_2), Migrations.ALL.toList())
+        assertEquals(listOf(Migrations.MIGRATION_1_2, Migrations.MIGRATION_2_3), Migrations.ALL.toList())
 
     private fun insertVersion1Rows(db: SupportSQLiteDatabase) {
         db.execSQL("INSERT INTO dishes (id, name, description, preparation, type, heaviness, updated_at) VALUES ('d1', 'Soup', '', '', 'STARTER', 'VERY_LOW', 1)")

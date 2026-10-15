@@ -41,6 +41,7 @@ import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.CalendarRoute
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.calendarGraph
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.navigateToDayEditor
+import com.gabrieltagama.menuplanner.feature.calendar.navigation.navigateToDinnerEditor
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.navigateToShoppingList
 import com.gabrieltagama.menuplanner.feature.dishes.navigation.dishesGraph
 import com.gabrieltagama.menuplanner.feature.dishes.navigation.navigateToDishEditor
@@ -121,6 +122,7 @@ private fun MainShellContent(
         ) {
             calendarGraph(
                 onOpenDay = { navController.navigateToDayEditor(it) },
+                onOpenDinner = { navController.navigateToDinnerEditor(it) },
                 onOpenShoppingList = { navController.navigateToShoppingList(it) },
                 onBack = { navController.popBackStack() }
             )

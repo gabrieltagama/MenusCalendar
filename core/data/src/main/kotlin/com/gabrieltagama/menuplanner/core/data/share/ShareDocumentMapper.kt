@@ -1,6 +1,8 @@
 package com.gabrieltagama.menuplanner.core.data.share
 
+import com.gabrieltagama.menuplanner.core.data.database.entity.DinnerDayEntity
 import com.gabrieltagama.menuplanner.core.data.database.entity.MealDayEntity
+import com.gabrieltagama.menuplanner.core.data.share.dto.DinnerDayDto
 import com.gabrieltagama.menuplanner.core.data.share.dto.DishDto
 import com.gabrieltagama.menuplanner.core.data.share.dto.IngredientDto
 import com.gabrieltagama.menuplanner.core.data.share.dto.MealDayDto
@@ -21,16 +23,22 @@ import java.time.LocalDate
 /**
  * Pure conversion between the share DTOs and the model. Unknown enum names, malformed dates or
  * dishes breaking the SaveDishUseCase rules (blank name, blank ingredient, negative or
- * non-finite quantity) make the whole file invalid (InvalidImportFile). Repeated dish ids or
- * meal day dates keep only their newest version. Dates use ISO-8601 (yyyy-MM-dd and instants).
+ * non-finite quantity) make the whole file invalid (InvalidImportFile). Repeated dish ids, meal
+ * day dates or dinner dates keep only their newest version. Dates use ISO-8601 (yyyy-MM-dd and instants).
  */
 internal object ShareDocumentMapper {
 
-    fun toDocument(dishes: List<Dish>, mealDays: List<MealDayEntity>, exportedAt: Instant): ShareDocumentDto =
+    fun toDocument(
+        dishes: List<Dish>,
+        mealDays: List<MealDayEntity>,
+        exportedAt: Instant,
+        dinnerDays: List<DinnerDayEntity> = emptyList()
+    ): ShareDocumentDto =
         ShareDocumentDto(
             exportedAt = exportedAt.toString(),
             dishes = dishes.map { it.toDto() },
-            mealDays = mealDays.map { it.toDto() }
+            mealDays = mealDays.map { it.toDto() },
+            dinnerDays = dinnerDays.map { it.toDto() }
         )
 
     fun toImportContent(document: ShareDocumentDto): Outcome<ImportContent> =
@@ -38,7 +46,8 @@ internal object ShareDocumentMapper {
             Outcome.Success(
                 ImportContent(
                     dishes = document.dishes.map { it.toDomain() }.newestPerId(),
-                    mealDays = document.mealDays.map { it.toEntity() }.newestPerDate()
+                    mealDays = document.mealDays.map { it.toEntity() }.newestPerDate(),
+                    dinnerDays = document.dinnerDays.map { it.toEntity() }.newestDinnerPerDate()
                 )
             )
         } catch (exception: IllegalArgumentException) {
@@ -69,11 +78,20 @@ internal object ShareDocumentMapper {
         updatedAt = Instant.ofEpochMilli(updatedAt).toString()
     )
 
+    private fun DinnerDayEntity.toDto(): DinnerDayDto = DinnerDayDto(
+        date = LocalDate.ofEpochDay(date).toString(),
+        dishId = dishId,
+        updatedAt = Instant.ofEpochMilli(updatedAt).toString()
+    )
+
     private fun List<Dish>.newestPerId(): List<Dish> =
         groupBy(Dish::id).values.map { versions -> versions.maxBy(Dish::updatedAt) }
 
     private fun List<MealDayEntity>.newestPerDate(): List<MealDayEntity> =
         groupBy(MealDayEntity::date).values.map { versions -> versions.maxBy(MealDayEntity::updatedAt) }
+
+    private fun List<DinnerDayEntity>.newestDinnerPerDate(): List<DinnerDayEntity> =
+        groupBy(DinnerDayEntity::date).values.map { versions -> versions.maxBy(DinnerDayEntity::updatedAt) }
 
     private fun DishDto.toDomain(): Dish {
         require(id.isNotBlank() && name.isNotBlank())
@@ -102,6 +120,12 @@ internal object ShareDocumentMapper {
         mainId = mainId,
         singleId = singleId,
         dessertId = dessertId,
+        updatedAt = Instant.parse(updatedAt).toEpochMilli()
+    )
+
+    private fun DinnerDayDto.toEntity(): DinnerDayEntity = DinnerDayEntity(
+        date = LocalDate.parse(date).toEpochDay(),
+        dishId = dishId,
         updatedAt = Instant.parse(updatedAt).toEpochMilli()
     )
 }

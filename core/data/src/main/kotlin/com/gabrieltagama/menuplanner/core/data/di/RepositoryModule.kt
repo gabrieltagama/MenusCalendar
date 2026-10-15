@@ -2,9 +2,11 @@ package com.gabrieltagama.menuplanner.core.data.di
 
 import com.gabrieltagama.menuplanner.core.data.initial.AssetInitialDishesRepository
 import com.gabrieltagama.menuplanner.core.data.repository.JsonMenuShareRepository
+import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
 import com.gabrieltagama.menuplanner.core.data.settings.SharedPreferencesSettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.InitialDishesRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
@@ -30,6 +32,10 @@ internal abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMealPlanRepository(implementation: RoomMealPlanRepository): MealPlanRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDinnerPlanRepository(implementation: RoomDinnerPlanRepository): DinnerPlanRepository
 
     @Binds
     @Singleton

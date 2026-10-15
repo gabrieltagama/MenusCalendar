@@ -13,6 +13,7 @@ class AutoFillMessageFormatterTest {
     private val texts = object : AutoFillTexts {
         override val nothingToFill = "No hay días vacíos en este mes"
         override val notEnoughDishes = "No hay platos suficientes: crea primeros y segundos o platos únicos"
+        override val notEnoughDinnerDishes = "No hay platos para cenar: marca platos como Cena o Indiferente"
         override fun filled(count: Int) = if (count == 1) "Rellenado 1 día" else "Rellenados $count días"
         override fun repeatedDish(count: Int) = if (count == 1) "1 repite plato" else "$count repiten plato"
         override fun heavyStreak(count: Int) = "$count con dos días pesados seguidos"
@@ -30,6 +31,13 @@ class AutoFillMessageFormatterTest {
         assertEquals(
             "No hay platos suficientes: crea primeros y segundos o platos únicos",
             formatter.format(AutoFillResult(0, 0, 0, 12))
+        )
+
+    @Test
+    fun `dinner view without dishes asks for dinner dishes`() =
+        assertEquals(
+            "No hay platos para cenar: marca platos como Cena o Indiferente",
+            formatter.format(AutoFillResult(0, 0, 0, 12), PlanView.DINNER)
         )
 
     @Test

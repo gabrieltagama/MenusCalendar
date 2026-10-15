@@ -3,12 +3,16 @@ package com.gabrieltagama.menuplanner.feature.calendar.month
 import app.cash.turbine.test
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
+import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthPlanUseCase
+import com.gabrieltagama.menuplanner.feature.calendar.testing.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.feature.calendar.testing.FakeDishRepository
 import com.gabrieltagama.menuplanner.feature.calendar.testing.FakeMealPlanRepository
 import com.gabrieltagama.menuplanner.feature.calendar.testing.MainDispatcherRule
@@ -30,7 +34,8 @@ import org.junit.Test
 /**
  * CalendarViewModel over the real ObserveMonthPlanUseCase with a fixed clock (2026-10-09 UTC):
  * month navigation, selected day summary, the "today" shortcut and the month autofill over the
- * real AutoFillMonthUseCase with in-memory repositories and a seeded Random.
+ * real AutoFillMonthUseCase with in-memory repositories and a seeded Random; the lunches/dinners
+ * view switch and the dinner autofill.
  */
 class CalendarViewModelTest {
 
@@ -45,12 +50,17 @@ class CalendarViewModelTest {
     private val todayPlan = MealDay(date = today, menu = DailyMenu.Courses(starter = starter, main = main))
     private val novemberPlan = MealDay(date = LocalDate.of(2026, 11, 3), menu = DailyMenu.Single(single = main.copy(type = DishType.SINGLE)))
 
+    private val todayDinner = DinnerDay(date = today, dish = main)
+
     private val repository = FakeMealPlanRepository(listOf(todayPlan, novemberPlan))
+    private val dinnerRepository = FakeDinnerPlanRepository(listOf(todayDinner))
     private var dishRepository = FakeDishRepository(listOf(starter, main))
     private val viewModel by lazy {
         CalendarViewModel(
             ObserveMonthPlanUseCase(repository),
+            ObserveMonthDinnersUseCase(dinnerRepository),
             AutoFillMonthUseCase(dishRepository, repository, Random(42), clock),
+            AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, Random(42), clock),
             clock
         )
     }
@@ -231,8 +241,46 @@ class CalendarViewModelTest {
         viewModel.events.test {
             viewModel.onAutoFill()
 
-            assertEquals(CalendarEvent.AutoFillCompleted(AutoFillResult(0, 0, 0, 30)), awaitItem())
+            assertEquals(CalendarEvent.AutoFillCompleted(AutoFillResult(0, 0, 0, 30), PlanView.LUNCH), awaitItem())
         }
         assertTrue(repository.saved.isEmpty())
+    }
+
+    @Test
+    fun `switching to dinners shows the dinner of the selected day`() = runTest {
+        viewModel.uiState.test {
+            val lunchState = awaitItemMatching { !it.isLoading }
+            assertEquals(PlanView.LUNCH, lunchState.view)
+
+            viewModel.onViewChange(PlanView.DINNER)
+
+            val state = awaitItemMatching { it.view == PlanView.DINNER }
+            assertEquals(todayDinner, state.selectedDinner)
+            assertTrue(state.isPlanned(today))
+            assertFalse(state.isPlanned(today.plusDays(1)))
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `autofill in the dinner view fills only dinners`() = runTest {
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+            viewModel.onViewChange(PlanView.DINNER)
+            awaitItemMatching { it.view == PlanView.DINNER }
+
+            viewModel.events.test {
+                viewModel.onAutoFill()
+
+                val event = awaitItem() as CalendarEvent.AutoFillCompleted
+                assertEquals(PlanView.DINNER, event.view)
+                assertEquals(30, event.result.filledDays)
+            }
+
+            awaitItemMatching { it.dinners.size == 31 && !it.isAutoFilling }
+            assertTrue(repository.saved.isEmpty())
+            assertTrue(dinnerRepository.saved.all { YearMonth.from(it.date) == YearMonth.of(2026, 10) })
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }

@@ -3,9 +3,9 @@ package com.gabrieltagama.menuplanner.core.domain.model
 /**
  * Domain enumerations. Persisted and exported by name, so constants must never be renamed;
  * new values can be appended safely. MealTime says when a dish may be served: the calendar
- * plans lunches, so only LUNCH and ANY dishes are eligible for it. Ingredients are kept in the
- * STANDARD units (grams, millilitres or units); the other MeasureUnit values remain only to read
- * old data and shared files, and are converted on save, import and app start.
+ * plans lunches with LUNCH and ANY dishes and dinners with DINNER and ANY dishes. Ingredients
+ * are kept in the STANDARD units (grams, millilitres or units); the other MeasureUnit values
+ * remain only to read old data and shared files, and are converted on save, import and app start.
  */
 enum class DishType { STARTER, MAIN, DESSERT, SINGLE }
 
@@ -29,4 +29,6 @@ enum class MealTime {
     LUNCH, DINNER, ANY;
 
     val isServedAtLunch: Boolean get() = this != DINNER
+
+    val isServedAtDinner: Boolean get() = this != LUNCH
 }

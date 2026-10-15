@@ -1,5 +1,7 @@
 package com.gabrieltagama.menuplanner.core.data.share
 
+import com.gabrieltagama.menuplanner.core.data.database.entity.DinnerDayEntity
+import com.gabrieltagama.menuplanner.core.data.fake.FakeDinnerDayDao
 import com.gabrieltagama.menuplanner.core.data.fake.FakeDishDao
 import com.gabrieltagama.menuplanner.core.data.fake.FakeMealDayDao
 import com.gabrieltagama.menuplanner.core.data.fake.TestData
@@ -18,12 +20,14 @@ import org.junit.Test
 
 /**
  * Tests ShareMerger against in-memory DAOs: add/update/skip counts for dishes and days, and that
- * a day referencing a dish that is neither local nor in the file is skipped.
+ * a day referencing a dish that is neither local nor in the file is skipped; dinners are merged
+ * with the same rules, counted with the days, and dinners with a dessert are skipped.
  */
 class ShareMergerTest {
     private val mealDayDao = FakeMealDayDao()
     private val dishDao = FakeDishDao(mealDayDao)
-    private val merger = ShareMerger(dishDao, mealDayDao)
+    private val dinnerDayDao = FakeDinnerDayDao()
+    private val merger = ShareMerger(dishDao, mealDayDao, dinnerDayDao)
     private val date = LocalDate.of(2026, 3, 10)
 
     @Test
@@ -130,4 +134,34 @@ class ShareMergerTest {
     }
 
     private suspend fun insert(dish: Dish) = dishDao.upsertWithIngredients(dish.toEntity(), dish.toIngredientEntities())
+
+    @Test
+    fun `dinners are added counted with days and newer local dinners are kept`() = runTest {
+        insert(TestData.dish("m", type = DishType.MAIN))
+        dinnerDayDao.upsert(DinnerDayEntity(date.plusDays(1).toEpochDay(), "m", updatedAt = TestData.NEW_INSTANT.toEpochMilli()))
+        val incoming = listOf(
+            DinnerDayEntity(date.toEpochDay(), "m", updatedAt = TestData.OLD_INSTANT.toEpochMilli()),
+            DinnerDayEntity(date.plusDays(1).toEpochDay(), "m", updatedAt = TestData.OLD_INSTANT.toEpochMilli())
+        )
+
+        val summary = merger.merge(ImportContent(emptyList(), emptyList(), incoming))
+
+        assertEquals(ImportSummary(0, 0, 0, 1, 0, 1), summary)
+        assertEquals("m", dinnerDayDao.currentDays.getValue(date.toEpochDay()).dishId)
+        assertEquals(TestData.NEW_INSTANT.toEpochMilli(), dinnerDayDao.currentDays.getValue(date.plusDays(1).toEpochDay()).updatedAt)
+    }
+
+    @Test
+    fun `dinners with an unknown dish or a dessert are skipped`() = runTest {
+        insert(TestData.dish("d", type = DishType.DESSERT))
+        val incoming = listOf(
+            DinnerDayEntity(date.toEpochDay(), "d", updatedAt = 1),
+            DinnerDayEntity(date.plusDays(1).toEpochDay(), "ghost", updatedAt = 1)
+        )
+
+        val summary = merger.merge(ImportContent(emptyList(), emptyList(), incoming))
+
+        assertEquals(2, summary.daysSkipped)
+        assertTrue(dinnerDayDao.currentDays.isEmpty())
+    }
 }

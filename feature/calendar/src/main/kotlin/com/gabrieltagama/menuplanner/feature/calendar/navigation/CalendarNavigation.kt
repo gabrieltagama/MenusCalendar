@@ -4,6 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.gabrieltagama.menuplanner.feature.calendar.day.DayEditorScreenRoute
+import com.gabrieltagama.menuplanner.feature.calendar.dinner.DinnerEditorScreenRoute
 import com.gabrieltagama.menuplanner.feature.calendar.month.CalendarScreenRoute
 import com.gabrieltagama.menuplanner.feature.calendar.shopping.ShoppingListScreenRoute
 import java.time.LocalDate
@@ -21,20 +22,29 @@ data object CalendarRoute
 data class DayEditorRoute(val epochDay: Long)
 
 @Serializable
+data class DinnerEditorRoute(val epochDay: Long)
+
+@Serializable
 data class ShoppingListRoute(val year: Int, val month: Int) {
     val yearMonth: YearMonth get() = YearMonth.of(year, month)
 }
 
 fun NavGraphBuilder.calendarGraph(
     onOpenDay: (LocalDate) -> Unit,
+    onOpenDinner: (LocalDate) -> Unit,
     onOpenShoppingList: (YearMonth) -> Unit,
     onBack: () -> Unit
 ) {
-    composable<CalendarRoute> { CalendarScreenRoute(onOpenDay = onOpenDay, onOpenShoppingList = onOpenShoppingList) }
+    composable<CalendarRoute> {
+        CalendarScreenRoute(onOpenDay = onOpenDay, onOpenDinner = onOpenDinner, onOpenShoppingList = onOpenShoppingList)
+    }
     composable<DayEditorRoute> { DayEditorScreenRoute(onBack = onBack) }
+    composable<DinnerEditorRoute> { DinnerEditorScreenRoute(onBack = onBack) }
     composable<ShoppingListRoute> { ShoppingListScreenRoute(onBack = onBack) }
 }
 
 fun NavController.navigateToDayEditor(date: LocalDate) = navigate(DayEditorRoute(date.toEpochDay()))
+
+fun NavController.navigateToDinnerEditor(date: LocalDate) = navigate(DinnerEditorRoute(date.toEpochDay()))
 
 fun NavController.navigateToShoppingList(month: YearMonth) = navigate(ShoppingListRoute(month.year, month.monthValue))

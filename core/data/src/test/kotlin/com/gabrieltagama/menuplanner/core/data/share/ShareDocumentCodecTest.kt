@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.core.data.share
 
+import com.gabrieltagama.menuplanner.core.data.database.entity.DinnerDayEntity
 import com.gabrieltagama.menuplanner.core.data.fake.TestData
 import com.gabrieltagama.menuplanner.core.data.share.dto.DishDto
 import com.gabrieltagama.menuplanner.core.data.share.dto.IngredientDto
@@ -54,6 +55,19 @@ class ShareDocumentCodecTest {
         val content = (ShareDocumentMapper.toImportContent((decoded as Outcome.Success).value) as Outcome.Success).value
         assertEquals(dishes, content.dishes)
         assertEquals(listOf(coursesDay, singleDay), content.mealDays)
+    }
+
+    @Test
+    fun `dinners survive the round trip and files without dinners still import`() {
+        val dinner = DinnerDayEntity(LocalDate.of(2026, 3, 10).toEpochDay(), single.id, TestData.NEW_INSTANT.toEpochMilli())
+        val document = ShareDocumentMapper.toDocument(listOf(single), emptyList(), TestData.EXPORTED_AT, listOf(dinner))
+
+        val decoded = (codec.decode(codec.encode(document)) as Outcome.Success).value
+        val legacy = (codec.decode(codec.encode(document).replace(Regex(",\\s*\"dinnerDays\"\\s*:\\s*\\[[^\\]]*\\]"), "")) as Outcome.Success).value
+
+        assertEquals("2026-03-10", decoded.dinnerDays.single().date)
+        assertEquals(listOf(dinner), (ShareDocumentMapper.toImportContent(decoded) as Outcome.Success).value.dinnerDays)
+        assertTrue((ShareDocumentMapper.toImportContent(legacy) as Outcome.Success).value.dinnerDays.isEmpty())
     }
 
     @Test

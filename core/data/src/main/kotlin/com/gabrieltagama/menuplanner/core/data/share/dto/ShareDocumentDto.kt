@@ -14,7 +14,8 @@ internal data class ShareDocumentDto(
     val app: String = APP_NAME,
     val exportedAt: String,
     val dishes: List<DishDto>,
-    val mealDays: List<MealDayDto>
+    val mealDays: List<MealDayDto>,
+    val dinnerDays: List<DinnerDayDto> = emptyList()
 ) {
     companion object {
         const val CURRENT_SCHEMA_VERSION = 1
@@ -50,5 +51,12 @@ internal data class MealDayDto(
     val mainId: String? = null,
     val singleId: String? = null,
     val dessertId: String? = null,
+    val updatedAt: String
+)
+
+@Serializable
+internal data class DinnerDayDto(
+    val date: String,
+    val dishId: String,
     val updatedAt: String
 )

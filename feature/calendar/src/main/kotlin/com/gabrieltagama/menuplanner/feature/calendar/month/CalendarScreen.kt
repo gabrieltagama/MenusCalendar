@@ -35,9 +35,11 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
@@ -50,6 +52,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -63,6 +67,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringArrayResource
@@ -93,11 +98,12 @@ import java.time.YearMonth
 
 /**
  * Monthly calendar: stateful route bound to [CalendarViewModel] and a stateless screen with a
- * Monday-first month grid (swipe left/right to change month, one heaviness dot per planned
- * dish) and an animated summary card of the selected day. The random autofill of the visible
- * month is a FAB confirmed with a dialog and summarised in a snackbar; "Hoy" only appears when
- * another month is shown. Below the day summary a button opens the shopping list of the visible
- * month. Bottom insets are left to the app shell, which draws the
+ * lunches/dinners switch on top, a Monday-first month grid of the active view (swipe left/right
+ * to change month, one heaviness dot per planned dish) and an animated summary card of the
+ * selected day, which opens the lunch or the dinner editor. The random autofill of the active
+ * view for the visible month is a FAB confirmed with a dialog and summarised in a snackbar;
+ * "Hoy" only appears when another month is shown. Below the day summary a button opens the
+ * shopping list of the visible month. Bottom insets are left to the app shell, which draws the
  * NavigationBar below this screen.
  */
 data class AutoFillActions(
@@ -112,6 +118,7 @@ private val FabClearance = 96.dp
 @Composable
 fun CalendarScreenRoute(
     onOpenDay: (LocalDate) -> Unit,
+    onOpenDinner: (LocalDate) -> Unit,
     onOpenShoppingList: (YearMonth) -> Unit,
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
@@ -123,7 +130,7 @@ fun CalendarScreenRoute(
     LaunchedEffect(viewModel, formatter) {
         viewModel.events.collect { event ->
             when (event) {
-                is CalendarEvent.AutoFillCompleted -> snackbarHostState.showSnackbar(formatter.format(event.result))
+                is CalendarEvent.AutoFillCompleted -> snackbarHostState.showSnackbar(formatter.format(event.result, event.view))
             }
         }
     }
@@ -135,6 +142,8 @@ fun CalendarScreenRoute(
         onToday = viewModel::onToday,
         onDateSelect = viewModel::onDateSelect,
         onOpenDay = onOpenDay,
+        onOpenDinner = onOpenDinner,
+        onViewChange = viewModel::onViewChange,
         onOpenShoppingList = { onOpenShoppingList(state.month) },
         autoFillActions = AutoFillActions(
             onRequest = viewModel::onAutoFillRequest,
@@ -154,6 +163,8 @@ fun CalendarScreen(
     onToday: () -> Unit,
     onDateSelect: (LocalDate) -> Unit,
     onOpenDay: (LocalDate) -> Unit,
+    onOpenDinner: (LocalDate) -> Unit = {},
+    onViewChange: (PlanView) -> Unit = {},
     onOpenShoppingList: () -> Unit = {},
     autoFillActions: AutoFillActions = AutoFillActions(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
@@ -183,7 +194,7 @@ fun CalendarScreen(
         if (state.showAutoFillConfirm)
             ConfirmDialog(
                 title = stringResource(R.string.calendar_autofill_title),
-                text = stringResource(R.string.calendar_autofill_text, state.month.inlineText()),
+                text = stringResource(state.view.autoFillTextRes(), state.month.inlineText()),
                 onConfirm = autoFillActions.onConfirm,
                 onDismiss = autoFillActions.onDismiss,
                 confirmLabel = stringResource(R.string.calendar_autofill_confirm)
@@ -199,8 +210,14 @@ fun CalendarScreen(
             Box(modifier = Modifier.fillMaxWidth().height(4.dp)) {
                 if (state.isLoading || state.isAutoFilling) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
+            MealViewSwitch(view = state.view, onViewChange = onViewChange)
             MonthCard(state = state, onDateSelect = onDateSelect, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth)
-            DaySummaryCard(date = state.selectedDate, day = state.selectedDay, onOpenDay = { onOpenDay(state.selectedDate) })
+            DaySummaryCard(
+                date = state.selectedDate,
+                lines = state.summaryLines(),
+                view = state.view,
+                onOpen = { if (state.view == PlanView.LUNCH) onOpenDay(state.selectedDate) else onOpenDinner(state.selectedDate) }
+            )
             OutlinedButton(onClick = onOpenShoppingList, enabled = !state.isLoading, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.ShoppingCart, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
@@ -287,7 +304,7 @@ private fun MonthGrid(month: YearMonth, state: CalendarUiState, onDateSelect: (L
                     if (date != null)
                         DayCell(
                             date = date,
-                            day = state.days[date],
+                            dishes = state.plannedDishes(date),
                             isToday = date == state.today,
                             isSelected = date == state.selectedDate,
                             onClick = { onDateSelect(date) }
@@ -299,12 +316,12 @@ private fun MonthGrid(month: YearMonth, state: CalendarUiState, onDateSelect: (L
 }
 
 @Composable
-private fun DayCell(date: LocalDate, day: MealDay?, isToday: Boolean, isSelected: Boolean, onClick: () -> Unit) {
+private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSelected: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val background = when {
         isSelected -> colors.primary
         isToday -> colors.primaryContainer
-        day != null -> colors.surfaceContainerHighest
+        dishes.isNotEmpty() -> colors.surfaceContainerHighest
         else -> Color.Transparent
     }
     val textColor = when {
@@ -332,35 +349,35 @@ private fun DayCell(date: LocalDate, day: MealDay?, isToday: Boolean, isSelected
             color = textColor
         )
         Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.height(6.dp)) {
-            day?.menu?.dishes?.take(MaxDotsPerDay)?.forEach { HeavinessDot(heaviness = it.heaviness, size = 6.dp) }
+            dishes.take(MaxDotsPerDay).forEach { HeavinessDot(heaviness = it.heaviness, size = 6.dp) }
         }
     }
 }
 
 @Composable
-private fun DaySummaryCard(date: LocalDate, day: MealDay?, onOpenDay: () -> Unit) = Surface(
+private fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, Dish>>, view: PlanView, onOpen: () -> Unit) = Surface(
     shape = MaterialTheme.shapes.large,
     color = MaterialTheme.colorScheme.surfaceContainer,
     modifier = Modifier.fillMaxWidth()
 ) {
-    AnimatedContent(targetState = date to day, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "day") { (shownDate, shownDay) ->
+    AnimatedContent(targetState = Triple(date, view, lines), transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "day") { (shownDate, shownView, shownLines) ->
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(
                 text = shownDate.longTitleText().replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.titleLarge
             )
-            if (shownDay == null) EmptyDaySummary(onOpenDay = onOpenDay)
-            else PlannedDaySummary(menu = shownDay.menu, onOpenDay = onOpenDay)
+            if (shownLines.isEmpty()) EmptyDaySummary(view = shownView, onOpenDay = onOpen)
+            else PlannedDaySummary(lines = shownLines, onOpenDay = onOpen)
         }
     }
 }
 
 @Composable
-private fun EmptyDaySummary(onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+private fun EmptyDaySummary(view: PlanView, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Icons.Filled.EventBusy, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
-            text = stringResource(R.string.calendar_no_menu),
+            text = stringResource(if (view == PlanView.LUNCH) R.string.calendar_no_menu else R.string.calendar_no_dinner),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -373,8 +390,8 @@ private fun EmptyDaySummary(onOpenDay: () -> Unit) = Column(verticalArrangement 
 }
 
 @Composable
-private fun PlannedDaySummary(menu: DailyMenu, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-    menu.summaryLines().forEach { (label, dish) -> SummaryLine(label = label, dish = dish) }
+private fun PlannedDaySummary(lines: List<Pair<String, Dish>>, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    lines.forEach { (label, dish) -> SummaryLine(label = label, dish = dish) }
     OutlinedButton(onClick = onOpenDay, modifier = Modifier.fillMaxWidth()) {
         Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
         Spacer(modifier = Modifier.size(8.dp))
@@ -393,6 +410,78 @@ private fun SummaryLine(label: String, dish: Dish) = Row(
         Text(text = dish.name, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
     HeavinessChip(heaviness = dish.heaviness)
+}
+
+@Composable
+private fun CalendarUiState.summaryLines(): List<Pair<String, Dish>> = when (view) {
+    PlanView.LUNCH -> selectedDay?.menu?.summaryLines().orEmpty()
+    PlanView.DINNER -> listOfNotNull(selectedDinner?.let { stringResource(R.string.calendar_slot_dinner) to it.dish })
+}
+
+private fun CalendarUiState.plannedDishes(date: LocalDate): List<Dish> = when (view) {
+    PlanView.LUNCH -> days[date]?.menu?.dishes.orEmpty()
+    PlanView.DINNER -> listOfNotNull(dinners[date]?.dish)
+}
+
+private fun PlanView.autoFillTextRes(): Int = when (this) {
+    PlanView.LUNCH -> R.string.calendar_autofill_text
+    PlanView.DINNER -> R.string.calendar_autofill_dinner_text
+}
+
+@Composable
+private fun MealViewSwitch(view: PlanView, onViewChange: (PlanView) -> Unit) = Row(
+    modifier = Modifier.fillMaxWidth(),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
+) {
+    MealViewLabel(
+        text = stringResource(R.string.calendar_view_lunch),
+        icon = Icons.Filled.WbSunny,
+        isActive = view == PlanView.LUNCH,
+        onClick = { onViewChange(PlanView.LUNCH) }
+    )
+    Switch(
+        checked = view == PlanView.DINNER,
+        onCheckedChange = { isDinner -> onViewChange(if (isDinner) PlanView.DINNER else PlanView.LUNCH) },
+        thumbContent = {
+            Icon(
+                imageVector = if (view == PlanView.DINNER) Icons.Filled.Bedtime else Icons.Filled.WbSunny,
+                contentDescription = null,
+                modifier = Modifier.size(SwitchDefaults.IconSize)
+            )
+        },
+        colors = SwitchDefaults.colors(
+            uncheckedThumbColor = MaterialTheme.colorScheme.primary,
+            uncheckedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+            uncheckedIconColor = MaterialTheme.colorScheme.onPrimary,
+            uncheckedBorderColor = MaterialTheme.colorScheme.primary
+        )
+    )
+    MealViewLabel(
+        text = stringResource(R.string.calendar_view_dinner),
+        icon = Icons.Filled.Bedtime,
+        isActive = view == PlanView.DINNER,
+        onClick = { onViewChange(PlanView.DINNER) }
+    )
+}
+
+@Composable
+private fun MealViewLabel(text: String, icon: ImageVector, isActive: Boolean, onClick: () -> Unit) = Row(
+    modifier = Modifier
+        .clip(RoundedCornerShape(12.dp))
+        .clickable(onClick = onClick)
+        .padding(horizontal = 8.dp, vertical = 6.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(6.dp)
+) {
+    val color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+        color = color
+    )
 }
 
 @Composable

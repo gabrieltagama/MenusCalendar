@@ -1,8 +1,10 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
+import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
@@ -17,7 +19,8 @@ import org.junit.Test
 
 /**
  * Tests that BuildShoppingListUseCase adds up the ingredients of the starters, mains and single
- * dishes of one month in standard units, one line per product, leaving desserts and other months out.
+ * dishes of one month and its dinners in standard units, one line per product, leaving desserts and
+ * other months out.
  */
 class BuildShoppingListUseCaseTest {
     private val october = YearMonth.of(2026, 10)
@@ -57,8 +60,8 @@ class BuildShoppingListUseCaseTest {
 
     private fun day(date: LocalDate, menu: DailyMenu) = MealDay(date = date, menu = menu)
 
-    private fun build(vararg days: MealDay) = runBlocking {
-        BuildShoppingListUseCase(FakeMealPlanRepository(days.toList()))(october)
+    private fun build(vararg days: MealDay, dinners: List<DinnerDay> = emptyList()) = runBlocking {
+        BuildShoppingListUseCase(FakeMealPlanRepository(days.toList()), FakeDinnerPlanRepository(dinners))(october)
     }
 
     @Test
@@ -141,5 +144,21 @@ class BuildShoppingListUseCaseTest {
             ),
             items
         )
+    }
+
+    @Test
+    fun `adds the dinners of the month to the lunches`() {
+        val omelette = dish(type = DishType.MAIN, ingredients = listOf(Ingredient("Huevos", 3.0, MeasureUnit.UNIT)))
+        val lunch = dish(type = DishType.SINGLE, ingredients = listOf(Ingredient("Huevo", 2.0, MeasureUnit.UNIT)))
+
+        val items = build(
+            day(LocalDate.of(2026, 10, 10), DailyMenu.Single(single = lunch)),
+            dinners = listOf(
+                DinnerDay(date = LocalDate.of(2026, 10, 10), dish = omelette),
+                DinnerDay(date = LocalDate.of(2026, 11, 1), dish = omelette)
+            )
+        )
+
+        assertEquals(listOf(ShoppingItem(name = "Huevo", quantity = 5.0, unit = MeasureUnit.UNIT)), items)
     }
 }

@@ -5,7 +5,8 @@ import java.util.UUID
 
 /**
  * Aggregate root for a dish of the recipe book. The id is a UUID so dishes can be merged
- * across devices when a shared JSON is imported; updatedAt decides which version wins.
+ * across devices when a shared JSON is imported; updatedAt decides which version wins. A dish can
+ * be planned as a dinner when it is served at dinner and is not a dessert.
  */
 data class Dish(
     val id: String = UUID.randomUUID().toString(),
@@ -18,4 +19,6 @@ data class Dish(
     val rating: Rating = Rating.THREE,
     val mealTime: MealTime = MealTime.ANY,
     val updatedAt: Instant = Instant.now()
-)
+) {
+    val isDinnerOption: Boolean get() = mealTime.isServedAtDinner && type != DishType.DESSERT
+}
