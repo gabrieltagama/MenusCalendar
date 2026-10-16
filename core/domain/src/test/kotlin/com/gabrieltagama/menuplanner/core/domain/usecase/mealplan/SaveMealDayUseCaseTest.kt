@@ -1,7 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.common.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
@@ -9,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals

@@ -1,49 +1,42 @@
 package com.gabrieltagama.menuplanner.core.data.initial
 
 import com.gabrieltagama.menuplanner.core.data.fake.TestData
-import com.gabrieltagama.menuplanner.core.data.share.ShareDocumentCodec
-import com.gabrieltagama.menuplanner.core.data.share.ShareDocumentMapper
-import com.gabrieltagama.menuplanner.core.data.share.dto.ShareDocumentDto
+import com.gabrieltagama.menuplanner.core.data.share.JsonMenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
+import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Checks that the bundled initial_dishes.json is a valid share document that the import accepts
- * as a whole: recipes only, unique ids and names, every dish type represented, and ingredients
- * already in standard units so the app does not need to convert them.
+ * Checks that the bundled initial_dishes.json is a valid share file that the import accepts as a
+ * whole: recipes only, unique ids and names, every dish type represented, and ingredients already
+ * in standard units so the app does not need to convert them.
  */
 class InitialDishesAssetTest {
-    private val codec = ShareDocumentCodec(TestData.json)
-    private val document = (codec.decode(File(ASSET_PATH).readText()) as Outcome.Success<ShareDocumentDto>).value
+    private val decoded = JsonMenuSnapshotCodec(TestData.json).decode(File(ASSET_PATH).readText())
+    private val snapshot: MenuSnapshot get() = (decoded as Outcome.Success).value
 
     @Test
-    fun `asset is accepted by the import validation`() {
-        val content = ShareDocumentMapper.toImportContent(document)
-
-        assertTrue(content is Outcome.Success)
-        assertEquals(document.dishes.size, (content as Outcome.Success).value.dishes.size)
-    }
+    fun `asset is accepted by the import validation`() = assertTrue(decoded is Outcome.Success)
 
     @Test
     fun `asset has recipes only with unique ids and names`() {
-        assertTrue(document.mealDays.isEmpty())
-        assertEquals(document.dishes.size, document.dishes.map { it.id }.distinct().size)
-        assertEquals(document.dishes.size, document.dishes.map { it.name.lowercase() }.distinct().size)
+        assertTrue(snapshot.lunches.isEmpty() && snapshot.dinners.isEmpty())
+        assertEquals(snapshot.dishes.size, snapshot.dishes.map { it.id }.distinct().size)
+        assertEquals(snapshot.dishes.size, snapshot.dishes.map { it.name.lowercase() }.distinct().size)
     }
 
     @Test
-    fun `asset covers every dish type`() =
-        assertEquals(DishType.entries.map { it.name }.toSet(), document.dishes.map { it.type }.toSet())
+    fun `asset covers every dish type`() = assertEquals(DishType.entries.toSet(), snapshot.dishes.map { it.type }.toSet())
 
     @Test
     fun `asset ingredients are already in standard units`() {
-        val dishes = (ShareDocumentMapper.toImportContent(document) as Outcome.Success).value.dishes
+        val dishes = snapshot.dishes
 
         assertTrue(dishes.flatMap { it.ingredients }.all { it.unit in MeasureUnit.STANDARD })
         assertEquals(dishes, IngredientStandardizer.standardize(dishes))

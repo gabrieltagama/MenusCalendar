@@ -4,6 +4,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -17,11 +18,11 @@ class GetDishUseCaseTest {
 
     @Test
     fun `existing dish returns Success`() = runBlocking {
-        assertEquals(Outcome.Success(stored), useCase("d1"))
+        assertEquals(Outcome.Success(stored), useCase(DishId("d1")))
     }
 
     @Test
     fun `missing dish returns DishNotFound`() = runBlocking {
-        assertEquals(Outcome.Failure(DomainError.DishNotFound), useCase("missing"))
+        assertEquals(Outcome.Failure(DomainError.DishNotFound), useCase(DishId("missing")))
     }
 }

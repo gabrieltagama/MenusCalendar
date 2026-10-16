@@ -302,7 +302,7 @@ class AutoFillMonthUseCaseTest {
         assertEquals(0, run.result.heavyStreakDays)
         assertEquals(countRepeatedDays(run.plan), run.result.repeatedDishDays)
         assertTrue(run.result.repeatedDishDays >= 4)
-        val singles = monthDays().map { (run.plan.getValue(it) as DailyMenu.Single).single.id }
+        val singles = monthDays().map { (run.plan.getValue(it) as DailyMenu.Single).single.id.value }
         assertEquals(setOf("s1", "s2", "s3"), singles.take(3).toSet())
     }
 

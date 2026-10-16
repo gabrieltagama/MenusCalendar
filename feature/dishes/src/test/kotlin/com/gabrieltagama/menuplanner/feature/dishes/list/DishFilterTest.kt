@@ -1,12 +1,14 @@
 package com.gabrieltagama.menuplanner.feature.dishes.list
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
+import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -93,19 +95,19 @@ class DishFilterTest {
 
     @Test
     fun `ratings filter keeps only the selected star values`() {
-        assertEquals(listOf("salad", "puree"), DishFilter.apply(rated, DishFilterCriteria(ratings = setOf(Rating.FOUR, Rating.FIVE))).map(Dish::id))
-        assertEquals(listOf("flan", "chicken"), DishFilter.apply(rated, DishFilterCriteria(ratings = setOf(Rating.ONE, Rating.THREE))).map(Dish::id))
+        assertEquals(listOf("salad", "puree"), DishFilter.apply(rated, DishFilterCriteria(ratings = setOf(Rating.FOUR, Rating.FIVE))).map { it.id.value })
+        assertEquals(listOf("flan", "chicken"), DishFilter.apply(rated, DishFilterCriteria(ratings = setOf(Rating.ONE, Rating.THREE))).map { it.id.value })
     }
 
     @Test
     fun `meal time filter matches exactly`() {
-        assertEquals(listOf("salad", "flan"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.DINNER))).map(Dish::id))
-        assertEquals(listOf("lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.ANY))).map(Dish::id))
+        assertEquals(listOf("salad", "flan"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.DINNER))).map { it.id.value })
+        assertEquals(listOf("lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.ANY))).map { it.id.value })
     }
 
     @Test
     fun `dinner and any together keep both`() =
-        assertEquals(listOf("salad", "flan", "lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.DINNER, MealTime.ANY))).map(Dish::id))
+        assertEquals(listOf("salad", "flan", "lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.DINNER, MealTime.ANY))).map { it.id.value })
 
     @Test
     fun `combines ratings and meal times with types`() =
@@ -114,14 +116,15 @@ class DishFilterTest {
             DishFilter.apply(
                 rated,
                 DishFilterCriteria(types = setOf(DishType.STARTER), ratings = setOf(Rating.FOUR, Rating.FIVE), mealTimes = setOf(MealTime.LUNCH))
-            ).map(Dish::id)
+            ).map { it.id.value }
         )
 
     private fun dish(id: String, name: String, type: DishType, heaviness: Heaviness, vararg ingredients: String) = Dish(
-        id = id,
+        id = DishId(id),
         name = name,
         ingredients = ingredients.map { Ingredient(it, 1.0, MeasureUnit.UNIT) },
         type = type,
-        heaviness = heaviness
+        heaviness = heaviness,
+        updatedAt = Instant.EPOCH
     )
 }

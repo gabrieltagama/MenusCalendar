@@ -6,6 +6,9 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
+import com.gabrieltagama.menuplanner.core.domain.model.DishType
+import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import kotlinx.coroutines.runBlocking
@@ -24,12 +27,12 @@ class SaveDishUseCaseTest {
     @Before
     fun setUp() {
         repository = FakeDishRepository()
-        useCase = SaveDishUseCase(TestDishes.fixedClock, StandardizeRecipeBookUseCase(repository))
+        useCase = SaveDishUseCase(TestDishes.fixedClock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository))
     }
 
     @Test
     fun `blank name fails with BlankDishName and is not persisted`() = runBlocking {
-        val result = useCase(dish(name = "   "))
+        val result = save(dish(name = "   "))
 
         assertEquals(Outcome.Failure(DomainError.BlankDishName), result)
         assertTrue(repository.upserted.isEmpty())
@@ -42,7 +45,7 @@ class SaveDishUseCaseTest {
             Ingredient(" ", 1.0, MeasureUnit.UNIT)
         )
 
-        val result = useCase(dish(ingredients = ingredients))
+        val result = save(dish(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(DomainError.InvalidIngredient(1)), result)
         assertTrue(repository.upserted.isEmpty())
@@ -52,14 +55,14 @@ class SaveDishUseCaseTest {
     fun `ingredient with negative quantity fails with its index`() = runBlocking {
         val ingredients = listOf(Ingredient("Salt", -0.5, MeasureUnit.PINCH))
 
-        val result = useCase(dish(ingredients = ingredients))
+        val result = save(dish(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(DomainError.InvalidIngredient(0)), result)
     }
 
     @Test
     fun `zero quantity is valid`() = runBlocking {
-        val result = useCase(dish(ingredients = listOf(Ingredient("Pepper", 0.0, MeasureUnit.TO_TASTE))))
+        val result = save(dish(ingredients = listOf(Ingredient("Pepper", 0.0, MeasureUnit.TO_TASTE))))
 
         assertTrue(result is Outcome.Success)
     }
@@ -73,7 +76,7 @@ class SaveDishUseCaseTest {
             ingredients = listOf(Ingredient("  Rice ", 200.0, MeasureUnit.GRAM))
         )
 
-        val saved = (useCase(input) as Outcome.Success).value
+        val saved = (save(input) as Outcome.Success).value
 
         assertEquals("Paella", saved.name)
         assertEquals("Rice dish", saved.description)
@@ -83,7 +86,7 @@ class SaveDishUseCaseTest {
 
     @Test
     fun `sets updatedAt from injected clock`() = runBlocking {
-        val saved = (useCase(dish(updatedAt = TestDishes.OLD_INSTANT)) as Outcome.Success).value
+        val saved = (save(dish(updatedAt = TestDishes.OLD_INSTANT)) as Outcome.Success).value
 
         assertEquals(TestDishes.FIXED_INSTANT, saved.updatedAt)
     }
@@ -92,11 +95,19 @@ class SaveDishUseCaseTest {
     fun `persists normalized dish and preserves id`() = runBlocking {
         val input = dish(id = "fixed-id", name = " Soup ")
 
-        val saved = (useCase(input) as Outcome.Success).value
+        val saved = (save(input) as Outcome.Success).value
 
-        assertEquals("fixed-id", saved.id)
+        assertEquals("fixed-id", saved.id.value)
         assertEquals(listOf(saved), repository.upserted)
         assertEquals(saved, repository.current["fixed-id"])
+    }
+
+    @Test
+    fun `new draft gets a generated id`() = runBlocking {
+        val saved = (useCase(DishDraft(name = "Soup", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW)) as Outcome.Success).value
+
+        assertEquals(TestDishes.GENERATED_ID, saved.id)
+        assertEquals(saved, repository.current[TestDishes.GENERATED_ID.value])
     }
 
     @Test
@@ -104,9 +115,11 @@ class SaveDishUseCaseTest {
         val original: Dish = dish(id = "d1", name = "Old")
         repository.upsert(original)
 
-        useCase(original.copy(name = "New"))
+        save(original.copy(name = "New"))
 
         assertEquals(1, repository.current.size)
         assertEquals("New", repository.current.getValue("d1").name)
     }
+
+    private suspend fun save(dish: Dish) = useCase(dish.toDraft())
 }

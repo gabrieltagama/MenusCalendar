@@ -8,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.data.database.entity.dishIds
 import com.gabrieltagama.menuplanner.core.data.mapper.toDomain
 import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import java.time.LocalDate
@@ -57,7 +58,7 @@ internal class RoomMealPlanRepository @Inject constructor(
         return days.mapNotNull { it.toDomain(dishesById) }
     }
 
-    private suspend fun loadDishes(ids: List<String>): Map<String, Dish> =
+    private suspend fun loadDishes(ids: List<String>): Map<DishId, Dish> =
         if (ids.isEmpty()) emptyMap()
         else dishDao.getByIds(ids).map(DishWithIngredients::toDomain).associateBy(Dish::id)
 }

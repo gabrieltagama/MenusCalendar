@@ -1,14 +1,13 @@
 package com.gabrieltagama.menuplanner.core.data.fake
 
-import com.gabrieltagama.menuplanner.core.data.database.entity.MealDayEntity
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import java.time.Instant
-import java.time.LocalDate
 import kotlinx.serialization.json.Json
 
 /**
@@ -36,7 +35,7 @@ internal object TestData {
         mealTime: MealTime = MealTime.ANY,
         updatedAt: Instant = OLD_INSTANT
     ) = Dish(
-        id = id,
+        id = DishId(id),
         name = name,
         description = "Description of $name",
         ingredients = ingredients,
@@ -47,22 +46,4 @@ internal object TestData {
         mealTime = mealTime,
         updatedAt = updatedAt
     )
-
-    fun singleDay(date: LocalDate, singleId: String, updatedAt: Instant = OLD_INSTANT) =
-        MealDayEntity(
-            date = date.toEpochDay(),
-            starterId = null,
-            mainId = null,
-            singleId = singleId,
-            updatedAt = updatedAt.toEpochMilli()
-        )
-
-    fun coursesDay(date: LocalDate, starterId: String, mainId: String, updatedAt: Instant = OLD_INSTANT) =
-        MealDayEntity(
-            date = date.toEpochDay(),
-            starterId = starterId,
-            mainId = mainId,
-            singleId = null,
-            updatedAt = updatedAt.toEpochMilli()
-        )
 }

@@ -5,12 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.common.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetMealDayUseCase
@@ -78,13 +78,6 @@ data class DayEditorUiState(
         }
     }
 }
-
-val MenuSlot.dishType: DishType
-    get() = when (this) {
-        MenuSlot.STARTER -> DishType.STARTER
-        MenuSlot.MAIN -> DishType.MAIN
-        MenuSlot.SINGLE -> DishType.SINGLE
-    }
 
 sealed interface DayEditorEvent {
     data object Close : DayEditorEvent

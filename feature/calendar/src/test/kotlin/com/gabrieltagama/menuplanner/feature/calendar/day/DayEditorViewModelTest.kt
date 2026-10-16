@@ -2,14 +2,15 @@ package com.gabrieltagama.menuplanner.feature.calendar.day
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.gabrieltagama.menuplanner.core.domain.common.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDayUseCase
@@ -123,7 +124,7 @@ class DayEditorViewModelTest {
 
     @Test
     fun existingSingleDayIsLoadedInSingleMode() {
-        val existing = MealDay(date = date, menu = DailyMenu.Single(single = single))
+        val existing = MealDay(date = date, menu = DailyMenu.Single(single = single), updatedAt = Instant.EPOCH)
         withViewModel(initialDays = listOf(existing)) { viewModel, _ ->
             val state = awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
 
@@ -136,7 +137,7 @@ class DayEditorViewModelTest {
 
     @Test
     fun clearDayCallsRepositoryAndCloses() {
-        val existing = MealDay(date = date, menu = DailyMenu.Courses(starter = starter, main = main))
+        val existing = MealDay(date = date, menu = DailyMenu.Courses(starter = starter, main = main), updatedAt = Instant.EPOCH)
         withViewModel(initialDays = listOf(existing)) { viewModel, mealPlanRepository ->
             awaitState(viewModel) { it.form.hasSavedDay }
             viewModel.onClearRequest()
@@ -188,7 +189,7 @@ class DayEditorViewModelTest {
     ): DayEditorUiState = withTimeout(TIMEOUT_MS) { viewModel.uiState.first(predicate) }
 
     private fun dish(id: String, name: String, type: DishType) =
-        Dish(id = id, name = name, type = type, heaviness = Heaviness.MEDIUM)
+        Dish(id = DishId(id), name = name, type = type, heaviness = Heaviness.MEDIUM, updatedAt = Instant.EPOCH)
 
     private companion object {
         const val TIMEOUT_MS = 5_000L

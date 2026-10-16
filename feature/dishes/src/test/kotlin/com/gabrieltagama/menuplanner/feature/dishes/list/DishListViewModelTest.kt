@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.feature.dishes.list
 import app.cash.turbine.test
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
@@ -12,6 +13,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.testing.awaitItemMatching
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
+import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -116,7 +118,7 @@ class DishListViewModelTest {
 
     @Test
     fun `filters by heaviness combined with type`() = runTest {
-        val lentils = Dish(id = "lentils", name = "Lentejas", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH)
+        val lentils = Dish(id = DishId("lentils"), name = "Lentejas", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH, updatedAt = Instant.EPOCH)
         repository.upsert(lentils)
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
@@ -132,9 +134,9 @@ class DishListViewModelTest {
 
     @Test
     fun `filters by several ratings and meal times`() = runTest {
-        val stew = Dish(id = "stew", name = "Cocido", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH, rating = Rating.FIVE, mealTime = MealTime.ANY)
-        val soup = Dish(id = "soup", name = "Sopa", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW, rating = Rating.FOUR, mealTime = MealTime.DINNER)
-        val toast = Dish(id = "toast", name = "Tostada", type = DishType.SINGLE, heaviness = Heaviness.VERY_LOW, rating = Rating.FOUR, mealTime = MealTime.LUNCH)
+        val stew = Dish(id = DishId("stew"), name = "Cocido", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH, rating = Rating.FIVE, mealTime = MealTime.ANY, updatedAt = Instant.EPOCH)
+        val soup = Dish(id = DishId("soup"), name = "Sopa", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW, rating = Rating.FOUR, mealTime = MealTime.DINNER, updatedAt = Instant.EPOCH)
+        val toast = Dish(id = DishId("toast"), name = "Tostada", type = DishType.SINGLE, heaviness = Heaviness.VERY_LOW, rating = Rating.FOUR, mealTime = MealTime.LUNCH, updatedAt = Instant.EPOCH)
         listOf(stew, soup, toast).forEach { repository.upsert(it) }
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
@@ -153,11 +155,12 @@ class DishListViewModelTest {
     @Test
     fun `search matches ingredient names`() = runTest {
         val omelette = Dish(
-            id = "omelette",
+            id = DishId("omelette"),
             name = "Tortilla",
             ingredients = listOf(Ingredient("Patatas", 3.0, MeasureUnit.UNIT)),
             type = DishType.SINGLE,
-            heaviness = Heaviness.MEDIUM
+            heaviness = Heaviness.MEDIUM,
+        updatedAt = Instant.EPOCH
         )
         repository.upsert(omelette)
         viewModel.uiState.test {
@@ -185,5 +188,5 @@ class DishListViewModelTest {
     }
 
     private fun dish(id: String, name: String, type: DishType) =
-        Dish(id = id, name = name, type = type, heaviness = Heaviness.MEDIUM)
+        Dish(id = DishId(id), name = name, type = type, heaviness = Heaviness.MEDIUM, updatedAt = Instant.EPOCH)
 }

@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.common
 
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 
 /**
  * Explicit success/failure result returned by use cases, so business errors are values
@@ -23,5 +24,3 @@ sealed interface DomainError {
     data object CloudUnavailable : DomainError
     data object CloudAuthorizationRequired : DomainError
 }
-
-enum class MenuSlot { STARTER, MAIN, SINGLE }

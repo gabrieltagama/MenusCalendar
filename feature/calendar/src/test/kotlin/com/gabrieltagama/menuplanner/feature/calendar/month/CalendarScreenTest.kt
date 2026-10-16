@@ -9,10 +9,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.feature.calendar.R
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import org.junit.Assert.assertEquals
@@ -35,15 +37,15 @@ class CalendarScreenTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val today = LocalDate.of(2026, 10, 9)
     private val menu = DailyMenu.Courses(
-        starter = Dish(name = "Gazpacho", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW),
-        main = Dish(name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
+        starter = Dish(id = DishId("Gazpacho"), name = "Gazpacho", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW, updatedAt = Instant.EPOCH),
+        main = Dish(id = DishId("Pollo asado"), name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM, updatedAt = Instant.EPOCH)
     )
     private val state = CalendarUiState(
         month = YearMonth.from(today),
         selectedDate = today,
         today = today,
         isLoading = false,
-        days = mapOf(today to MealDay(date = today, menu = menu))
+        days = mapOf(today to MealDay(date = today, menu = menu, updatedAt = Instant.EPOCH))
     )
 
     @Test

@@ -5,10 +5,12 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import java.time.Instant
 import java.time.LocalDate
 
@@ -29,15 +31,17 @@ internal object DatabaseTestData {
         name: String = "Dish $id",
         type: DishType = DishType.MAIN,
         ingredients: List<Ingredient> = emptyList(),
+        mealTime: MealTime = MealTime.ANY,
         updatedAt: Instant = OLD_INSTANT
     ) = Dish(
-        id = id,
+        id = DishId(id),
         name = name,
         description = "Description of $name",
         ingredients = ingredients,
         preparation = "Prepare $name",
         type = type,
         heaviness = Heaviness.MEDIUM,
+        mealTime = mealTime,
         updatedAt = updatedAt
     )
 

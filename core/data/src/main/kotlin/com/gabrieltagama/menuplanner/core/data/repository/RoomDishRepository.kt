@@ -6,6 +6,7 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toDomain
 import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import javax.inject.Inject
@@ -27,14 +28,14 @@ internal class RoomDishRepository @Inject constructor(
 
     override suspend fun getDishes(): List<Dish> = dishDao.getAll().toDomainList()
 
-    override suspend fun getDish(id: String): Dish? = dishDao.getById(id)?.toDomain()
+    override suspend fun getDish(id: DishId): Dish? = dishDao.getById(id.value)?.toDomain()
 
     override suspend fun upsert(dish: Dish) = dishDao.upsertWithIngredients(dish.toEntity(), dish.toIngredientEntities())
 
     override suspend fun upsertAll(dishes: List<Dish>) =
         dishDao.upsertAllWithIngredients(dishes.map { it.toEntity() to it.toIngredientEntities() })
 
-    override suspend fun deleteIfUnused(id: String): Boolean = dishDao.deleteIfUnused(id)
+    override suspend fun deleteIfUnused(id: DishId): Boolean = dishDao.deleteIfUnused(id.value)
 
     private fun List<DishWithIngredients>.toDomainList(): List<Dish> = map(DishWithIngredients::toDomain)
 }

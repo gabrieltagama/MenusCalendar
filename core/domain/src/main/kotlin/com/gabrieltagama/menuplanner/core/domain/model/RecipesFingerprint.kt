@@ -12,8 +12,8 @@ object RecipesFingerprint {
 
     fun of(dishes: List<Dish>): String =
         MessageDigest.getInstance(ALGORITHM)
-            .digest(dishes.sortedBy(Dish::id).joinToString(separator = "\n", transform = ::versionOf).toByteArray(Charsets.UTF_8))
+            .digest(dishes.sortedBy { it.id.value }.joinToString(separator = "\n", transform = ::versionOf).toByteArray(Charsets.UTF_8))
             .joinToString(separator = "") { "%02x".format(it) }
 
-    private fun versionOf(dish: Dish): String = "${dish.id}|${dish.updatedAt.toEpochMilli()}"
+    private fun versionOf(dish: Dish): String = "${dish.id.value}|${dish.updatedAt.toEpochMilli()}"
 }
