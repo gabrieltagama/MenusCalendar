@@ -30,10 +30,10 @@ class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository {
         dishes.value = dishes.value + (dish.id to dish)
     }
 
-    override suspend fun delete(id: String) {
+    override suspend fun deleteIfUnused(id: String): Boolean {
+        if (id in usedInCalendar) return false
         deletedIds += id
         dishes.value = dishes.value - id
+        return true
     }
-
-    override suspend fun isUsedInCalendar(id: String): Boolean = id in usedInCalendar
 }

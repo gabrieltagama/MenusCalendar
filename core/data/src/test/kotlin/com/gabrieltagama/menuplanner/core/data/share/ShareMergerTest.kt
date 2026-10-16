@@ -10,6 +10,7 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import java.time.LocalDate
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -20,7 +21,8 @@ import org.junit.Test
 /**
  * Tests ShareMerger against in-memory DAOs: add/update/skip counts for dishes and days, and that
  * a day referencing a dish that is neither local nor in the file is skipped; dinners are merged
- * with the same rules, counted with the days, and dinners with a dessert are skipped.
+ * with the same rules, counted with the days, and dinners whose dish is not a dinner option (a
+ * dessert or a lunch-only dish) are skipped.
  */
 class ShareMergerTest {
     private val mealDayDao = FakeMealDayDao()
@@ -140,16 +142,18 @@ class ShareMergerTest {
     }
 
     @Test
-    fun `dinners with an unknown dish or a dessert are skipped`() = runTest {
+    fun `dinners with an unknown dish, a dessert or a lunch-only dish are skipped`() = runTest {
         insert(TestData.dish("d", type = DishType.DESSERT))
+        insert(TestData.dish("l", type = DishType.SINGLE, mealTime = MealTime.LUNCH))
         val incoming = listOf(
             DinnerDayEntity(date.toEpochDay(), "d", updatedAt = 1),
-            DinnerDayEntity(date.plusDays(1).toEpochDay(), "ghost", updatedAt = 1)
+            DinnerDayEntity(date.plusDays(1).toEpochDay(), "ghost", updatedAt = 1),
+            DinnerDayEntity(date.plusDays(2).toEpochDay(), "l", updatedAt = 1)
         )
 
         val summary = merger.merge(ImportContent(emptyList(), emptyList(), incoming))
 
-        assertEquals(2, summary.daysSkipped)
+        assertEquals(3, summary.daysSkipped)
         assertTrue(dinnerDayDao.currentDays.isEmpty())
     }
 }

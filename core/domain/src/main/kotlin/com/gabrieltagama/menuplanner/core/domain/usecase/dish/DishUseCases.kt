@@ -50,8 +50,6 @@ class SaveDishUseCase @Inject constructor(
 class DeleteDishUseCase @Inject constructor(private val repository: DishRepository) {
     suspend operator fun invoke(id: String): Outcome<Unit> {
         if (repository.getDish(id) == null) return Outcome.Failure(DomainError.DishNotFound)
-        if (repository.isUsedInCalendar(id)) return Outcome.Failure(DomainError.DishInUse)
-        repository.delete(id)
-        return Outcome.Success(Unit)
+        return if (repository.deleteIfUnused(id)) Outcome.Success(Unit) else Outcome.Failure(DomainError.DishInUse)
     }
 }

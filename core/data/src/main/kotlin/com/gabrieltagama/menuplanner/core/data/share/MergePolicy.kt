@@ -10,7 +10,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishType
  * importable only when it has exactly one valid shape (single, or starter + main, never both)
  * and every referenced dish is known after the dishes have been merged and sits in the slot
  * matching its type, the same rule SaveMealDayUseCase applies. A dinner is importable when its
- * dish is known and is not a dessert.
+ * dish is known and is a dinner option (Dish.isDinnerOption), the rule SaveDinnerDayUseCase applies.
  */
 internal enum class MergeDecision { ADD, UPDATE, SKIP }
 
@@ -25,8 +25,7 @@ internal object MergePolicy {
     fun isImportable(day: MealDayEntity, knownDishTypes: Map<String, DishType>): Boolean =
         hasValidShape(day) && day.slots().all { (dishId, expected) -> knownDishTypes[dishId] == expected }
 
-    fun isImportable(dinner: DinnerDayEntity, knownDishTypes: Map<String, DishType>): Boolean =
-        knownDishTypes[dinner.dishId]?.let { it != DishType.DESSERT } ?: false
+    fun isImportable(dinner: DinnerDayEntity, dinnerOptionIds: Set<String>): Boolean = dinner.dishId in dinnerOptionIds
 
     private fun hasValidShape(day: MealDayEntity): Boolean {
         val isSingle = day.singleId != null && day.starterId == null && day.mainId == null
