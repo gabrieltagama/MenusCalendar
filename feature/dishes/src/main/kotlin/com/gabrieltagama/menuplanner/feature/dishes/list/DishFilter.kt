@@ -33,9 +33,9 @@ internal object DishFilter {
 
     fun index(dishes: List<Dish>): List<SearchableDish> = dishes.map(::SearchableDish).sortedBy(SearchableDish::sortKey)
 
-    fun apply(dishes: List<Dish>, criteria: DishFilterCriteria): List<Dish> = apply(index(dishes), criteria)
+    fun apply(dishes: List<Dish>, criteria: DishFilterCriteria): List<Dish> = filter(index(dishes), criteria)
 
-    fun apply(index: List<SearchableDish>, criteria: DishFilterCriteria): List<Dish> {
+    fun filter(index: List<SearchableDish>, criteria: DishFilterCriteria): List<Dish> {
         val normalizedQuery = criteria.query.normalizedForSearch()
         return index
             .filter { criteria.types.accepts(it.dish.type) }

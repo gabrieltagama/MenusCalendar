@@ -61,7 +61,7 @@ class DishListViewModel @Inject constructor(observeDishes: ObserveDishesUseCase)
                 selectedHeaviness = criteria.heaviness,
                 selectedRatings = criteria.ratings,
                 selectedMealTimes = criteria.mealTimes,
-                dishes = DishFilter.apply(index, criteria.copy(query = query))
+                dishes = DishFilter.filter(index, criteria.copy(query = query))
             )
         }
             .flowOn(Dispatchers.Default)
