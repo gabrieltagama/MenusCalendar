@@ -119,7 +119,7 @@ class ShoppingListViewModel @Inject constructor(
         _uiState.update { it.copy(from = minOf(it.from, date), to = date) }
     }
 
-    private fun filters(): Flow<ShoppingFilter> = _uiState.map(ShoppingListUiState::filter).distinctUntilChanged()
+    private fun filters(): Flow<ShoppingFilter> = _uiState.map { it.filter }.distinctUntilChanged()
 }
 
 private fun YearMonth.initialState(today: LocalDate): ShoppingListUiState = ShoppingListUiState(
