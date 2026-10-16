@@ -7,5 +7,5 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:cloud"))
+    implementation(project(":core:cloud-ui"))
 }

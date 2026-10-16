@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.ui
+package com.gabrieltagama.menuplanner.feature.share
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.gabrieltagama.menuplanner.R
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import kotlinx.coroutines.launch
 
@@ -31,7 +30,7 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun MoreActionsSheet(
+fun MoreActionsSheet(
     isBusy: Boolean,
     onDismiss: () -> Unit,
     onExport: () -> Unit,

@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
- * Recipe backup in the hidden app data folder of the user's own Google Drive. Only the linked
+ * Backup of recipes and calendar in the hidden app data folder of the user's own Google Drive. Only the linked
  * email and the fingerprint of the last upload are kept, in a private DataStore; no password or
  * token is stored. Every operation asks Google for a fresh token silently, so a revoked grant
  * becomes CloudAuthorizationRequired and network problems CloudUnavailable. A new backup is
@@ -50,9 +50,9 @@ internal class GoogleDriveBackupRepository @Inject constructor(
         connected
     }
 
-    override suspend fun upload(recipesJson: String, fingerprint: String): Outcome<Unit> = withDrive { token ->
+    override suspend fun upload(json: String, fingerprint: String): Outcome<Unit> = withDrive { token ->
         val previous = drive.findBackups(token)
-        drive.create(token, recipesJson)
+        drive.create(token, json)
         previous.forEach { drive.delete(token, it.id) }
         dataStore.edit { it[KEY_FINGERPRINT] = fingerprint }
         Unit

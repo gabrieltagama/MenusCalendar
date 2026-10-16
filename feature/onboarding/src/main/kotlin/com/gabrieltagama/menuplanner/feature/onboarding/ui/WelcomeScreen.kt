@@ -30,7 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gabrieltagama.menuplanner.core.cloud.auth.rememberGoogleDriveConnect
+import com.gabrieltagama.menuplanner.core.cloud.ui.rememberGoogleDriveConnect
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
@@ -39,7 +39,7 @@ import com.gabrieltagama.menuplanner.feature.onboarding.R
 /**
  * First-start welcome UI: [WelcomeScreenRoute] wires [WelcomeViewModel] and the Google consent
  * flow, while [WelcomeScreen] is a stateless rendering of [WelcomeUiState] with the choice between
- * linking Google for the recipe backup or using the app only on this device.
+ * linking Google for the backup of recipes and calendar or using the app only on this device.
  */
 @Composable
 fun WelcomeScreenRoute(viewModel: WelcomeViewModel = hiltViewModel()) {

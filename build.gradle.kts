@@ -17,8 +17,10 @@ dependencies {
     kover(project(":core:data"))
     kover(project(":core:ui"))
     kover(project(":core:cloud"))
+    kover(project(":core:cloud-ui"))
     kover(project(":feature:onboarding"))
     kover(project(":feature:dishes"))
     kover(project(":feature:calendar"))
     kover(project(":feature:settings"))
+    kover(project(":feature:share"))
 }

@@ -1,6 +1,5 @@
 plugins {
     id("menuplanner.android.library")
-    id("menuplanner.android.compose")
     id("menuplanner.hilt")
 }
 
@@ -11,8 +10,6 @@ android {
 dependencies {
     implementation(project(":core:domain"))
 
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.play.services.auth)

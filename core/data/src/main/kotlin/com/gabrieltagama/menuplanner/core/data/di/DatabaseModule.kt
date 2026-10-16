@@ -12,14 +12,10 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import java.time.Clock
 import javax.inject.Singleton
-import kotlin.random.Random
-import kotlinx.serialization.json.Json
 
 /**
- * Provides the Room database, its DAOs, the system clock, the random source used by the calendar
- * autofill and the JSON configuration used for sharing.
+ * Provides the Room database and its DAOs.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -40,20 +36,4 @@ internal object DatabaseModule {
 
     @Provides
     fun provideDinnerDayDao(database: MenuPlannerDatabase): DinnerDayDao = database.dinnerDayDao()
-
-    @Provides
-    @Singleton
-    fun provideClock(): Clock = Clock.systemDefaultZone()
-
-    @Provides
-    @Singleton
-    fun provideRandom(): Random = Random.Default
-
-    @Provides
-    @Singleton
-    fun provideJson(): Json = Json {
-        prettyPrint = true
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
 }
