@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.feature.dishes.testing
+package com.gabrieltagama.menuplanner.core.domain.testing
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
