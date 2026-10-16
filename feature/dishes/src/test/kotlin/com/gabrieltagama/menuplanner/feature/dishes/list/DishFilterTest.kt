@@ -95,19 +95,19 @@ class DishFilterTest {
 
     @Test
     fun `ratings filter keeps only the selected star values`() {
-        assertEquals(listOf("salad", "puree"), DishFilter.apply(rated, DishFilterCriteria(ratings = setOf(Rating.FOUR, Rating.FIVE))).map(Dish::id))
-        assertEquals(listOf("flan", "chicken"), DishFilter.apply(rated, DishFilterCriteria(ratings = setOf(Rating.ONE, Rating.THREE))).map(Dish::id))
+        assertEquals(listOf("salad", "puree"), DishFilter.apply(rated, DishFilterCriteria(ratings = setOf(Rating.FOUR, Rating.FIVE))).map { it.id.value })
+        assertEquals(listOf("flan", "chicken"), DishFilter.apply(rated, DishFilterCriteria(ratings = setOf(Rating.ONE, Rating.THREE))).map { it.id.value })
     }
 
     @Test
     fun `meal time filter matches exactly`() {
-        assertEquals(listOf("salad", "flan"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.DINNER))).map(Dish::id))
-        assertEquals(listOf("lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.ANY))).map(Dish::id))
+        assertEquals(listOf("salad", "flan"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.DINNER))).map { it.id.value })
+        assertEquals(listOf("lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.ANY))).map { it.id.value })
     }
 
     @Test
     fun `dinner and any together keep both`() =
-        assertEquals(listOf("salad", "flan", "lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.DINNER, MealTime.ANY))).map(Dish::id))
+        assertEquals(listOf("salad", "flan", "lentils"), DishFilter.apply(rated, DishFilterCriteria(mealTimes = setOf(MealTime.DINNER, MealTime.ANY))).map { it.id.value })
 
     @Test
     fun `combines ratings and meal times with types`() =
@@ -116,7 +116,7 @@ class DishFilterTest {
             DishFilter.apply(
                 rated,
                 DishFilterCriteria(types = setOf(DishType.STARTER), ratings = setOf(Rating.FOUR, Rating.FIVE), mealTimes = setOf(MealTime.LUNCH))
-            ).map(Dish::id)
+            ).map { it.id.value }
         )
 
     private fun dish(id: String, name: String, type: DishType, heaviness: Heaviness, vararg ingredients: String) = Dish(
