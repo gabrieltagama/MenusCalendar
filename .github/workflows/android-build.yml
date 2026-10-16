@@ -51,10 +51,18 @@ jobs:
       - name: Kotlin style (ktlint, informative)
         continue-on-error: true
         run: |
-          ./gradlew ktlintCheck --continue --console=plain > "$RUNNER_TEMP/ktlint.log" 2>&1 && exit 0
-          reports=$(find . -path '*/build/reports/ktlint/*' -name '*.txt')
-          rules=$(cat $reports | grep -oE '\([a-z-]+:[a-z-]+\)$' | sort | uniq -c | sort -rn | head -30 | sed ':a;N;$!ba;s/\n/%0A/g')
-          echo "::warning title=ktlint - infracciones por regla::$rules"
+          encode() { sed -e 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g'; }
+          if ./gradlew ktlintCheck --continue --console=plain > "$RUNNER_TEMP/ktlint.log" 2>&1; then
+            echo "::notice title=ktlint::Sin infracciones de estilo"
+            exit 0
+          fi
+          reports=$(find . -path '*/build/reports/ktlint/*' -name '*.txt' -size +0c)
+          if [ -n "$reports" ]; then
+            summary=$(cat $reports | sed -nE 's/.*\(([a-z]+:[a-z0-9-]+)\)[[:space:]]*$/\1/p' | sort | uniq -c | sort -rn | head -30 | encode)
+          else
+            summary=$(tail -40 "$RUNNER_TEMP/ktlint.log" | encode)
+          fi
+          echo "::warning title=ktlint - infracciones por regla::${summary:-sin detalle}"
           exit 1
 
       - name: Upload reports
