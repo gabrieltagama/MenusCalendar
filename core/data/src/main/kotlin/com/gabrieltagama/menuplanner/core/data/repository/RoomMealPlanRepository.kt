@@ -12,34 +12,17 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import java.time.LocalDate
-import java.time.YearMonth
 import javax.inject.Inject
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 
 /**
- * Room-backed lunch calendar. The month flow is combined with the versions of the dishes it
- * references, so editing one of those dishes refreshes it while changes to other dishes do not;
- * referenced dishes are resolved with one query per emission. Several days are saved in one
- * transaction.
+ * Room-backed lunch calendar (write side and the reads that commands need). Referenced dishes are
+ * resolved with one query per read and several days are saved in one transaction. The calendar
+ * screen reads through RoomCalendarQueries instead.
  */
 internal class RoomMealPlanRepository @Inject constructor(
     private val mealDayDao: MealDayDao,
     private val dishDao: DishDao
 ) : MealPlanRepository {
-
-    override fun observeMonth(month: YearMonth): Flow<List<MealDay>> =
-        combine(
-            mealDayDao.observeRange(month.atDay(1).toEpochDay(), month.atEndOfMonth().toEpochDay()),
-            dishDao.observeVersions()
-        ) { days, versions ->
-            val referenced = days.flatMap { it.dishIds }.toSet()
-            days to versions.filter { it.id in referenced }.toSet()
-        }
-            .distinctUntilChanged()
-            .map { (days, _) -> resolve(days) }
 
     override suspend fun getDay(date: LocalDate): MealDay? =
         mealDayDao.getByDate(date.toEpochDay())?.let { resolve(listOf(it)).firstOrNull() }

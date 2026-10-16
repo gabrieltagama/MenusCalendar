@@ -4,6 +4,8 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedDinner
+import com.gabrieltagama.menuplanner.core.domain.query.CalendarQueries
 import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
 import java.time.Clock
 import java.time.Instant
@@ -13,12 +15,13 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Use cases of the monthly dinner calendar. Saving accepts only dishes served at dinner (DINNER
+ * Use cases of the monthly dinner calendar. Observing a month is a query that returns read
+ * models (PlannedDinner); the other use cases are commands over DinnerDay. Saving accepts only dishes served at dinner (DINNER
  * or ANY) that are not desserts, because a dinner is a single dish. Clearing several dinners
  * returns the removed ones so they can be restored (undo).
  */
-class ObserveMonthDinnersUseCase @Inject constructor(private val repository: DinnerPlanRepository) {
-    operator fun invoke(month: YearMonth): Flow<List<DinnerDay>> = repository.observeMonth(month)
+class ObserveMonthDinnersUseCase @Inject constructor(private val queries: CalendarQueries) {
+    operator fun invoke(month: YearMonth): Flow<List<PlannedDinner>> = queries.observeDinners(month)
 }
 
 class GetDinnerDayUseCase @Inject constructor(private val repository: DinnerPlanRepository) {

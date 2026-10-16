@@ -6,6 +6,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.PastedDays
+import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedDinner
+import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDaysUseCase
@@ -38,8 +40,8 @@ import kotlinx.coroutines.launch
 
 /**
  * Monthly calendar: keeps the visible month, the selected day and the active view (lunches or
- * dinners), and switches the observed lunch and dinner plans with flatMapLatest whenever the
- * month changes. It also runs the random autofill of the active view for the visible month after
+ * dinners), and switches the observed lunch and dinner read models (PlannedLunch, PlannedDinner)
+ * with flatMapLatest whenever the month changes. It also runs the random autofill of the active view for the visible month after
  * confirmation and reports its result as a one-shot event. "Today" is refreshed whenever the screen
  * resumes, so the highlight stays right after midnight. A selection mode marks any days (tap, drag
  * over a range or the whole month, kept across months and views) and acts on the active view: it
@@ -55,8 +57,8 @@ data class CalendarUiState(
     val today: LocalDate,
     val view: PlanView = PlanView.LUNCH,
     val isLoading: Boolean = true,
-    val days: Map<LocalDate, MealDay> = emptyMap(),
-    val dinners: Map<LocalDate, DinnerDay> = emptyMap(),
+    val days: Map<LocalDate, PlannedLunch> = emptyMap(),
+    val dinners: Map<LocalDate, PlannedDinner> = emptyMap(),
     val isAutoFilling: Boolean = false,
     val showAutoFillConfirm: Boolean = false,
     val selection: DaySelection? = null,
@@ -73,9 +75,9 @@ data class CalendarUiState(
 
     fun isMarked(date: LocalDate): Boolean = selection?.dates?.contains(date) == true
 
-    val selectedDay: MealDay? get() = days[selectedDate]
+    val selectedDay: PlannedLunch? get() = days[selectedDate]
 
-    val selectedDinner: DinnerDay? get() = dinners[selectedDate]
+    val selectedDinner: PlannedDinner? get() = dinners[selectedDate]
 
     val isShowingCurrentMonth: Boolean get() = month == YearMonth.from(today)
 
@@ -127,7 +129,7 @@ sealed interface PlanDeletion {
     }
 }
 
-private data class MonthPlan(val month: YearMonth, val days: Map<LocalDate, MealDay>, val dinners: Map<LocalDate, DinnerDay>)
+private data class MonthPlan(val month: YearMonth, val days: Map<LocalDate, PlannedLunch>, val dinners: Map<LocalDate, PlannedDinner>)
 
 private data class AutoFillStatus(val isRunning: Boolean = false, val showConfirm: Boolean = false)
 

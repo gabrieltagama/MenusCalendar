@@ -16,10 +16,12 @@ import com.gabrieltagama.menuplanner.feature.calendar.navigation.DinnerEditorRou
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -62,7 +64,7 @@ class DinnerEditorViewModel @Inject constructor(
     private val date: LocalDate = LocalDate.ofEpochDay(savedStateHandle.toRoute<DinnerEditorRoute>().epochDay)
 
     private val options: Flow<List<Dish>> =
-        observeDishes().map { dishes -> dishes.filter(Dish::isDinnerOption).sortedBy { it.name.lowercase() } }
+        observeDishes().map { dishes -> dishes.filter(Dish::isDinnerOption).sortedBy { it.name.lowercase() } }.flowOn(Dispatchers.Default)
 
     val uiState: StateFlow<DinnerEditorUiState> =
         combine(form, options, observeDishUsage()) { currentForm, currentOptions, usage ->

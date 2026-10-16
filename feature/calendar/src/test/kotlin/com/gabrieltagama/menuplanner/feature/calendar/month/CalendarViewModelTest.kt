@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakePlanQueries
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
@@ -12,6 +13,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedDinner
+import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedLunch
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.testing.awaitItemMatching
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthDinnersUseCase
@@ -42,7 +45,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * CalendarViewModel over the real ObserveMonthPlanUseCase with a controllable clock (2026-10-09 UTC):
+ * CalendarViewModel over the real ObserveMonthPlanUseCase (read through FakePlanQueries) with a controllable clock (2026-10-09 UTC):
  * month navigation, selected day summary, the "today" shortcut and the month autofill over the
  * real AutoFillMonthUseCase with in-memory repositories and a seeded Random; the lunches/dinners
  * view switch, the dinner autofill and the refresh of "today" when the screen resumes; the selection
@@ -75,10 +78,11 @@ class CalendarViewModelTest {
     private val repository = FakeMealPlanRepository(listOf(todayPlan, novemberPlan))
     private val dinnerRepository = FakeDinnerPlanRepository(listOf(todayDinner))
     private var dishRepository = FakeDishRepository(listOf(starter, main))
+    private val queries = FakePlanQueries(repository, dinnerRepository)
     private val viewModel by lazy {
         CalendarViewModel(
-            ObserveMonthPlanUseCase(repository),
-            ObserveMonthDinnersUseCase(dinnerRepository),
+            ObserveMonthPlanUseCase(queries),
+            ObserveMonthDinnersUseCase(queries),
             AutoFillMonthUseCase(dishRepository, repository, Random(42), clock),
             AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, Random(42), clock),
             ClearMealDaysUseCase(repository),
@@ -101,7 +105,7 @@ class CalendarViewModelTest {
             assertEquals(YearMonth.of(2026, 10), state.month)
             assertEquals(today, state.today)
             assertEquals(today, state.selectedDate)
-            assertEquals(mapOf(today to todayPlan), state.days)
+            assertEquals(mapOf(today to todayPlan.toPlannedLunch()), state.days)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -123,7 +127,7 @@ class CalendarViewModelTest {
         viewModel.uiState.test {
             val state = awaitItemMatching { !it.isLoading }
 
-            assertEquals(todayPlan, state.selectedDay)
+            assertEquals(todayPlan.toPlannedLunch(), state.selectedDay)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -183,7 +187,7 @@ class CalendarViewModelTest {
             viewModel.onPreviousMonth()
 
             val state = awaitItemMatching { it.month == YearMonth.of(2026, 10) && !it.isLoading && it.selectedDate == today }
-            assertEquals(todayPlan, state.selectedDay)
+            assertEquals(todayPlan.toPlannedLunch(), state.selectedDay)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -199,7 +203,7 @@ class CalendarViewModelTest {
             viewModel.onToday()
 
             val state = awaitItemMatching { it.month == YearMonth.of(2026, 10) && !it.isLoading && it.selectedDate == today }
-            assertEquals(todayPlan, state.selectedDay)
+            assertEquals(todayPlan.toPlannedLunch(), state.selectedDay)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -249,7 +253,7 @@ class CalendarViewModelTest {
 
             val state = awaitItemMatching { it.days.size == 31 && !it.isAutoFilling }
             assertFalse(state.showAutoFillConfirm)
-            assertEquals(todayPlan, state.selectedDay)
+            assertEquals(todayPlan.toPlannedLunch(), state.selectedDay)
             assertTrue(repository.saved.all { YearMonth.from(it.date) == YearMonth.of(2026, 10) })
             cancelAndIgnoreRemainingEvents()
         }
@@ -295,7 +299,7 @@ class CalendarViewModelTest {
             viewModel.onViewChange(PlanView.DINNER)
 
             val state = awaitItemMatching { it.view == PlanView.DINNER }
-            assertEquals(todayDinner, state.selectedDinner)
+            assertEquals(todayDinner.toPlannedDinner(), state.selectedDinner)
             assertTrue(state.isPlanned(today))
             assertFalse(state.isPlanned(today.plusDays(1)))
             cancelAndIgnoreRemainingEvents()
@@ -473,7 +477,7 @@ class CalendarViewModelTest {
 
             val state = awaitItemMatching { it.days.size == 3 && !it.isAutoFilling }
             assertFalse(state.isSelecting)
-            assertEquals(todayPlan, state.days[today])
+            assertEquals(todayPlan.toPlannedLunch(), state.days[today])
             assertEquals(setOf(today.plusDays(1), today.plusDays(2)), repository.saved.map { it.date }.toSet())
             cancelAndIgnoreRemainingEvents()
         }
@@ -504,8 +508,8 @@ class CalendarViewModelTest {
             assertEquals(2, paste.count)
 
             val pasted = awaitItemMatching { it.days.size == 4 && !it.isPasting }
-            assertEquals(todayPlan.menu, pasted.days[target]?.menu)
-            assertEquals(nextPlan.menu, pasted.days[target.plusDays(2)]?.menu)
+            assertEquals(todayPlan.toPlannedLunch().slots, pasted.days[target]?.slots)
+            assertEquals(nextPlan.toPlannedLunch().slots, pasted.days[target.plusDays(2)]?.slots)
             assertNull(pasted.days[target.plusDays(1)])
 
             viewModel.onUndoPaste(paste)

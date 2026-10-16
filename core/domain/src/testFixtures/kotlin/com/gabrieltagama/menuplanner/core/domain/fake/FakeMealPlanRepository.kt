@@ -3,26 +3,22 @@ package com.gabrieltagama.menuplanner.core.domain.fake
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import java.time.LocalDate
-import java.time.YearMonth
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * In-memory MealPlanRepository keyed by date, recording saved days, cleared dates and observed months.
+ * In-memory MealPlanRepository keyed by date, recording saved days and cleared dates. state lets
+ * FakePlanQueries read the same plan.
  */
 class FakeMealPlanRepository(initial: List<MealDay> = emptyList()) : MealPlanRepository {
     private val days = MutableStateFlow(initial.associateBy { it.date })
     val saved = mutableListOf<MealDay>()
     val cleared = mutableListOf<LocalDate>()
-    val observedMonths = mutableListOf<YearMonth>()
 
     val current: Map<LocalDate, MealDay> get() = days.value
 
-    override fun observeMonth(month: YearMonth): Flow<List<MealDay>> {
-        observedMonths += month
-        return days.map { all -> all.values.filter { YearMonth.from(it.date) == month }.sortedBy { it.date } }
-    }
+    val state: StateFlow<Map<LocalDate, MealDay>> = days.asStateFlow()
 
     override suspend fun getDay(date: LocalDate): MealDay? = days.value[date]
 

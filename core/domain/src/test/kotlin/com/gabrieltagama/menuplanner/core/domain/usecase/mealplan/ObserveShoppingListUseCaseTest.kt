@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakePlanQueries
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
@@ -14,17 +15,20 @@ import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Tests that BuildShoppingListUseCase adds up the ingredients of the starters, mains and single
+ * Tests that ObserveShoppingListUseCase adds up the ingredients of the starters, mains and single
  * dishes of one month and its dinners in standard units, one line per product, leaving other months
  * out, that it can be limited to lunches or to dinners and to a date range that may
- * span several months.
+ * span several months, and that it emits again when the plan changes.
  */
-class BuildShoppingListUseCaseTest {
+class ObserveShoppingListUseCaseTest {
     private val october = YearMonth.of(2026, 10)
 
     private val starter = dish(
@@ -62,7 +66,7 @@ class BuildShoppingListUseCaseTest {
         dinners: List<DinnerDay> = emptyList(),
         meals: Set<Meal> = Meal.entries.toSet()
     ) = runBlocking {
-        BuildShoppingListUseCase(FakeMealPlanRepository(days.toList()), FakeDinnerPlanRepository(dinners))(october, meals)
+        ObserveShoppingListUseCase(FakePlanQueries(FakeMealPlanRepository(days.toList()), FakeDinnerPlanRepository(dinners)))(october, meals).first()
     }
 
     @Test
@@ -200,9 +204,9 @@ class BuildShoppingListUseCaseTest {
         )
 
         val items = runBlocking {
-            BuildShoppingListUseCase(FakeMealPlanRepository(lunches), FakeDinnerPlanRepository(dinners))(
+            ObserveShoppingListUseCase(FakePlanQueries(FakeMealPlanRepository(lunches), FakeDinnerPlanRepository(dinners)))(
                 LocalDate.of(2026, 10, 15)..LocalDate.of(2026, 11, 2)
-            )
+            ).first()
         }
 
         assertEquals(
@@ -212,5 +216,21 @@ class BuildShoppingListUseCaseTest {
             ),
             items
         )
+    }
+
+    @Test
+    fun `emits the list again when a day is planned`() {
+        val mealPlan = FakeMealPlanRepository()
+        val useCase = ObserveShoppingListUseCase(FakePlanQueries(mealPlan, FakeDinnerPlanRepository()))
+
+        val planned = day(LocalDate.of(2026, 10, 5), DailyMenu.Single(single = single))
+
+        val items = runBlocking {
+            val updated = async(start = CoroutineStart.UNDISPATCHED) { useCase(october).first { it.isNotEmpty() } }
+            mealPlan.save(planned)
+            updated.await()
+        }
+
+        assertEquals(build(planned), items)
     }
 }

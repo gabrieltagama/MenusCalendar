@@ -3,13 +3,13 @@ package com.gabrieltagama.menuplanner.core.domain.fake
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
 import java.time.LocalDate
-import java.time.YearMonth
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * In-memory DinnerPlanRepository keyed by date, recording saved days and cleared dates.
+ * In-memory DinnerPlanRepository keyed by date, recording saved days and cleared dates. state lets
+ * FakePlanQueries read the same plan.
  */
 class FakeDinnerPlanRepository(initial: List<DinnerDay> = emptyList()) : DinnerPlanRepository {
     private val days = MutableStateFlow(initial.associateBy { it.date })
@@ -18,8 +18,7 @@ class FakeDinnerPlanRepository(initial: List<DinnerDay> = emptyList()) : DinnerP
 
     val current: Map<LocalDate, DinnerDay> get() = days.value
 
-    override fun observeMonth(month: YearMonth): Flow<List<DinnerDay>> =
-        days.map { all -> all.values.filter { YearMonth.from(it.date) == month }.sortedBy { it.date } }
+    val state: StateFlow<Map<LocalDate, DinnerDay>> = days.asStateFlow()
 
     override suspend fun getDay(date: LocalDate): DinnerDay? = days.value[date]
 

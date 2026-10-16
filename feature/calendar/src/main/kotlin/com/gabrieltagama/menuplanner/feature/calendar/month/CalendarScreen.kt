@@ -103,10 +103,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
-import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
+import com.gabrieltagama.menuplanner.core.domain.model.plan.DishSummary
+import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
+import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedLunch
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
@@ -547,7 +550,7 @@ private fun YearMonth.dateAt(position: Offset, size: IntSize, gap: Float): Local
 }
 
 @Composable
-private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSelected: Boolean, isMarked: Boolean, onClick: () -> Unit) {
+private fun DayCell(date: LocalDate, dishes: List<DishSummary>, isToday: Boolean, isSelected: Boolean, isMarked: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val background = when {
         isMarked -> colors.tertiary
@@ -591,7 +594,7 @@ private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSel
 }
 
 @Composable
-private fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, Dish>>, view: PlanView, onOpen: () -> Unit) = Surface(
+private fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, DishSummary>>, view: PlanView, onOpen: () -> Unit) = Surface(
     shape = MaterialTheme.shapes.large,
     color = MaterialTheme.colorScheme.surfaceContainer,
     modifier = Modifier.fillMaxWidth()
@@ -626,7 +629,7 @@ private fun EmptyDaySummary(view: PlanView, onOpenDay: () -> Unit) = Column(vert
 }
 
 @Composable
-private fun PlannedDaySummary(lines: List<Pair<String, Dish>>, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+private fun PlannedDaySummary(lines: List<Pair<String, DishSummary>>, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
     lines.forEach { (label, dish) -> SummaryLine(label = label, dish = dish) }
     OutlinedButton(onClick = onOpenDay, modifier = Modifier.fillMaxWidth()) {
         Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -636,7 +639,7 @@ private fun PlannedDaySummary(lines: List<Pair<String, Dish>>, onOpenDay: () -> 
 }
 
 @Composable
-private fun SummaryLine(label: String, dish: Dish) = Row(
+private fun SummaryLine(label: String, dish: DishSummary) = Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(12.dp)
 ) {
@@ -649,13 +652,13 @@ private fun SummaryLine(label: String, dish: Dish) = Row(
 }
 
 @Composable
-private fun CalendarUiState.summaryLines(): List<Pair<String, Dish>> = when (view) {
-    PlanView.LUNCH -> selectedDay?.menu?.summaryLines().orEmpty()
+private fun CalendarUiState.summaryLines(): List<Pair<String, DishSummary>> = when (view) {
+    PlanView.LUNCH -> selectedDay?.summaryLines().orEmpty()
     PlanView.DINNER -> listOfNotNull(selectedDinner?.let { stringResource(R.string.calendar_slot_dinner) to it.dish })
 }
 
-private fun CalendarUiState.plannedDishes(date: LocalDate): List<Dish> = when (view) {
-    PlanView.LUNCH -> days[date]?.menu?.dishes.orEmpty()
+private fun CalendarUiState.plannedDishes(date: LocalDate): List<DishSummary> = when (view) {
+    PlanView.LUNCH -> days[date]?.dishes.orEmpty()
     PlanView.DINNER -> listOfNotNull(dinners[date]?.dish)
 }
 
@@ -731,12 +734,13 @@ private fun MealViewLabel(text: String, icon: ImageVector, isActive: Boolean, on
 }
 
 @Composable
-private fun DailyMenu.summaryLines(): List<Pair<String, Dish>> = when (this) {
-    is DailyMenu.Courses -> listOf(
-        stringResource(R.string.calendar_slot_starter) to starter,
-        stringResource(R.string.calendar_slot_main) to main
-    )
-    is DailyMenu.Single -> listOf(stringResource(R.string.calendar_slot_single) to single)
+private fun PlannedLunch.summaryLines(): List<Pair<String, DishSummary>> =
+    slots.map { (slot, dish) -> stringResource(slot.labelRes()) to dish }
+
+private fun MenuSlot.labelRes(): Int = when (this) {
+    MenuSlot.STARTER -> R.string.calendar_slot_starter
+    MenuSlot.MAIN -> R.string.calendar_slot_main
+    MenuSlot.SINGLE -> R.string.calendar_slot_single
 }
 
 private fun YearMonth.weeks(): List<List<LocalDate?>> {
@@ -759,7 +763,7 @@ private fun CalendarScreenPreview() = MenuPlannerTheme {
             selectedDate = today,
             today = today,
             isLoading = false,
-            days = mapOf(today to MealDay(date = today, menu = menu, updatedAt = Instant.EPOCH))
+            days = mapOf(today to MealDay(date = today, menu = menu, updatedAt = Instant.EPOCH).toPlannedLunch())
         ),
         onPreviousMonth = {},
         onNextMonth = {},
