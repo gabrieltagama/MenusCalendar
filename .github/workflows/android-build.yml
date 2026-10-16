@@ -54,7 +54,7 @@ jobs:
           ./gradlew ktlintCheck --continue --console=plain > "$RUNNER_TEMP/ktlint.log" 2>&1 && exit 0
           reports=$(find . -path '*/build/reports/ktlint/*' -name '*.txt')
           rules=$(cat $reports | grep -oE '\([a-z-]+:[a-z-]+\)$' | sort | uniq -c | sort -rn | head -30 | sed ':a;N;$!ba;s/\n/%0A/g')
-          echo "::warning title=ktlint: infracciones por regla::$rules"
+          echo "::warning title=ktlint - infracciones por regla::$rules"
           exit 1
 
       - name: Upload reports
