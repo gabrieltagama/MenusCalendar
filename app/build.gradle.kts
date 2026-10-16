@@ -57,6 +57,7 @@ dependencies {
     implementation(project(":feature:dishes"))
     implementation(project(":feature:calendar"))
     implementation(project(":feature:settings"))
+    implementation(project(":feature:share"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

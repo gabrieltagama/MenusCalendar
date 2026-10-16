@@ -28,10 +28,10 @@ class FakeCloudBackupRepository(
         return Outcome.Success(connected)
     }
 
-    override suspend fun upload(recipesJson: String, fingerprint: String): Outcome<Unit> {
+    override suspend fun upload(json: String, fingerprint: String): Outcome<Unit> {
         failure?.let { return it }
-        uploads += recipesJson
-        remoteJson = recipesJson
+        uploads += json
+        remoteJson = json
         this.fingerprint = fingerprint
         return Outcome.Success(Unit)
     }

@@ -1,10 +1,5 @@
 package com.gabrieltagama.menuplanner.ui
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
@@ -18,18 +13,14 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -46,47 +37,24 @@ import com.gabrieltagama.menuplanner.feature.calendar.navigation.navigateToShopp
 import com.gabrieltagama.menuplanner.feature.dishes.navigation.dishesGraph
 import com.gabrieltagama.menuplanner.feature.dishes.navigation.navigateToDishEditor
 import com.gabrieltagama.menuplanner.feature.settings.navigation.settingsGraph
-import com.gabrieltagama.menuplanner.share.ShareEvent
-import com.gabrieltagama.menuplanner.share.ShareViewModel
-import com.gabrieltagama.menuplanner.share.text
+import com.gabrieltagama.menuplanner.feature.share.MoreActionsSheet
+import com.gabrieltagama.menuplanner.feature.share.rememberShareController
 
 /**
  * Main shell: a Scaffold with the bottom NavigationBar (Calendario, Platos, Ajustes, Más), the
  * snackbar host and the NavHost of the feature graphs. Feature screens draw their own top bar,
- * so the shell only reserves space for the navigation bar. "Más" opens the share sheet.
+ * so the shell only reserves space for the navigation bar. "Más" opens the share actions of
+ * :feature:share.
  */
 @Composable
-internal fun MainShell(
-    shareViewModel: ShareViewModel = hiltViewModel()
-) {
-    val context = LocalContext.current
-    val shareState by shareViewModel.uiState.collectAsStateWithLifecycle()
+internal fun MainShell() {
     val snackbarHostState = remember { SnackbarHostState() }
-    val chooserTitle = stringResource(R.string.share_chooser_title)
-    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let(shareViewModel::onImport)
-    }
-
-    LaunchedEffect(shareViewModel) {
-        shareViewModel.events.collect { event ->
-            when (event) {
-                is ShareEvent.ShareFile -> context.shareJson(event.uri, chooserTitle)
-            }
-        }
-    }
-
-    val messageText = shareState.message?.text()
-    LaunchedEffect(shareState.message) {
-        if (messageText == null) return@LaunchedEffect
-        snackbarHostState.showSnackbar(messageText)
-        shareViewModel.onMessageShown()
-    }
-
+    val share = rememberShareController(snackbarHostState)
     MainShellContent(
         snackbarHostState = snackbarHostState,
-        isBusy = shareState.isBusy,
-        onExport = shareViewModel::onExport,
-        onImport = { importLauncher.launch(ImportMimeTypes) }
+        isBusy = share.isBusy,
+        onExport = share.onExport,
+        onImport = share.onImport
     )
 }
 
@@ -170,20 +138,9 @@ private fun NavHostController.navigateToTopLevel(destination: TopLevelDestinatio
         restoreState = true
     }
 
-private fun Context.shareJson(uri: Uri, chooserTitle: String) {
-    val send = Intent(Intent.ACTION_SEND).apply {
-        type = JsonMimeType
-        putExtra(Intent.EXTRA_STREAM, uri)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-    startActivity(Intent.createChooser(send, chooserTitle))
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun MenuPlannerNavigationBarPreview() = MenuPlannerTheme {
     MenuPlannerNavigationBar(currentDestination = null, onSelect = {}, onMore = {})
 }
 
-private val ImportMimeTypes = arrayOf("application/json", "text/plain", "application/octet-stream")
-private const val JsonMimeType = "application/json"

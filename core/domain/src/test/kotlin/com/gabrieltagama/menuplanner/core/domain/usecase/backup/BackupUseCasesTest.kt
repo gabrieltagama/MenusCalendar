@@ -24,7 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests of the recipe backup use cases: upload only on changes, recipes-only payload, restore,
+ * Tests of the backup use cases: upload only on changes, recipes and calendar payload, restore,
  * connection flow and scheduling.
  */
 class BackupUseCasesTest {
@@ -36,10 +36,10 @@ class BackupUseCasesTest {
     private val recipesText = "dishes=1;lunches=0;dinners=0"
     private val remoteSnapshot = MenuSnapshot(listOf(dish(id = "remote")))
 
-    private fun backUp(cloud: FakeCloudBackupRepository) = BackUpRecipesUseCase(cloud, snapshots, codec, TestDishes.fixedClock)
+    private fun backUp(cloud: FakeCloudBackupRepository) = BackUpUseCase(cloud, snapshots, codec, TestDishes.fixedClock)
 
     private fun restore(cloud: FakeCloudBackupRepository) =
-        RestoreRecipesUseCase(cloud, ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes)))
+        RestoreBackupUseCase(cloud, ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes)))
 
     private fun connect(cloud: FakeCloudBackupRepository) =
         ConnectCloudAccountUseCase(cloud, restore(cloud), backUp(cloud), scheduler)
@@ -53,12 +53,12 @@ class BackupUseCasesTest {
     }
 
     @Test
-    fun `backup uploads only the recipes json`() = runBlocking {
+    fun `backup uploads a snapshot of the recipes and the calendar`() = runBlocking {
         val cloud = FakeCloudBackupRepository(connected)
 
         assertEquals(Outcome.Success(BackupResult.UPLOADED), backUp(cloud)(onlyIfChanged = true))
         assertEquals(listOf(recipesText), cloud.uploads)
-        assertEquals(listOf(SnapshotScope.RECIPES), snapshots.readScopes)
+        assertEquals(listOf(SnapshotScope.EVERYTHING), snapshots.readScopes)
     }
 
     @Test

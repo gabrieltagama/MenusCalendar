@@ -7,11 +7,11 @@ import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
-import com.gabrieltagama.menuplanner.core.domain.usecase.backup.BackUpRecipesUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.backup.BackUpUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ConnectCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.DisconnectCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ObserveCloudAccountUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.backup.RestoreRecipesUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.backup.RestoreBackupUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveThemeModeUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetThemeModeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Settings screen state: the chosen theme mode and the optional Google recipe backup, which can
+ * Settings screen state: the chosen theme mode and the optional Google backup of recipes and calendar, which can
  * be linked, run or restored on demand and unlinked. Backup results surface as a nullable
  * [BackupMessage] in [BackupUiState].
  */
@@ -48,8 +48,8 @@ class SettingsViewModel @Inject constructor(
     observeCloudAccount: ObserveCloudAccountUseCase,
     private val setThemeMode: SetThemeModeUseCase,
     private val connectCloudAccount: ConnectCloudAccountUseCase,
-    private val backUpRecipes: BackUpRecipesUseCase,
-    private val restoreRecipes: RestoreRecipesUseCase,
+    private val backUp: BackUpUseCase,
+    private val restoreBackup: RestoreBackupUseCase,
     private val disconnectCloudAccount: DisconnectCloudAccountUseCase
 ) : ViewModel() {
 
@@ -73,9 +73,9 @@ class SettingsViewModel @Inject constructor(
         else runBusy { connectCloudAccount(accessToken).toMessage(BackupMessage::Restored) }
     }
 
-    fun onBackUpNow() = runBusy { backUpRecipes(onlyIfChanged = false).toMessage { BackupMessage.BackedUp } }
+    fun onBackUpNow() = runBusy { backUp(onlyIfChanged = false).toMessage { BackupMessage.BackedUp } }
 
-    fun onRestore() = runBusy { restoreRecipes().toMessage(BackupMessage::Restored) }
+    fun onRestore() = runBusy { restoreBackup().toMessage(BackupMessage::Restored) }
 
     fun onDisconnect() = runBusy {
         disconnectCloudAccount()
