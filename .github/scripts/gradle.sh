@@ -10,12 +10,8 @@ status=${PIPESTATUS[0]}
 
 encode() { sed -e 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g'; }
 
-grep -E '^e: ' "$log" | head -40 | while read -r line; do
-  file=$(echo "$line" | sed -nE 's#^e: file://[^ ]*/(app|core|feature|build-logic)/([^:]+):([0-9]+):([0-9]+) .*#\1/\2#p')
-  row=$(echo "$line" | sed -nE 's#^e: file://[^:]+:([0-9]+):([0-9]+) .*#\1#p')
-  message=$(echo "$line" | sed -E 's#^e: file://[^ ]+ ##')
-  if [ -n "$file" ]; then echo "::error file=$file,line=$row,title=Kotlin::$message"; else echo "::error title=Kotlin::$(echo "$line" | encode)"; fi
-done
+kotlin=$(grep -E '^e: ' "$log" | sed -E 's#^e: file://[^ ]*/((app|core|feature|build-logic)/[^ ]+) #\1 #' | head -50 | encode)
+[ -n "$kotlin" ] && echo "::error title=Errores de Kotlin::$kotlin"
 
 python3 - <<'PY'
 import glob, xml.etree.ElementTree as ET
@@ -27,10 +23,11 @@ for path in glob.glob('**/build/test-results/**/*.xml', recursive=True):
         continue
     for case in root.iter('testcase'):
         for failure in list(case.findall('failure')) + list(case.findall('error')):
-            text = (failure.get('message') or failure.text or '').strip().splitlines()
-            lines.append(f"{case.get('classname')}.{case.get('name')}: {' | '.join(text[:6])[:600]}")
-for line in lines[:30]:
-    print('::error title=Test fallido::' + line.replace('%', '%25').replace('\n', '%0A'))
+            text = ((failure.get('message') or '') + '\n' + (failure.text or '')).strip().splitlines()
+            lines.append(f"{case.get('classname')}.{case.get('name')}: {' | '.join(text[:4])[:400]}")
+if lines:
+    body = '\n'.join(lines[:60]).replace('%', '%25').replace('\r', '').replace('\n', '%0A')
+    print(f'::error title=Tests fallidos ({len(lines)})::' + body)
 PY
 
 wrong=$(awk '/What went wrong:/{flag=1} flag{print} /^\* Try:/{flag=0}' "$log" | head -60 | encode)
