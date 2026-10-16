@@ -8,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
@@ -45,12 +46,12 @@ class CalendarViewModelTest {
     private val today = LocalDate.of(2026, 10, 9)
     private val clock = Clock.fixed(Instant.parse("2026-10-09T10:00:00Z"), ZoneOffset.UTC)
 
-    private val starter = Dish(id = "gazpacho", name = "Gazpacho", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW)
-    private val main = Dish(id = "chicken", name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
-    private val todayPlan = MealDay(date = today, menu = DailyMenu.Courses(starter = starter, main = main))
-    private val novemberPlan = MealDay(date = LocalDate.of(2026, 11, 3), menu = DailyMenu.Single(single = main.copy(type = DishType.SINGLE)))
+    private val starter = Dish(id = DishId("gazpacho"), name = "Gazpacho", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW, updatedAt = Instant.EPOCH)
+    private val main = Dish(id = DishId("chicken"), name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM, updatedAt = Instant.EPOCH)
+    private val todayPlan = MealDay(date = today, menu = DailyMenu.Courses(starter = starter, main = main), updatedAt = Instant.EPOCH)
+    private val novemberPlan = MealDay(date = LocalDate.of(2026, 11, 3), menu = DailyMenu.Single(single = main.copy(type = DishType.SINGLE)), updatedAt = Instant.EPOCH)
 
-    private val todayDinner = DinnerDay(date = today, dish = main)
+    private val todayDinner = DinnerDay(date = today, dish = main, updatedAt = Instant.EPOCH)
 
     private val repository = FakeMealPlanRepository(listOf(todayPlan, novemberPlan))
     private val dinnerRepository = FakeDinnerPlanRepository(listOf(todayDinner))

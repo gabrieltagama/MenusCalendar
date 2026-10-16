@@ -68,6 +68,7 @@ import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.EmptyState
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
+import com.gabrieltagama.menuplanner.core.ui.preview.PreviewDishes
 import com.gabrieltagama.menuplanner.core.ui.text.label
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.dishes.R
@@ -253,8 +254,8 @@ private fun DishList(dishes: List<Dish>, listState: LazyListState, onOpenDish: (
     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp)
 ) {
-    items(items = dishes, key = { it.id }) { dish ->
-        DishCard(dish = dish, onClick = { onOpenDish(dish.id) }, modifier = Modifier.animateItem())
+    items(items = dishes, key = { it.id.value }) { dish ->
+        DishCard(dish = dish, onClick = { onOpenDish(dish.id.value) }, modifier = Modifier.animateItem())
     }
 }
 
@@ -304,15 +305,15 @@ private val previewState = DishListUiState(
     isLoading = false,
     hasDishes = true,
     dishes = listOf(
-        Dish(
+        PreviewDishes.dish(
             name = "Ensalada mixta",
             ingredients = listOf(Ingredient("Lechuga", 1.0, MeasureUnit.UNIT)),
             type = DishType.STARTER,
             heaviness = Heaviness.VERY_LOW
         ),
-        Dish(name = "Flan de huevo", type = DishType.DESSERT, heaviness = Heaviness.MEDIUM),
-        Dish(name = "Lentejas estofadas con chorizo y verduras de temporada", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH),
-        Dish(name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
+        PreviewDishes.dish(name = "Flan de huevo", type = DishType.DESSERT, heaviness = Heaviness.MEDIUM),
+        PreviewDishes.dish(name = "Lentejas estofadas con chorizo y verduras de temporada", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH),
+        PreviewDishes.dish(name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
     )
 )
 

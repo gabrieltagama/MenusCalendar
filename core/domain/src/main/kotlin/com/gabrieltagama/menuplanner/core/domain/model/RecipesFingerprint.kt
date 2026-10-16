@@ -15,5 +15,5 @@ object RecipesFingerprint {
             .digest(dishes.sortedBy(Dish::id).joinToString(separator = "\n", transform = ::versionOf).toByteArray(Charsets.UTF_8))
             .joinToString(separator = "") { "%02x".format(it) }
 
-    private fun versionOf(dish: Dish): String = "${dish.id}|${dish.updatedAt.toEpochMilli()}"
+    private fun versionOf(dish: Dish): String = "${dish.id.value}|${dish.updatedAt.toEpochMilli()}"
 }

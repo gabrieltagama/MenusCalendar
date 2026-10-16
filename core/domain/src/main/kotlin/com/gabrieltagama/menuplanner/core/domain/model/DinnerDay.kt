@@ -9,5 +9,5 @@ import java.time.LocalDate
 data class DinnerDay(
     val date: LocalDate,
     val dish: Dish,
-    val updatedAt: Instant = Instant.now()
+    val updatedAt: Instant
 )

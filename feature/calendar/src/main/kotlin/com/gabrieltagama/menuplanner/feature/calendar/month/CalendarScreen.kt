@@ -52,9 +52,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -88,11 +88,13 @@ import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessDot
+import com.gabrieltagama.menuplanner.core.ui.preview.PreviewDishes
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import com.gabrieltagama.menuplanner.feature.calendar.common.inlineText
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
 import com.gabrieltagama.menuplanner.feature.calendar.common.titleText
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -504,8 +506,8 @@ private fun YearMonth.weeks(): List<List<LocalDate?>> {
 private fun CalendarScreenPreview() = MenuPlannerTheme {
     val today = LocalDate.of(2026, 10, 9)
     val menu = DailyMenu.Courses(
-        starter = Dish(name = "Gazpacho", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW),
-        main = Dish(name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
+        starter = PreviewDishes.dish(name = "Gazpacho", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW),
+        main = PreviewDishes.dish(name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
     )
     CalendarScreen(
         state = CalendarUiState(
@@ -513,7 +515,7 @@ private fun CalendarScreenPreview() = MenuPlannerTheme {
             selectedDate = today,
             today = today,
             isLoading = false,
-            days = mapOf(today to MealDay(date = today, menu = menu))
+            days = mapOf(today to MealDay(date = today, menu = menu, updatedAt = Instant.EPOCH))
         ),
         onPreviousMonth = {},
         onNextMonth = {},

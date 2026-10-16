@@ -5,6 +5,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
+import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import kotlinx.coroutines.runBlocking
@@ -24,7 +25,7 @@ class SaveDishNonFiniteQuantityTest {
     @Before
     fun setUp() {
         repository = FakeDishRepository()
-        useCase = SaveDishUseCase(TestDishes.fixedClock, StandardizeRecipeBookUseCase(repository))
+        useCase = SaveDishUseCase(TestDishes.fixedClock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository))
     }
 
     @Test
@@ -34,7 +35,7 @@ class SaveDishNonFiniteQuantityTest {
             Ingredient("Oil", Double.NaN, MeasureUnit.TABLESPOON)
         )
 
-        val result = useCase(dish(ingredients = ingredients))
+        val result = save(dish(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(DomainError.InvalidIngredient(1)), result)
         assertTrue(repository.upserted.isEmpty())
@@ -44,7 +45,7 @@ class SaveDishNonFiniteQuantityTest {
     fun `positive infinity quantity fails with its index`() = runBlocking {
         val ingredients = listOf(Ingredient("Water", Double.POSITIVE_INFINITY, MeasureUnit.LITER))
 
-        val result = useCase(dish(ingredients = ingredients))
+        val result = save(dish(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(DomainError.InvalidIngredient(0)), result)
         assertTrue(repository.upserted.isEmpty())
@@ -58,7 +59,7 @@ class SaveDishNonFiniteQuantityTest {
             Ingredient("Flour", Double.NEGATIVE_INFINITY, MeasureUnit.GRAM)
         )
 
-        val result = useCase(dish(ingredients = ingredients))
+        val result = save(dish(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(DomainError.InvalidIngredient(2)), result)
     }
@@ -70,8 +71,10 @@ class SaveDishNonFiniteQuantityTest {
             Ingredient("Egg", Double.NaN, MeasureUnit.UNIT)
         )
 
-        val result = useCase(dish(ingredients = ingredients))
+        val result = save(dish(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(DomainError.InvalidIngredient(0)), result)
     }
+
+    private suspend fun save(dish: Dish) = useCase(dish.toDraft())
 }

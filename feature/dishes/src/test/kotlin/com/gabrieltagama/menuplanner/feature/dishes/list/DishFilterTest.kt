@@ -1,12 +1,14 @@
 package com.gabrieltagama.menuplanner.feature.dishes.list
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
+import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -118,10 +120,11 @@ class DishFilterTest {
         )
 
     private fun dish(id: String, name: String, type: DishType, heaviness: Heaviness, vararg ingredients: String) = Dish(
-        id = id,
+        id = DishId(id),
         name = name,
         ingredients = ingredients.map { Ingredient(it, 1.0, MeasureUnit.UNIT) },
         type = type,
-        heaviness = heaviness
+        heaviness = heaviness,
+        updatedAt = Instant.EPOCH
     )
 }

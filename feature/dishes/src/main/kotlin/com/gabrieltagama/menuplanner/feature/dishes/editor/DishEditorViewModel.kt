@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
@@ -27,8 +29,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Create/edit form of a dish. In edit mode the loaded dish is kept as the base and saved with
- * copy(), so its id and any field not handled by this form are preserved.
+ * Create/edit form of a dish. The form is saved as a DishDraft: in edit mode it carries the id of
+ * the loaded dish, and for a new dish SaveDishUseCase assigns the id.
  */
 sealed interface DishEditorEvent {
     data object Close : DishEditorEvent
@@ -42,8 +44,7 @@ class DishEditorViewModel @Inject constructor(
     private val deleteDish: DeleteDishUseCase
 ) : ViewModel() {
 
-    private val dishId: String? = savedStateHandle.toRoute<DishEditorRoute>().dishId
-    private var originalDish: Dish? = null
+    private val dishId: DishId? = savedStateHandle.toRoute<DishEditorRoute>().dishId?.let(::DishId)
     private var nextIngredientKey = 0L
 
     private val _uiState = MutableStateFlow(DishEditorUiState(isEditMode = dishId != null, isLoading = dishId != null))
@@ -96,10 +97,10 @@ class DishEditorViewModel @Inject constructor(
             _uiState.update { it.copy(showValidationErrors = true) }
             return
         }
-        val dish = buildDish(state)
+        val draft = draftOf(state)
         _uiState.update { it.copy(isSaving = true, showValidationErrors = true) }
         viewModelScope.launch {
-            when (val outcome = saveDish(dish)) {
+            when (val outcome = saveDish(draft)) {
                 is Outcome.Success -> _events.send(DishEditorEvent.Close)
                 is Outcome.Failure -> _uiState.update { it.copy(isSaving = false, error = outcome.error) }
             }
@@ -117,7 +118,7 @@ class DishEditorViewModel @Inject constructor(
         }
     }
 
-    private fun load(id: String) = viewModelScope.launch {
+    private fun load(id: DishId) = viewModelScope.launch {
         when (val outcome = getDish(id)) {
             is Outcome.Success -> fillForm(outcome.value)
             is Outcome.Failure -> _uiState.update { it.copy(isLoading = false, error = outcome.error) }
@@ -125,7 +126,6 @@ class DishEditorViewModel @Inject constructor(
     }
 
     private fun fillForm(dish: Dish) {
-        originalDish = dish
         _uiState.update {
             it.copy(
                 isLoading = false,
@@ -141,19 +141,17 @@ class DishEditorViewModel @Inject constructor(
         }
     }
 
-    private fun buildDish(state: DishEditorUiState): Dish {
-        val base = originalDish ?: Dish(name = state.name, type = state.type, heaviness = state.heaviness)
-        return base.copy(
-            name = state.name,
-            description = state.description,
-            type = state.type,
-            heaviness = state.heaviness,
-            rating = state.rating,
-            mealTime = state.mealTime,
-            ingredients = state.ingredients.mapNotNull { it.toDomain() },
-            preparation = state.preparation
-        )
-    }
+    private fun draftOf(state: DishEditorUiState): DishDraft = DishDraft(
+        id = dishId,
+        name = state.name,
+        description = state.description,
+        ingredients = state.ingredients.mapNotNull { it.toDomain() },
+        preparation = state.preparation,
+        type = state.type,
+        heaviness = state.heaviness,
+        rating = state.rating,
+        mealTime = state.mealTime
+    )
 
     private fun updateIngredient(key: Long, transform: (IngredientForm) -> IngredientForm) = _uiState.update { state ->
         state.copy(ingredients = state.ingredients.map { if (it.key == key) transform(it) else it })

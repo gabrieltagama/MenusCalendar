@@ -5,18 +5,21 @@ import com.gabrieltagama.menuplanner.core.domain.model.BackupResult
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.RecipesFingerprint
+import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
 import com.gabrieltagama.menuplanner.core.domain.repository.BackupScheduler
 import com.gabrieltagama.menuplanner.core.domain.repository.CloudBackupRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
-import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
+import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotCodec
+import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotRepository
+import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
+import java.time.Clock
+import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 /**
  * Use cases of the optional recipe backup. Only recipes are saved, never the calendar. Restoring
- * merges with the share rules (newest updatedAt wins) and converts to standard units; an
+ * imports the backup like a shared file (newest updatedAt wins, standard units); an
  * automatic backup uploads only when the recipes fingerprint changed since the last upload.
  * Connecting restores, uploads and schedules the daily backup; disconnecting cancels it.
  */
@@ -26,14 +29,16 @@ class ObserveCloudAccountUseCase @Inject constructor(private val cloud: CloudBac
 
 class BackUpRecipesUseCase @Inject constructor(
     private val cloud: CloudBackupRepository,
-    private val share: MenuShareRepository,
-    private val dishes: DishRepository
+    private val snapshots: MenuSnapshotRepository,
+    private val codec: MenuSnapshotCodec,
+    private val clock: Clock
 ) {
     suspend operator fun invoke(onlyIfChanged: Boolean): Outcome<BackupResult> {
         if (cloud.account.first() is CloudAccount.Disconnected) return Outcome.Success(BackupResult.NOT_CONNECTED)
-        val fingerprint = RecipesFingerprint.of(dishes.getDishes())
+        val snapshot = snapshots.read(SnapshotScope.RECIPES)
+        val fingerprint = RecipesFingerprint.of(snapshot.dishes)
         if (onlyIfChanged && fingerprint == cloud.lastUploadedFingerprint()) return Outcome.Success(BackupResult.NO_CHANGES)
-        return when (val upload = cloud.upload(share.exportRecipes(), fingerprint)) {
+        return when (val upload = cloud.upload(codec.encode(snapshot, Instant.now(clock)), fingerprint)) {
             is Outcome.Failure -> upload
             is Outcome.Success -> Outcome.Success(BackupResult.UPLOADED)
         }
@@ -42,16 +47,12 @@ class BackUpRecipesUseCase @Inject constructor(
 
 class RestoreRecipesUseCase @Inject constructor(
     private val cloud: CloudBackupRepository,
-    private val share: MenuShareRepository,
-    private val standardizeRecipeBook: StandardizeRecipeBookUseCase
+    private val importMenus: ImportMenusUseCase
 ) {
     suspend operator fun invoke(): Outcome<ImportSummary> = when (val download = cloud.download()) {
         is Outcome.Failure -> download
-        is Outcome.Success -> download.value?.let { restore(it) } ?: Outcome.Success(ImportSummary.EMPTY)
+        is Outcome.Success -> download.value?.let { importMenus(it) } ?: Outcome.Success(ImportSummary.EMPTY)
     }
-
-    private suspend fun restore(json: String): Outcome<ImportSummary> =
-        share.importAndMerge(json).also { if (it is Outcome.Success) standardizeRecipeBook() }
 }
 
 class ConnectCloudAccountUseCase @Inject constructor(

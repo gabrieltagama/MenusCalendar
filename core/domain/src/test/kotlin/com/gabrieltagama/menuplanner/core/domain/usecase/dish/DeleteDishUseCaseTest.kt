@@ -4,6 +4,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -20,7 +21,7 @@ class DeleteDishUseCaseTest {
     fun `missing dish fails with DishNotFound`() = runBlocking {
         val repository = FakeDishRepository()
 
-        val result = DeleteDishUseCase(repository)("unknown")
+        val result = DeleteDishUseCase(repository)(DishId("unknown"))
 
         assertEquals(Outcome.Failure(DomainError.DishNotFound), result)
         assertTrue(repository.deletedIds.isEmpty())
@@ -31,7 +32,7 @@ class DeleteDishUseCaseTest {
         val repository = FakeDishRepository(listOf(dish(id = "d1")))
         repository.usedInCalendar += "d1"
 
-        val result = DeleteDishUseCase(repository)("d1")
+        val result = DeleteDishUseCase(repository)(DishId("d1"))
 
         assertEquals(Outcome.Failure(DomainError.DishInUse), result)
         assertTrue(repository.deletedIds.isEmpty())
@@ -42,7 +43,7 @@ class DeleteDishUseCaseTest {
     fun `unused dish is deleted`() = runBlocking {
         val repository = FakeDishRepository(listOf(dish(id = "d1"), dish(id = "d2")))
 
-        val result = DeleteDishUseCase(repository)("d1")
+        val result = DeleteDishUseCase(repository)(DishId("d1"))
 
         assertEquals(Outcome.Success(Unit), result)
         assertEquals(listOf("d1"), repository.deletedIds)

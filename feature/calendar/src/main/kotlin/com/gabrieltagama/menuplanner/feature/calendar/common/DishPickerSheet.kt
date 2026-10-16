@@ -96,7 +96,7 @@ internal fun DishPickerSheet(
                             onClick = { choose(null) }
                         )
                     }
-                items(items = visible, key = { it.id }) { dish ->
+                items(items = visible, key = { it.id.value }) { dish ->
                     PickerRow(
                         headline = dish.name,
                         leading = { DishTypeAvatar(type = dish.type, size = 36.dp) },

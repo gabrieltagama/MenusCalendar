@@ -9,6 +9,7 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
@@ -85,7 +86,7 @@ class DishDaoTest {
 
         dishRepository.upsert(edited)
 
-        assertEquals(edited, dishRepository.getDish("d1"))
+        assertEquals(edited, dishRepository.getDish(DishId("d1")))
         assertEquals(2, dishDao.getById("d1")!!.ingredients.size)
         assertEquals(1, dishDao.getAll().size)
     }
@@ -115,9 +116,9 @@ class DishDaoTest {
     fun deletingUnplannedDishCascadesIngredients() = runTest {
         dishRepository.upsert(DatabaseTestData.dish("d1", ingredients = listOf(Ingredient("Rice", 1.0, MeasureUnit.CUP))))
 
-        assertTrue(dishRepository.deleteIfUnused("d1"))
+        assertTrue(dishRepository.deleteIfUnused(DishId("d1")))
 
-        assertNull(dishRepository.getDish("d1"))
+        assertNull(dishRepository.getDish(DishId("d1")))
         assertEquals(0, countIngredientRows("d1"))
     }
 
@@ -137,7 +138,7 @@ class DishDaoTest {
         dishRepository.upsert(single)
         mealPlanRepository.save(DatabaseTestData.singleDay(date, single))
 
-        val error = runCatching { dishDao.deleteById(single.id) }.exceptionOrNull()
+        val error = runCatching { dishDao.deleteById(single.id.value) }.exceptionOrNull()
 
         assertTrue("Expected SQLiteConstraintException but was $error", error is SQLiteConstraintException)
         assertEquals(single, dishRepository.getDish(single.id))

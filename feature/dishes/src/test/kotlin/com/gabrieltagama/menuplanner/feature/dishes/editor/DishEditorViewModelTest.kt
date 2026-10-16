@@ -4,7 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
@@ -49,7 +51,7 @@ class DishEditorViewModelTest {
     private val clock: Clock = Clock.fixed(fixedInstant, ZoneOffset.UTC)
 
     private val existingDish = Dish(
-        id = "tortilla",
+        id = DishId("tortilla"),
         name = "Tortilla de patatas",
         description = "Jugosa",
         ingredients = listOf(
@@ -148,7 +150,7 @@ class DishEditorViewModelTest {
 
     @Test
     fun editModeLoadsDish() = runBlocking {
-        val viewModel = createViewModel(dishId = existingDish.id)
+        val viewModel = createViewModel(dishId = existingDish.id.value)
 
         val state = awaitLoaded(viewModel)
 
@@ -167,7 +169,7 @@ class DishEditorViewModelTest {
 
     @Test
     fun editModeSaveKeepsDishId() = runBlocking {
-        val viewModel = createViewModel(dishId = existingDish.id)
+        val viewModel = createViewModel(dishId = existingDish.id.value)
         awaitLoaded(viewModel)
         viewModel.onNameChange("Tortilla con cebolla")
 
@@ -191,8 +193,8 @@ class DishEditorViewModelTest {
 
     @Test
     fun deleteBlockedWhenDishIsUsedInCalendar() = runBlocking {
-        repository.usedInCalendar += existingDish.id
-        val viewModel = createViewModel(dishId = existingDish.id)
+        repository.usedInCalendar += existingDish.id.value
+        val viewModel = createViewModel(dishId = existingDish.id.value)
         awaitLoaded(viewModel)
         viewModel.onDeleteRequest()
         assertTrue(viewModel.uiState.value.showDeleteConfirm)
@@ -211,20 +213,20 @@ class DishEditorViewModelTest {
 
     @Test
     fun deleteNotUsedDishEmitsClose() = runBlocking {
-        val viewModel = createViewModel(dishId = existingDish.id)
+        val viewModel = createViewModel(dishId = existingDish.id.value)
         awaitLoaded(viewModel)
 
         viewModel.onDeleteRequest()
         viewModel.onDeleteConfirm()
 
         assertEquals(DishEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
-        assertEquals(listOf(existingDish.id), repository.deletedIds)
+        assertEquals(listOf(existingDish.id.value), repository.deletedIds)
     }
 
     private fun createViewModel(dishId: String?): DishEditorViewModel = DishEditorViewModel(
         savedStateHandle = if (dishId == null) SavedStateHandle() else SavedStateHandle(mapOf("dishId" to dishId)),
         getDish = GetDishUseCase(repository),
-        saveDish = SaveDishUseCase(clock, StandardizeRecipeBookUseCase(repository)),
+        saveDish = SaveDishUseCase(clock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository)),
         deleteDish = DeleteDishUseCase(repository)
     )
 

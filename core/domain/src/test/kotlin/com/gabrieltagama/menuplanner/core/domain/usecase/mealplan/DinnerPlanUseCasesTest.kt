@@ -13,6 +13,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.ChronoUnit
@@ -66,7 +67,7 @@ class DinnerPlanUseCasesTest {
 
     @Test
     fun `fills every empty dinner with dinner options only and keeps planned dinners`() {
-        val planned = DinnerDay(date = date, dish = dinnerCatalog.first())
+        val planned = DinnerDay(date = date, dish = dinnerCatalog.first(), updatedAt = Instant.EPOCH)
         (1..30).forEach { seed ->
             val run = autoFill(dinnerCatalog, seed, dinners = listOf(planned))
 
@@ -80,7 +81,7 @@ class DinnerPlanUseCasesTest {
     fun `never repeats the lunch of the day nor a dish served within 6 days`() {
         val lunchDish = dish(id = "any-1", type = DishType.MAIN, mealTime = MealTime.ANY)
         val starter = dish(id = "starter", type = DishType.STARTER, mealTime = MealTime.LUNCH)
-        val lunches = (1..month.lengthOfMonth()).map { MealDay(date = month.atDay(it), menu = DailyMenu.Courses(starter = starter, main = lunchDish)) }
+        val lunches = (1..month.lengthOfMonth()).map { MealDay(date = month.atDay(it), menu = DailyMenu.Courses(starter = starter, main = lunchDish), updatedAt = Instant.EPOCH) }
         (1..30).forEach { seed ->
             val run = autoFill(dinnerCatalog, seed, lunches = lunches)
             val plan = run.dinners.current

@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.PlanningPolicy
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
 import java.time.Clock
@@ -15,7 +16,7 @@ import kotlin.random.Random
 /**
  * Fills every empty day of a month with a random menu built by MenuPicker, using only dishes
  * served at lunch (MealTime LUNCH or ANY). Days already planned are never modified; the days of
- * the previous and next months within MenuPicker.RECENT_DAYS are taken into account so the
+ * the previous and next months within PlanningPolicy.RECENT_DAYS are taken into account so the
  * no-repeat and heavy-streak rules also hold across both month boundaries. Every filled day is
  * saved at the end in a single transaction.
  */
@@ -48,7 +49,7 @@ class AutoFillMonthUseCase @Inject constructor(
     }
 
     private suspend fun loadHistory(month: YearMonth): MutableMap<LocalDate, DailyMenu> {
-        val window = month.atDay(1).minusDays(MenuPicker.RECENT_DAYS)..month.atEndOfMonth().plusDays(MenuPicker.RECENT_DAYS)
+        val window = PlanningPolicy.window(month.atDay(1)..month.atEndOfMonth())
         return mealPlanRepository.getRange(window).associate { it.date to it.menu }.toMutableMap()
     }
 

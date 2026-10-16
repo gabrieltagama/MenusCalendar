@@ -46,14 +46,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gabrieltagama.menuplanner.core.domain.common.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
+import com.gabrieltagama.menuplanner.core.ui.preview.PreviewDishes
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
@@ -285,8 +286,8 @@ private fun MenuSlot.label(): String = stringResource(
 @Preview(showBackground = true)
 @Composable
 private fun DayEditorScreenPreview() = MenuPlannerTheme {
-    val starter = Dish(name = "Crema de calabaza", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW)
-    val main = Dish(name = "Merluza en salsa verde", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
+    val starter = PreviewDishes.dish(name = "Crema de calabaza", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW)
+    val main = PreviewDishes.dish(name = "Merluza en salsa verde", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
     DayEditorScreen(
         state = DayEditorUiState(
             date = LocalDate.of(2026, 10, 9),

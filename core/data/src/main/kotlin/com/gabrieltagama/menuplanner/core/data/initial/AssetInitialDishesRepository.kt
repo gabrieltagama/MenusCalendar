@@ -7,8 +7,10 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishDao
 import com.gabrieltagama.menuplanner.core.data.di.SettingsDataStore
+import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.repository.InitialDishesRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
+import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotCodec
+import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,7 +22,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * Loads assets/initial_dishes.json, a share document with recipes only, through the regular
- * import so it is validated and merged like any received file. A flag in the settings DataStore
+ * codec and merge so it is validated and merged like any received file. A flag in the settings DataStore
  * makes it run once per installation, and it is skipped when the recipe book already has dishes
  * (users updating the app). The dishes have fixed ids and an old updatedAt, so any later edit by
  * the user wins.
@@ -29,7 +31,8 @@ import kotlinx.coroutines.withContext
 internal class AssetInitialDishesRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val dishDao: DishDao,
-    private val shareRepository: MenuShareRepository,
+    private val codec: MenuSnapshotCodec,
+    private val snapshots: MenuSnapshotRepository,
     @param:SettingsDataStore private val dataStore: DataStore<Preferences>
 ) : InitialDishesRepository {
 
@@ -38,7 +41,7 @@ internal class AssetInitialDishesRepository @Inject constructor(
     override suspend fun loadIfFirstLaunch() {
         mutex.withLock {
             if (dataStore.data.first()[KEY_LOADED] == true) return
-            if (dishDao.getVersions().isEmpty()) shareRepository.importAndMerge(readInitialDishes())
+            if (dishDao.getVersions().isEmpty()) (codec.decode(readInitialDishes()) as? Outcome.Success)?.let { snapshots.merge(it.value) }
             dataStore.edit { it[KEY_LOADED] = true }
         }
     }
