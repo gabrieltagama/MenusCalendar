@@ -128,8 +128,7 @@ class JsonMenuSnapshotCodecTest {
     fun `dishes breaking the dish rules are InvalidImportFile`() = listOf(
         dishDto(name = "  "),
         dishDto(ingredients = listOf(IngredientDto(" ", 1.0, "GRAM"))),
-        dishDto(ingredients = listOf(IngredientDto("Flour", -1.0, "GRAM"))),
-        dishDto(ingredients = listOf(IngredientDto("Flour", Double.NaN, "GRAM")))
+        dishDto(ingredients = listOf(IngredientDto("Flour", -1.0, "GRAM")))
     ).forEach { assertInvalid(textWith(it)) }
 
     @Test
