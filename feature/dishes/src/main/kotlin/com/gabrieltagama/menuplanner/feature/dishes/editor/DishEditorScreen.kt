@@ -67,8 +67,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessDot
-import com.gabrieltagama.menuplanner.core.ui.component.icon
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
+import com.gabrieltagama.menuplanner.core.ui.component.icon
 import com.gabrieltagama.menuplanner.core.ui.text.label
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme

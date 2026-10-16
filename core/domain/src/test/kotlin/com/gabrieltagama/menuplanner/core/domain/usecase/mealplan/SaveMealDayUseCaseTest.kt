@@ -1,7 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.common.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
@@ -9,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -24,7 +24,6 @@ class SaveMealDayUseCaseTest {
     private val starter = dish(type = DishType.STARTER)
     private val main = dish(type = DishType.MAIN)
     private val single = dish(type = DishType.SINGLE)
-    private val dessert = dish(type = DishType.DESSERT)
 
     private lateinit var repository: FakeMealPlanRepository
     private lateinit var useCase: SaveMealDayUseCase
@@ -41,8 +40,8 @@ class SaveMealDayUseCaseTest {
     }
 
     @Test
-    fun `valid courses menu with dessert is saved`() = runBlocking {
-        val menu = DailyMenu.Courses(starter, main, dessert)
+    fun `valid courses menu is saved`() = runBlocking {
+        val menu = DailyMenu.Courses(starter, main)
 
         val result = useCase(date, menu)
 
@@ -53,19 +52,15 @@ class SaveMealDayUseCaseTest {
 
     @Test
     fun `courses with wrong starter fails on STARTER slot`() =
-        assertRejected(DailyMenu.Courses(main, main, dessert), MenuSlot.STARTER, DishType.STARTER)
+        assertRejected(DailyMenu.Courses(main, main), MenuSlot.STARTER, DishType.STARTER)
 
     @Test
     fun `courses with wrong main fails on MAIN slot`() =
-        assertRejected(DailyMenu.Courses(starter, single, dessert), MenuSlot.MAIN, DishType.MAIN)
-
-    @Test
-    fun `courses with wrong dessert fails on DESSERT slot`() =
-        assertRejected(DailyMenu.Courses(starter, main, starter), MenuSlot.DESSERT, DishType.DESSERT)
+        assertRejected(DailyMenu.Courses(starter, single), MenuSlot.MAIN, DishType.MAIN)
 
     @Test
     fun `valid single menu is saved`() = runBlocking {
-        val menu = DailyMenu.Single(single, dessert)
+        val menu = DailyMenu.Single(single)
 
         val result = useCase(date, menu)
 
@@ -76,17 +71,6 @@ class SaveMealDayUseCaseTest {
     @Test
     fun `single menu with a main dish fails on SINGLE slot`() =
         assertRejected(DailyMenu.Single(main), MenuSlot.SINGLE, DishType.SINGLE)
-
-    @Test
-    fun `single menu with wrong dessert fails on DESSERT slot`() =
-        assertRejected(DailyMenu.Single(single, main), MenuSlot.DESSERT, DishType.DESSERT)
-
-    @Test
-    fun `optional dessert may be null in both variants`() = runBlocking {
-        assertTrue(useCase(date, DailyMenu.Courses(starter, main)) is Outcome.Success)
-        assertTrue(useCase(date.plusDays(1), DailyMenu.Single(single)) is Outcome.Success)
-        assertEquals(2, repository.saved.size)
-    }
 
     @Test
     fun `updatedAt comes from injected clock`() = runBlocking {

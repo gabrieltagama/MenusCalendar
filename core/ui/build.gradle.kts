@@ -1,24 +1,10 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.compose)
+    id("menuplanner.android.library")
+    id("menuplanner.android.compose")
 }
 
 android {
     namespace = "com.gabrieltagama.menuplanner.core.ui"
-    compileSdk = 37
-
-    defaultConfig {
-        minSdk = 31
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        compose = true
-    }
 }
 
 dependencies {
@@ -30,5 +16,4 @@ dependencies {
     api(libs.androidx.compose.ui.tooling.preview)
     api(libs.androidx.compose.material3)
     api(libs.androidx.compose.material.icons.extended)
-    debugImplementation(libs.androidx.compose.ui.tooling)
 }

@@ -1,28 +1,24 @@
 package com.gabrieltagama.menuplanner.feature.calendar.dinner
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetDinnerDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveDinnerDayUseCase
+import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorViewModel
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.DinnerEditorRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -50,10 +46,6 @@ data class DinnerEditorUiState(
     val canSave: Boolean get() = !form.isLoading && !form.isSaving && form.selected != null
 }
 
-sealed interface DinnerEditorEvent {
-    data object Close : DinnerEditorEvent
-}
-
 @HiltViewModel
 class DinnerEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -61,11 +53,9 @@ class DinnerEditorViewModel @Inject constructor(
     private val getDinnerDay: GetDinnerDayUseCase,
     private val saveDinnerDay: SaveDinnerDayUseCase,
     private val clearDinnerDay: ClearDinnerDayUseCase
-) : ViewModel() {
+) : PlanEditorViewModel<DinnerEditorForm>(DinnerEditorForm()) {
 
     private val date: LocalDate = LocalDate.ofEpochDay(savedStateHandle.toRoute<DinnerEditorRoute>().epochDay)
-
-    private val form = MutableStateFlow(DinnerEditorForm())
 
     private val options: Flow<List<Dish>> =
         observeDishes().map { dishes -> dishes.filter(Dish::isDinnerOption).sortedBy { it.name.lowercase() } }
@@ -74,9 +64,6 @@ class DinnerEditorViewModel @Inject constructor(
         combine(form, options) { currentForm, currentOptions ->
             DinnerEditorUiState(date = date, form = currentForm, options = currentOptions, isOptionsLoading = false)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DinnerEditorUiState(date = date))
-
-    private val _events = Channel<DinnerEditorEvent>(Channel.BUFFERED)
-    val events: Flow<DinnerEditorEvent> = _events.receiveAsFlow()
 
     init {
         viewModelScope.launch {
@@ -92,30 +79,18 @@ class DinnerEditorViewModel @Inject constructor(
         state.options.filterNot { it.id == state.form.selected?.id }.ifEmpty { state.options }.randomOrNull()?.let(::onDishSelect)
     }
 
-    fun onClearRequest() = form.update { it.copy(showClearConfirm = true) }
-
-    fun onClearDismiss() = form.update { it.copy(showClearConfirm = false) }
-
-    fun onErrorShown() = form.update { it.copy(error = null) }
-
     fun onSave() {
         val state = uiState.value
         if (!state.canSave) return
         val dish = state.form.selected ?: return
-        form.update { it.copy(isSaving = true) }
-        viewModelScope.launch {
-            when (val outcome = saveDinnerDay(date, dish)) {
-                is Outcome.Success -> _events.send(DinnerEditorEvent.Close)
-                is Outcome.Failure -> form.update { it.copy(isSaving = false, error = outcome.error) }
-            }
-        }
+        save { saveDinnerDay(date, dish) }
     }
 
-    fun onClearConfirm() {
-        form.update { it.copy(showClearConfirm = false, isSaving = true) }
-        viewModelScope.launch {
-            clearDinnerDay(date)
-            _events.send(DinnerEditorEvent.Close)
-        }
-    }
+    override fun DinnerEditorForm.withClearConfirm(visible: Boolean) = copy(showClearConfirm = visible)
+
+    override fun DinnerEditorForm.withSaving(saving: Boolean) = copy(isSaving = saving)
+
+    override fun DinnerEditorForm.withError(error: DomainError?) = copy(error = error)
+
+    override suspend fun clearDay() = clearDinnerDay(date)
 }

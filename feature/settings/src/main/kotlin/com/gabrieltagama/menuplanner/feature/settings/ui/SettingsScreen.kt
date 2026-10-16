@@ -42,7 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gabrieltagama.menuplanner.core.cloud.auth.rememberGoogleDriveConnect
+import com.gabrieltagama.menuplanner.core.cloud.ui.rememberGoogleDriveConnect
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
 import com.gabrieltagama.menuplanner.core.ui.text.message
@@ -52,7 +52,7 @@ import com.gabrieltagama.menuplanner.feature.settings.R
 /**
  * Settings tab: stateful route bound to [SettingsViewModel] and the Google consent flow, and a
  * stateless screen grouped in sections: "Apariencia" with the theme choice (system, light or dark)
- * and the optional Google Drive recipe backup. Bottom insets are left to the app shell, which
+ * and the optional Google Drive backup of recipes and calendar. Bottom insets are left to the app shell, which
  * draws the NavigationBar below this screen.
  */
 @Composable
@@ -176,7 +176,7 @@ private fun BackupItem(icon: ImageVector, title: String, hint: String?, enabled:
 @Composable
 private fun BackupMessage.text(): String = when (this) {
     BackupMessage.BackedUp -> stringResource(R.string.settings_backup_done)
-    is BackupMessage.Restored -> stringResource(R.string.settings_backup_restored, summary.dishesAdded, summary.dishesUpdated)
+    is BackupMessage.Restored -> stringResource(R.string.settings_backup_restored, summary.dishesAdded, summary.dishesUpdated, summary.daysAdded, summary.daysUpdated)
     BackupMessage.Disconnected -> stringResource(R.string.settings_backup_disconnected)
     BackupMessage.ConnectionCancelled -> stringResource(R.string.settings_backup_cancelled)
     is BackupMessage.Failed -> error.message()

@@ -14,13 +14,12 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.util.Locale
 import javax.inject.Inject
-import kotlinx.coroutines.flow.first
 
 /**
  * Builds the shopping list of a month or of a date range (both ends included, it may span several
  * months) from the starters, mains and single dishes planned for lunch and the dishes planned for
- * dinner, limited to the requested meals (both by default); desserts are left out. A dish counts once per meal it
- * is planned in. Every line is converted to its standard unit and grouped by IngredientKey
+ * dinner, limited to the requested meals (both by default). A dish counts once per meal it is
+ * planned in. Every line is converted to its standard unit and grouped by IngredientKey
  * (ignoring case, accents and plurals), so each product appears once with its total; the most
  * used spelling names it. Grams and millilitres are shown in kilograms and litres from 1000
  * upwards. The result is sorted alphabetically in Spanish order.
@@ -46,21 +45,10 @@ class BuildShoppingListUseCase @Inject constructor(
         Meal.entries.filter { it in meals }.flatMap { dishesOf(it, dates) }
 
     private suspend fun dishesOf(meal: Meal, dates: ClosedRange<LocalDate>): List<Dish> = when (meal) {
-        Meal.LUNCH -> dates.months()
-            .flatMap { mealPlanRepository.observeMonth(it).first() }
-            .filter { it.date in dates }
-            .flatMap { it.menu.mainDishes }
-        Meal.DINNER -> dates.months()
-            .flatMap { dinnerPlanRepository.observeMonth(it).first() }
-            .filter { it.date in dates }
-            .map { it.dish }
+        Meal.LUNCH -> mealPlanRepository.getRange(dates).flatMap { it.menu.dishes }
+        Meal.DINNER -> dinnerPlanRepository.getRange(dates).map { it.dish }
     }
 }
-
-private fun ClosedRange<LocalDate>.months(): List<YearMonth> =
-    generateSequence(YearMonth.from(start)) { it.plusMonths(1) }
-        .takeWhile { it <= YearMonth.from(endInclusive) }
-        .toList()
 
 private const val METRIC_FACTOR = 1000.0
 

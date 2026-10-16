@@ -2,22 +2,33 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.share
 
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
+import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
+import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotCodec
+import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
+import java.time.Clock
+import java.time.Instant
 import javax.inject.Inject
 
 /**
- * Use cases to share the recipe book and calendar as JSON with other users. Imported recipes are
- * converted to standard units right after the merge.
+ * Use cases to share the recipe book and calendar with other users. Export encodes a snapshot of
+ * everything; import decodes a received file, merges it and converts the recipes to standard units.
  */
-class ExportMenusUseCase @Inject constructor(private val repository: MenuShareRepository) {
-    suspend operator fun invoke(): String = repository.exportAll()
+class ExportMenusUseCase @Inject constructor(
+    private val repository: MenuSnapshotRepository,
+    private val codec: MenuSnapshotCodec,
+    private val clock: Clock
+) {
+    suspend operator fun invoke(): String = codec.encode(repository.read(SnapshotScope.EVERYTHING), Instant.now(clock))
 }
 
 class ImportMenusUseCase @Inject constructor(
-    private val repository: MenuShareRepository,
+    private val repository: MenuSnapshotRepository,
+    private val codec: MenuSnapshotCodec,
     private val standardizeRecipeBook: StandardizeRecipeBookUseCase
 ) {
-    suspend operator fun invoke(json: String): Outcome<ImportSummary> =
-        repository.importAndMerge(json).also { if (it is Outcome.Success) standardizeRecipeBook() }
+    suspend operator fun invoke(text: String): Outcome<ImportSummary> = when (val decoded = codec.decode(text)) {
+        is Outcome.Failure -> decoded
+        is Outcome.Success -> Outcome.Success(repository.merge(decoded.value)).also { standardizeRecipeBook() }
+    }
 }

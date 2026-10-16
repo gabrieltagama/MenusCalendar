@@ -24,8 +24,8 @@ import org.junit.Test
 
 /**
  * Property-style tests of AutoFillMonthUseCase (and MenuPicker) over many seeds: only empty days are
- * filled, menu shapes and desserts are mixed, no dish repeats within 7 days (also across the month
- * boundary), dinner-only dishes are never used, no VERY_HIGH main dish follows a heavy day, and the fallback order when dishes are scarce
+ * filled, menu shapes are mixed, desserts are never planned, no dish repeats within 7 days (also across both month
+ * boundaries), dinner-only dishes are never used, no VERY_HIGH main dish follows a heavy day, and the fallback order when dishes are scarce
  * is "repeat first, break the heavy rule last".
  */
 class AutoFillMonthUseCaseTest {
@@ -48,17 +48,19 @@ class AutoFillMonthUseCaseTest {
 
     private val richCatalog: List<Dish> = DishType.entries.flatMap { dishesOf(it, light = 8, heavy = 3) }
 
-    private fun DailyMenu.isHeavy(): Boolean = mainDishes.any { it.heaviness == Heaviness.VERY_HIGH }
+    private fun DailyMenu.isHeavy(): Boolean = dishes.any { it.heaviness == Heaviness.VERY_HIGH }
 
     private fun monthDays(): List<LocalDate> = (1..month.lengthOfMonth()).map(month::atDay)
 
     private fun assertNoRepeatWithinWeek(plan: Map<LocalDate, DailyMenu>, seed: Int) {
         val dates = plan.keys.sorted()
-        for (first in dates) for (second in dates) {
-            val gap = ChronoUnit.DAYS.between(first, second)
-            if (gap !in 1..6) continue
-            val shared = plan.getValue(first).dishes.map(Dish::id).intersect(plan.getValue(second).dishes.map(Dish::id).toSet())
-            if (shared.isNotEmpty()) fail("seed $seed: $first and $second share $shared")
+        for (first in dates) {
+            for (second in dates) {
+                val gap = ChronoUnit.DAYS.between(first, second)
+                if (gap !in 1..6) continue
+                val shared = plan.getValue(first).dishes.map(Dish::id).intersect(plan.getValue(second).dishes.map(Dish::id).toSet())
+                if (shared.isNotEmpty()) fail("seed $seed: $first and $second share $shared")
+            }
         }
     }
 
@@ -83,7 +85,6 @@ class AutoFillMonthUseCaseTest {
             }
             is DailyMenu.Single -> assertEquals(DishType.SINGLE, menu.single.type)
         }
-        menu.dessert?.let { assertEquals(DishType.DESSERT, it.type) }
     }
 
     private fun heavyDay(date: LocalDate) =
@@ -170,19 +171,11 @@ class AutoFillMonthUseCaseTest {
     }
 
     @Test
-    fun `dessert is added on some days but not all`() = seeds.forEach { seed ->
-        val menus = autoFill(richCatalog, seed).plan.values
-
-        assertTrue("seed $seed: no dessert", menus.any { it.dessert != null })
-        assertTrue("seed $seed: always dessert", menus.any { it.dessert == null })
-    }
-
-    @Test
-    fun `no dessert is ever added when there are no desserts`() = seeds.forEach { seed ->
-        val run = autoFill(richCatalog.filter { it.type != DishType.DESSERT }, seed)
+    fun `desserts are never planned`() = seeds.forEach { seed ->
+        val run = autoFill(richCatalog, seed)
 
         assertEquals(31, run.result.filledDays)
-        assertTrue(run.plan.values.all { it.dessert == null })
+        assertTrue("seed $seed", run.plan.values.flatMap(DailyMenu::dishes).none { it.type == DishType.DESSERT })
     }
 
     @Test
@@ -196,11 +189,10 @@ class AutoFillMonthUseCaseTest {
     @Test
     fun `no dish repeats within seven days across the previous month boundary`() = seeds.forEach { seed ->
         val singles = richCatalog.filter { it.type == DishType.SINGLE && it.heaviness != Heaviness.VERY_HIGH }
-        val desserts = richCatalog.filter { it.type == DishType.DESSERT }
         val previousMonth = month.minusMonths(1)
         val planned = (0 until 6).map { offset ->
             val date = previousMonth.atEndOfMonth().minusDays(offset.toLong())
-            MealDay(date, DailyMenu.Single(singles[offset], desserts[offset]), TestDishes.OLD_INSTANT)
+            MealDay(date, DailyMenu.Single(singles[offset]), TestDishes.OLD_INSTANT)
         }
 
         val run = autoFill(richCatalog, seed, planned)
@@ -208,6 +200,28 @@ class AutoFillMonthUseCaseTest {
         assertNoRepeatWithinWeek(run.plan, seed)
         assertEquals(0, run.result.repeatedDishDays)
         assertEquals(31, run.result.filledDays)
+    }
+
+    @Test
+    fun `no dish repeats within seven days across the next month boundary`() = seeds.forEach { seed ->
+        val singles = richCatalog.filter { it.type == DishType.SINGLE && it.heaviness != Heaviness.VERY_HIGH }
+        val nextMonth = month.plusMonths(1)
+        val planned = (0 until 6).map { offset ->
+            MealDay(nextMonth.atDay(1).plusDays(offset.toLong()), DailyMenu.Single(singles[offset]), TestDishes.OLD_INSTANT)
+        }
+
+        val run = autoFill(richCatalog, seed, planned)
+
+        assertNoRepeatWithinWeek(run.plan, seed)
+        assertEquals(0, run.result.repeatedDishDays)
+        assertEquals(31, run.result.filledDays)
+    }
+
+    @Test
+    fun `last day of the month before a planned heavy day of the next month is not heavy`() = seeds.forEach { seed ->
+        val run = autoFill(richCatalog, seed, listOf(heavyDay(month.plusMonths(1).atDay(1))))
+
+        assertFalse("seed $seed", run.plan.getValue(month.atEndOfMonth()).isHeavy())
     }
 
     @Test
@@ -265,38 +279,18 @@ class AutoFillMonthUseCaseTest {
     }
 
     @Test
-    fun `heavy starter counts as a heavy day while heavy dessert does not`() = seeds.forEach { seed ->
+    fun `heavy starter counts as a heavy day`() = seeds.forEach { seed ->
         val heavyStarterDay = MealDay(
             month.atDay(5),
             DailyMenu.Courses(dish(id = "hs", type = DishType.STARTER, heaviness = Heaviness.VERY_HIGH), dish(id = "lm")),
             TestDishes.OLD_INSTANT
         )
-        val heavyDessertDay = MealDay(
-            month.atDay(20),
-            DailyMenu.Single(dish(id = "ls", type = DishType.SINGLE), dish(id = "hd", type = DishType.DESSERT, heaviness = Heaviness.VERY_HIGH)),
-            TestDishes.OLD_INSTANT
-        )
         val heavySingle = dish(id = "heavy-single", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH)
         val lightSingle = dish(id = "light-single", type = DishType.SINGLE)
 
-        val run = autoFill(listOf(heavySingle, lightSingle), seed, listOf(heavyStarterDay, heavyDessertDay))
+        val run = autoFill(listOf(heavySingle, lightSingle), seed, listOf(heavyStarterDay))
 
         assertFalse(run.plan.getValue(month.atDay(6)).isHeavy())
-    }
-
-    @Test
-    fun `heavy dessert on the previous day does not force a light day`() {
-        val heavySingle = dish(id = "heavy-single", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH)
-        val heavyDessertDay = MealDay(
-            month.atDay(20),
-            DailyMenu.Single(dish(id = "ls", type = DishType.SINGLE), dish(id = "hd", type = DishType.DESSERT, heaviness = Heaviness.VERY_HIGH)),
-            TestDishes.OLD_INSTANT
-        )
-
-        val run = autoFill(listOf(heavySingle), seed = 1, planned = listOf(heavyDessertDay))
-
-        assertTrue(run.plan.getValue(month.atDay(21)).isHeavy())
-        assertEquals(31 - 1 - 1 - 1, run.result.heavyStreakDays)
     }
 
     @Test
@@ -310,7 +304,7 @@ class AutoFillMonthUseCaseTest {
         assertEquals(0, run.result.heavyStreakDays)
         assertEquals(countRepeatedDays(run.plan), run.result.repeatedDishDays)
         assertTrue(run.result.repeatedDishDays >= 4)
-        val singles = monthDays().map { (run.plan.getValue(it) as DailyMenu.Single).single.id }
+        val singles = monthDays().map { (run.plan.getValue(it) as DailyMenu.Single).single.id.value }
         assertEquals(setOf("s1", "s2", "s3"), singles.take(3).toSet())
     }
 

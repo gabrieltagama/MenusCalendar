@@ -46,19 +46,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gabrieltagama.menuplanner.core.domain.common.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
+import com.gabrieltagama.menuplanner.core.ui.preview.PreviewDishes
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import com.gabrieltagama.menuplanner.feature.calendar.common.DishPickerSheet
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
+import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
 import java.time.LocalDate
 
 /**
@@ -91,7 +93,7 @@ fun DayEditorScreenRoute(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                DayEditorEvent.Close -> currentOnBack()
+                PlanEditorEvent.Close -> currentOnBack()
             }
         }
     }
@@ -162,7 +164,7 @@ fun DayEditorScreen(
     pickingSlot?.let { slot ->
         DishPickerSheet(
             title = slot.label(),
-            noneLabel = if (slot.isRequired) null else stringResource(R.string.day_editor_no_dessert),
+            noneLabel = null,
             options = state.optionsFor(slot),
             selected = state.selectionFor(slot),
             onSelect = { actions.onDishSelect(slot, it) },
@@ -218,8 +220,8 @@ private fun ModeSelector(selected: MenuMode, onSelect: (MenuMode) -> Unit) =
 @Composable
 private fun SlotCard(slot: MenuSlot, selected: Dish?, hasOptions: Boolean, onPick: () -> Unit, onRandom: () -> Unit) {
     val slotLabel = slot.label()
-    val title = if (slot.isRequired) stringResource(R.string.day_editor_required, slotLabel) else slotLabel
-    val placeholder = stringResource(if (slot.isRequired) R.string.day_editor_select_dish else R.string.day_editor_no_dessert)
+    val title = stringResource(R.string.day_editor_required, slotLabel)
+    val placeholder = stringResource(R.string.day_editor_select_dish)
     Surface(
         shape = MaterialTheme.shapes.large,
         color = if (selected != null) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainerLow,
@@ -279,15 +281,14 @@ private fun MenuSlot.label(): String = stringResource(
         MenuSlot.STARTER -> R.string.calendar_slot_starter
         MenuSlot.MAIN -> R.string.calendar_slot_main
         MenuSlot.SINGLE -> R.string.calendar_slot_single
-        MenuSlot.DESSERT -> R.string.calendar_slot_dessert
     }
 )
 
 @Preview(showBackground = true)
 @Composable
 private fun DayEditorScreenPreview() = MenuPlannerTheme {
-    val starter = Dish(name = "Crema de calabaza", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW)
-    val main = Dish(name = "Merluza en salsa verde", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
+    val starter = PreviewDishes.dish(name = "Crema de calabaza", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW)
+    val main = PreviewDishes.dish(name = "Merluza en salsa verde", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
     DayEditorScreen(
         state = DayEditorUiState(
             date = LocalDate.of(2026, 10, 9),

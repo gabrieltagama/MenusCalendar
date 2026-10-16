@@ -52,9 +52,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -78,6 +78,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
@@ -88,11 +89,13 @@ import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessDot
+import com.gabrieltagama.menuplanner.core.ui.preview.PreviewDishes
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import com.gabrieltagama.menuplanner.feature.calendar.common.inlineText
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
 import com.gabrieltagama.menuplanner.feature.calendar.common.titleText
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -126,6 +129,11 @@ fun CalendarScreenRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val formatter = remember(resources) { AutoFillMessageFormatter(ResourcesAutoFillTexts(resources)) }
+
+    LifecycleResumeEffect(viewModel) {
+        viewModel.onScreenResume()
+        onPauseOrDispose { }
+    }
 
     LaunchedEffect(viewModel, formatter) {
         viewModel.events.collect { event ->
@@ -488,14 +496,10 @@ private fun MealViewLabel(text: String, icon: ImageVector, isActive: Boolean, on
 private fun DailyMenu.summaryLines(): List<Pair<String, Dish>> = when (this) {
     is DailyMenu.Courses -> listOf(
         stringResource(R.string.calendar_slot_starter) to starter,
-        stringResource(R.string.calendar_slot_main) to main,
-        stringResource(R.string.calendar_slot_dessert) to dessert
+        stringResource(R.string.calendar_slot_main) to main
     )
-    is DailyMenu.Single -> listOf(
-        stringResource(R.string.calendar_slot_single) to single,
-        stringResource(R.string.calendar_slot_dessert) to dessert
-    )
-}.mapNotNull { (label, dish) -> dish?.let { label to it } }
+    is DailyMenu.Single -> listOf(stringResource(R.string.calendar_slot_single) to single)
+}
 
 private fun YearMonth.weeks(): List<List<LocalDate?>> {
     val leadingBlanks = atDay(1).dayOfWeek.value - 1
@@ -508,8 +512,8 @@ private fun YearMonth.weeks(): List<List<LocalDate?>> {
 private fun CalendarScreenPreview() = MenuPlannerTheme {
     val today = LocalDate.of(2026, 10, 9)
     val menu = DailyMenu.Courses(
-        starter = Dish(name = "Gazpacho", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW),
-        main = Dish(name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
+        starter = PreviewDishes.dish(name = "Gazpacho", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW),
+        main = PreviewDishes.dish(name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
     )
     CalendarScreen(
         state = CalendarUiState(
@@ -517,7 +521,7 @@ private fun CalendarScreenPreview() = MenuPlannerTheme {
             selectedDate = today,
             today = today,
             isLoading = false,
-            days = mapOf(today to MealDay(date = today, menu = menu))
+            days = mapOf(today to MealDay(date = today, menu = menu, updatedAt = Instant.EPOCH))
         ),
         onPreviousMonth = {},
         onNextMonth = {},

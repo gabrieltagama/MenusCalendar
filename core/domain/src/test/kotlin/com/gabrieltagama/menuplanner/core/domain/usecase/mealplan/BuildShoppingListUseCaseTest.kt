@@ -11,17 +11,17 @@ import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
  * Tests that BuildShoppingListUseCase adds up the ingredients of the starters, mains and single
- * dishes of one month and its dinners in standard units, one line per product, leaving desserts and
- * other months out, that it can be limited to lunches or to dinners and to a date range that may
+ * dishes of one month and its dinners in standard units, one line per product, leaving other months
+ * out, that it can be limited to lunches or to dinners and to a date range that may
  * span several months.
  */
 class BuildShoppingListUseCaseTest {
@@ -54,13 +54,8 @@ class BuildShoppingListUseCaseTest {
             Ingredient(name = "SAL", quantity = 0.0, unit = MeasureUnit.TO_TASTE)
         )
     )
-    private val dessert = dish(
-        name = "Flan",
-        type = DishType.DESSERT,
-        ingredients = listOf(Ingredient(name = "Azúcar", quantity = 100.0, unit = MeasureUnit.GRAM))
-    )
 
-    private fun day(date: LocalDate, menu: DailyMenu) = MealDay(date = date, menu = menu)
+    private fun day(date: LocalDate, menu: DailyMenu) = MealDay(date = date, menu = menu, updatedAt = Instant.EPOCH)
 
     private fun build(
         vararg days: MealDay,
@@ -89,13 +84,6 @@ class BuildShoppingListUseCaseTest {
             ),
             items
         )
-    }
-
-    @Test
-    fun `leaves desserts out`() {
-        val items = build(day(LocalDate.of(2026, 10, 5), DailyMenu.Single(single = single, dessert = dessert)))
-
-        assertTrue(items.none { it.name == "Azúcar" })
     }
 
     @Test
@@ -160,8 +148,8 @@ class BuildShoppingListUseCaseTest {
         val items = build(
             day(LocalDate.of(2026, 10, 10), DailyMenu.Single(single = lunch)),
             dinners = listOf(
-                DinnerDay(date = LocalDate.of(2026, 10, 10), dish = omelette),
-                DinnerDay(date = LocalDate.of(2026, 11, 1), dish = omelette)
+                DinnerDay(date = LocalDate.of(2026, 10, 10), dish = omelette, updatedAt = Instant.EPOCH),
+                DinnerDay(date = LocalDate.of(2026, 11, 1), dish = omelette, updatedAt = Instant.EPOCH)
             )
         )
 
@@ -175,7 +163,7 @@ class BuildShoppingListUseCaseTest {
 
         val items = build(
             day(LocalDate.of(2026, 10, 10), DailyMenu.Single(single = lunch)),
-            dinners = listOf(DinnerDay(date = LocalDate.of(2026, 10, 10), dish = omelette)),
+            dinners = listOf(DinnerDay(date = LocalDate.of(2026, 10, 10), dish = omelette, updatedAt = Instant.EPOCH)),
             meals = setOf(Meal.LUNCH)
         )
 
@@ -189,7 +177,7 @@ class BuildShoppingListUseCaseTest {
 
         val items = build(
             day(LocalDate.of(2026, 10, 10), DailyMenu.Single(single = lunch)),
-            dinners = listOf(DinnerDay(date = LocalDate.of(2026, 10, 10), dish = omelette)),
+            dinners = listOf(DinnerDay(date = LocalDate.of(2026, 10, 10), dish = omelette, updatedAt = Instant.EPOCH)),
             meals = setOf(Meal.DINNER)
         )
 
@@ -207,8 +195,8 @@ class BuildShoppingListUseCaseTest {
             day(LocalDate.of(2026, 11, 3), DailyMenu.Single(single = rice))
         )
         val dinners = listOf(
-            DinnerDay(date = LocalDate.of(2026, 10, 14), dish = omelette),
-            DinnerDay(date = LocalDate.of(2026, 10, 31), dish = omelette)
+            DinnerDay(date = LocalDate.of(2026, 10, 14), dish = omelette, updatedAt = Instant.EPOCH),
+            DinnerDay(date = LocalDate.of(2026, 10, 31), dish = omelette, updatedAt = Instant.EPOCH)
         )
 
         val items = runBlocking {

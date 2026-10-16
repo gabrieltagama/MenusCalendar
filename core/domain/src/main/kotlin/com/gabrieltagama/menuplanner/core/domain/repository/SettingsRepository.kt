@@ -1,16 +1,18 @@
 package com.gabrieltagama.menuplanner.core.domain.repository
 
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
 /**
- * Persistence port for the user settings. Values are exposed as StateFlow so the theme is known
- * synchronously when the app starts, without a flash of the wrong colors; isOnboardingCompleted
- * tells whether the welcome screen was already answered. Implemented in :core:data.
+ * Persistence port for the user settings, read without blocking: the theme mode, whether the
+ * welcome screen was already answered and the version of the unit conversion already applied to
+ * the recipe book (see MigrateRecipeUnitsUseCase). Implemented in :core:data.
  */
 interface SettingsRepository {
-    val themeMode: StateFlow<ThemeMode>
-    val isOnboardingCompleted: StateFlow<Boolean>
+    val themeMode: Flow<ThemeMode>
+    val isOnboardingCompleted: Flow<Boolean>
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun completeOnboarding()
+    suspend fun recipeUnitsVersion(): Int
+    suspend fun setRecipeUnitsVersion(version: Int)
 }

@@ -56,11 +56,13 @@ import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
+import com.gabrieltagama.menuplanner.core.ui.preview.PreviewDishes
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import com.gabrieltagama.menuplanner.feature.calendar.common.DishPickerSheet
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
+import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
 import java.time.LocalDate
 
 /**
@@ -91,7 +93,7 @@ fun DinnerEditorScreenRoute(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                DinnerEditorEvent.Close -> currentOnBack()
+                PlanEditorEvent.Close -> currentOnBack()
             }
         }
     }
@@ -255,7 +257,7 @@ private fun DinnerAvatar() = Box(
 @Preview(showBackground = true)
 @Composable
 private fun DinnerEditorScreenPreview() = MenuPlannerTheme {
-    val omelette = Dish(name = "Tortilla francesa", type = DishType.MAIN, heaviness = Heaviness.VERY_LOW, mealTime = MealTime.DINNER)
+    val omelette = PreviewDishes.dish(name = "Tortilla francesa", type = DishType.MAIN, heaviness = Heaviness.VERY_LOW, mealTime = MealTime.DINNER)
     DinnerEditorScreen(
         state = DinnerEditorUiState(
             date = LocalDate.of(2026, 10, 9),

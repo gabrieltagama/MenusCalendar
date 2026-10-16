@@ -21,7 +21,6 @@
     <string name="calendar_slot_starter">Primero</string>
     <string name="calendar_slot_main">Segundo</string>
     <string name="calendar_slot_single">Plato único</string>
-    <string name="calendar_slot_dessert">Postre</string>
     <string name="calendar_slot_dinner">Cena</string>
     <string name="calendar_autofill">Autorrellenar mes</string>
     <string name="calendar_autofill_short">Rellenar mes</string>
@@ -58,7 +57,6 @@
     <string name="day_editor_mode_single">Plato único</string>
     <string name="day_editor_required">%1$s*</string>
     <string name="day_editor_select_dish">Selecciona un plato</string>
-    <string name="day_editor_no_dessert">Sin postre</string>
     <string name="day_editor_random">Plato al azar</string>
     <string name="day_editor_change">Cambiar plato</string>
     <string name="day_editor_search_hint">Buscar plato</string>

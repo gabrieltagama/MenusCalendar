@@ -16,7 +16,7 @@ import com.gabrieltagama.menuplanner.core.data.database.entity.MealDayEntity
  */
 @Database(
     entities = [DishEntity::class, IngredientEntity::class, MealDayEntity::class, DinnerDayEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 internal abstract class MenuPlannerDatabase : RoomDatabase() {

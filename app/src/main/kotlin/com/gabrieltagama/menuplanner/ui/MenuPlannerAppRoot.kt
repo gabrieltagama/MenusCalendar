@@ -15,6 +15,9 @@ import com.gabrieltagama.menuplanner.feature.onboarding.ui.WelcomeScreenRoute
 @Composable
 fun MenuPlannerAppRoot(viewModel: AppViewModel = hiltViewModel()) {
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle()
-    if (isOnboardingCompleted) MainShell()
-    else WelcomeScreenRoute()
+    when (isOnboardingCompleted) {
+        true -> MainShell()
+        false -> WelcomeScreenRoute()
+        null -> Unit
+    }
 }

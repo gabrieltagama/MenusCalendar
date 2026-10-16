@@ -6,23 +6,24 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
-import com.gabrieltagama.menuplanner.core.domain.usecase.backup.BackUpRecipesUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.backup.BackUpUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
 /**
- * Daily background job of the recipe backup: it uploads only when the recipes changed since the
- * last upload. Network problems are retried by WorkManager; a missing authorization is not, the
- * user has to link the account again from Ajustes.
+ * Daily background job of the backup (recipes and calendar): it uploads only when something changed
+ * since the last upload. Network problems are retried by WorkManager; a missing authorization is
+ * not, the user has to link the account again from Ajustes. The class keeps its original name
+ * because WorkManager stores it in the already scheduled work.
  */
 @HiltWorker
 internal class RecipesBackupWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted parameters: WorkerParameters,
-    private val backUpRecipes: BackUpRecipesUseCase
+    private val backUp: BackUpUseCase
 ) : CoroutineWorker(context, parameters) {
 
-    override suspend fun doWork(): Result = when (val outcome = backUpRecipes(onlyIfChanged = true)) {
+    override suspend fun doWork(): Result = when (val outcome = backUp(onlyIfChanged = true)) {
         is Outcome.Success -> Result.success()
         is Outcome.Failure -> if (outcome.error == DomainError.CloudUnavailable) Result.retry() else Result.failure()
     }
