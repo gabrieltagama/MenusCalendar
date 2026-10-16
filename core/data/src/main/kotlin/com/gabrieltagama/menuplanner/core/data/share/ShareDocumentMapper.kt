@@ -74,7 +74,6 @@ internal object ShareDocumentMapper {
         starterId = starterId,
         mainId = mainId,
         singleId = singleId,
-        dessertId = dessertId,
         updatedAt = Instant.ofEpochMilli(updatedAt).toString()
     )
 
@@ -119,7 +118,6 @@ internal object ShareDocumentMapper {
         starterId = starterId,
         mainId = mainId,
         singleId = singleId,
-        dessertId = dessertId,
         updatedAt = Instant.parse(updatedAt).toEpochMilli()
     )
 

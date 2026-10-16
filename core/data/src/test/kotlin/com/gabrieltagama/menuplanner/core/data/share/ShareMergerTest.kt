@@ -13,7 +13,6 @@ import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import java.time.LocalDate
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -66,17 +65,6 @@ class ShareMergerTest {
 
         assertEquals(ImportSummary(0, 0, 0, 0, 0, 1), summary)
         assertNull(mealDayDao.getByDate(date.toEpochDay()))
-    }
-
-    @Test
-    fun `day referencing unknown dessert is skipped even when the main dish exists`() = runTest {
-        insert(TestData.dish("s", type = DishType.SINGLE))
-
-        val summary = merger.merge(ImportContent(emptyList(), listOf(TestData.singleDay(date, "s", dessertId = "ghost"))))
-
-        assertEquals(0, summary.daysAdded)
-        assertEquals(1, summary.daysSkipped)
-        assertFalse(date.toEpochDay() in mealDayDao.currentDays)
     }
 
     @Test

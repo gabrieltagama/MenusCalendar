@@ -56,8 +56,8 @@ data class DayEditorUiState(
 ) {
     val visibleSlots: List<MenuSlot>
         get() = when (form.mode) {
-            MenuMode.COURSES -> listOf(MenuSlot.STARTER, MenuSlot.MAIN, MenuSlot.DESSERT)
-            MenuMode.SINGLE -> listOf(MenuSlot.SINGLE, MenuSlot.DESSERT)
+            MenuMode.COURSES -> listOf(MenuSlot.STARTER, MenuSlot.MAIN)
+            MenuMode.SINGLE -> listOf(MenuSlot.SINGLE)
         }
 
     val canSave: Boolean get() = !form.isLoading && !form.isSaving && toMenu() != null
@@ -68,12 +68,11 @@ data class DayEditorUiState(
 
     fun toMenu(): DailyMenu? {
         val selections = form.selections
-        val dessert = selections[MenuSlot.DESSERT]
         return when (form.mode) {
             MenuMode.COURSES -> selections[MenuSlot.STARTER]?.let { starter ->
-                selections[MenuSlot.MAIN]?.let { main -> DailyMenu.Courses(starter = starter, main = main, dessert = dessert) }
+                selections[MenuSlot.MAIN]?.let { main -> DailyMenu.Courses(starter = starter, main = main) }
             }
-            MenuMode.SINGLE -> selections[MenuSlot.SINGLE]?.let { DailyMenu.Single(single = it, dessert = dessert) }
+            MenuMode.SINGLE -> selections[MenuSlot.SINGLE]?.let { DailyMenu.Single(single = it) }
         }
     }
 }
@@ -83,10 +82,7 @@ val MenuSlot.dishType: DishType
         MenuSlot.STARTER -> DishType.STARTER
         MenuSlot.MAIN -> DishType.MAIN
         MenuSlot.SINGLE -> DishType.SINGLE
-        MenuSlot.DESSERT -> DishType.DESSERT
     }
-
-val MenuSlot.isRequired: Boolean get() = this != MenuSlot.DESSERT
 
 sealed interface DayEditorEvent {
     data object Close : DayEditorEvent
@@ -105,9 +101,11 @@ class DayEditorViewModel @Inject constructor(
 
     private val form = MutableStateFlow(DayEditorForm())
 
+    private val plannableTypes: List<DishType> = MenuSlot.entries.map { it.dishType }
+
     private val options: Flow<Map<DishType, List<Dish>>> =
-        combine(DishType.entries.map { type -> observeDishes(type) }) { lists ->
-            DishType.entries.zip(lists) { type, dishes -> type to dishes.sortedBy { it.name.lowercase() } }.toMap()
+        combine(plannableTypes.map { type -> observeDishes(type) }) { lists ->
+            plannableTypes.zip(lists) { type, dishes -> type to dishes.sortedBy { it.name.lowercase() } }.toMap()
         }
 
     val uiState: StateFlow<DayEditorUiState> =
@@ -169,17 +167,14 @@ class DayEditorViewModel @Inject constructor(
                 isLoading = false,
                 hasSavedDay = true,
                 mode = MenuMode.COURSES,
-                selections = selectionsOf(MenuSlot.STARTER to menu.starter, MenuSlot.MAIN to menu.main, MenuSlot.DESSERT to menu.dessert)
+                selections = mapOf(MenuSlot.STARTER to menu.starter, MenuSlot.MAIN to menu.main)
             )
             is DailyMenu.Single -> current.copy(
                 isLoading = false,
                 hasSavedDay = true,
                 mode = MenuMode.SINGLE,
-                selections = selectionsOf(MenuSlot.SINGLE to menu.single, MenuSlot.DESSERT to menu.dessert)
+                selections = mapOf(MenuSlot.SINGLE to menu.single)
             )
         }
     }
-
-    private fun selectionsOf(vararg slots: Pair<MenuSlot, Dish?>): Map<MenuSlot, Dish> =
-        slots.mapNotNull { (slot, dish) -> dish?.let { slot to it } }.toMap()
 }

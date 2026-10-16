@@ -16,19 +16,17 @@ import androidx.room.PrimaryKey
     foreignKeys = [
         ForeignKey(entity = DishEntity::class, parentColumns = ["id"], childColumns = ["starter_id"], onDelete = ForeignKey.RESTRICT),
         ForeignKey(entity = DishEntity::class, parentColumns = ["id"], childColumns = ["main_id"], onDelete = ForeignKey.RESTRICT),
-        ForeignKey(entity = DishEntity::class, parentColumns = ["id"], childColumns = ["single_id"], onDelete = ForeignKey.RESTRICT),
-        ForeignKey(entity = DishEntity::class, parentColumns = ["id"], childColumns = ["dessert_id"], onDelete = ForeignKey.RESTRICT)
+        ForeignKey(entity = DishEntity::class, parentColumns = ["id"], childColumns = ["single_id"], onDelete = ForeignKey.RESTRICT)
     ],
-    indices = [Index("starter_id"), Index("main_id"), Index("single_id"), Index("dessert_id")]
+    indices = [Index("starter_id"), Index("main_id"), Index("single_id")]
 )
 internal data class MealDayEntity(
     @PrimaryKey val date: Long,
     @ColumnInfo(name = "starter_id") val starterId: String?,
     @ColumnInfo(name = "main_id") val mainId: String?,
     @ColumnInfo(name = "single_id") val singleId: String?,
-    @ColumnInfo(name = "dessert_id") val dessertId: String?,
     @ColumnInfo(name = "updated_at") val updatedAt: Long
 )
 
 internal val MealDayEntity.dishIds: List<String>
-    get() = listOfNotNull(starterId, mainId, singleId, dessertId)
+    get() = listOfNotNull(starterId, mainId, singleId)

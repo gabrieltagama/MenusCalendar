@@ -162,7 +162,7 @@ fun DayEditorScreen(
     pickingSlot?.let { slot ->
         DishPickerSheet(
             title = slot.label(),
-            noneLabel = if (slot.isRequired) null else stringResource(R.string.day_editor_no_dessert),
+            noneLabel = null,
             options = state.optionsFor(slot),
             selected = state.selectionFor(slot),
             onSelect = { actions.onDishSelect(slot, it) },
@@ -218,8 +218,8 @@ private fun ModeSelector(selected: MenuMode, onSelect: (MenuMode) -> Unit) =
 @Composable
 private fun SlotCard(slot: MenuSlot, selected: Dish?, hasOptions: Boolean, onPick: () -> Unit, onRandom: () -> Unit) {
     val slotLabel = slot.label()
-    val title = if (slot.isRequired) stringResource(R.string.day_editor_required, slotLabel) else slotLabel
-    val placeholder = stringResource(if (slot.isRequired) R.string.day_editor_select_dish else R.string.day_editor_no_dessert)
+    val title = stringResource(R.string.day_editor_required, slotLabel)
+    val placeholder = stringResource(R.string.day_editor_select_dish)
     Surface(
         shape = MaterialTheme.shapes.large,
         color = if (selected != null) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainerLow,
@@ -279,7 +279,6 @@ private fun MenuSlot.label(): String = stringResource(
         MenuSlot.STARTER -> R.string.calendar_slot_starter
         MenuSlot.MAIN -> R.string.calendar_slot_main
         MenuSlot.SINGLE -> R.string.calendar_slot_single
-        MenuSlot.DESSERT -> R.string.calendar_slot_dessert
     }
 )
 

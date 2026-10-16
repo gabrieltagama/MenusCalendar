@@ -19,8 +19,8 @@ import kotlinx.coroutines.flow.first
 /**
  * Builds the shopping list of a month or of a date range (both ends included, it may span several
  * months) from the starters, mains and single dishes planned for lunch and the dishes planned for
- * dinner, limited to the requested meals (both by default); desserts are left out. A dish counts once per meal it
- * is planned in. Every line is converted to its standard unit and grouped by IngredientKey
+ * dinner, limited to the requested meals (both by default). A dish counts once per meal it is
+ * planned in. Every line is converted to its standard unit and grouped by IngredientKey
  * (ignoring case, accents and plurals), so each product appears once with its total; the most
  * used spelling names it. Grams and millilitres are shown in kilograms and litres from 1000
  * upwards. The result is sorted alphabetically in Spanish order.
@@ -49,7 +49,7 @@ class BuildShoppingListUseCase @Inject constructor(
         Meal.LUNCH -> dates.months()
             .flatMap { mealPlanRepository.observeMonth(it).first() }
             .filter { it.date in dates }
-            .flatMap { it.menu.mainDishes }
+            .flatMap { it.menu.dishes }
         Meal.DINNER -> dates.months()
             .flatMap { dinnerPlanRepository.observeMonth(it).first() }
             .filter { it.date in dates }

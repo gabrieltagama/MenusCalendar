@@ -45,7 +45,7 @@ internal interface DishDao {
     suspend fun getVersions(): List<DishVersion>
 
     @Query(
-        "SELECT (SELECT COUNT(*) FROM meal_days WHERE starter_id = :id OR main_id = :id OR single_id = :id OR dessert_id = :id) + " +
+        "SELECT (SELECT COUNT(*) FROM meal_days WHERE starter_id = :id OR main_id = :id OR single_id = :id) + " +
             "(SELECT COUNT(*) FROM dinner_days WHERE dish_id = :id)"
     )
     suspend fun countUsages(id: String): Int

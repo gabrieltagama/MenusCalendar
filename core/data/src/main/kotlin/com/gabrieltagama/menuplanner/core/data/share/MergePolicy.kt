@@ -37,8 +37,7 @@ internal object MergePolicy {
     private fun MealDayEntity.slots(): List<Pair<String, DishType>> = listOfNotNull(
         starterId?.let { it to DishType.STARTER },
         mainId?.let { it to DishType.MAIN },
-        singleId?.let { it to DishType.SINGLE },
-        dessertId?.let { it to DishType.DESSERT }
+        singleId?.let { it to DishType.SINGLE }
     )
 }
 

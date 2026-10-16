@@ -32,14 +32,13 @@ class RoomMealPlanRepositoryTest {
     private val starter = AndroidTestData.dish("st", name = "Soup", type = DishType.STARTER)
     private val main = AndroidTestData.dish("mn", name = "Steak", type = DishType.MAIN)
     private val single = AndroidTestData.dish("sg", name = "Lasagna", type = DishType.SINGLE)
-    private val dessert = AndroidTestData.dish("ds", name = "Flan", type = DishType.DESSERT)
 
     @Before
     fun setUp(): Unit = runBlocking {
         database = AndroidTestData.inMemoryDatabase()
         dishRepository = RoomDishRepository(database.dishDao())
         repository = RoomMealPlanRepository(database.mealDayDao(), database.dishDao())
-        listOf(starter, main, single, dessert).forEach { dishRepository.upsert(it) }
+        listOf(starter, main, single).forEach { dishRepository.upsert(it) }
     }
 
     @After
@@ -48,8 +47,8 @@ class RoomMealPlanRepositoryTest {
     @Test
     fun observeMonthReturnsOnlyDaysOfThatMonthSortedByDate() = runTest {
         val firstOfMarch = AndroidTestData.singleDay(LocalDate.of(2026, 3, 1), single)
-        val lastOfMarch = AndroidTestData.coursesDay(LocalDate.of(2026, 3, 31), starter, main, dessert)
-        val midMarch = AndroidTestData.singleDay(LocalDate.of(2026, 3, 15), single, dessert)
+        val lastOfMarch = AndroidTestData.coursesDay(LocalDate.of(2026, 3, 31), starter, main)
+        val midMarch = AndroidTestData.singleDay(LocalDate.of(2026, 3, 15), single)
         listOf(
             lastOfMarch,
             AndroidTestData.singleDay(LocalDate.of(2026, 2, 28), single),
