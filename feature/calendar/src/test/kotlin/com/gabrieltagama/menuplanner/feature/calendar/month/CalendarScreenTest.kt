@@ -19,12 +19,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 
 /**
  * Stateless CalendarScreen: weekday headers, planned dish names in the grid and the summary card,
- * and day/navigation callbacks.
+ * and day/navigation callbacks, on a phone-sized screen so the summary card is visible.
  */
 @RunWith(AndroidJUnit4::class)
+@Config(qualifiers = "w412dp-h915dp-xxhdpi")
 class CalendarScreenTest {
 
     @get:Rule
