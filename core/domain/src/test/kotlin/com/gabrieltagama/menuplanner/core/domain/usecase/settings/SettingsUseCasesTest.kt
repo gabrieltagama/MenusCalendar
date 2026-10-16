@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.settings
 
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -10,7 +11,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests that the settings use cases read and change the theme mode and the onboarding flag.
+ * Tests that the settings use cases read and change the theme mode, the days without repeating a
+ * dish (kept within its limits) and the onboarding flag.
  */
 class SettingsUseCasesTest {
     private val repository = FakeSettingsRepository()
@@ -37,5 +39,25 @@ class SettingsUseCasesTest {
         CompleteOnboardingUseCase(repository)()
 
         assertTrue(ObserveOnboardingCompletedUseCase(repository)().first())
+    }
+
+    @Test
+    fun `repeat window is six days by default`() = runBlocking {
+        assertEquals(RepeatWindow.DEFAULT_DAYS, ObserveRepeatWindowUseCase(repository)().first().days)
+    }
+
+    @Test
+    fun `set repeat window is observed and kept within its limits`() = runBlocking {
+        val setRepeatWindow = SetRepeatWindowUseCase(repository)
+        val observe = ObserveRepeatWindowUseCase(repository)
+
+        setRepeatWindow(10)
+        assertEquals(10, observe().first().days)
+
+        setRepeatWindow(RepeatWindow.MAX_DAYS + 5)
+        assertEquals(RepeatWindow.MAX_DAYS, observe().first().days)
+
+        setRepeatWindow(-1)
+        assertEquals(RepeatWindow.MIN_DAYS, observe().first().days)
     }
 }

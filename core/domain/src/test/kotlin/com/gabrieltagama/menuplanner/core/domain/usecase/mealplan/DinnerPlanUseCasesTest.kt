@@ -5,6 +5,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
@@ -55,7 +56,7 @@ class DinnerPlanUseCasesTest {
     private fun autoFill(dishes: List<Dish>, seed: Int, lunches: List<MealDay> = emptyList(), dinners: List<DinnerDay> = emptyList()): Run = runBlocking {
         val lunchRepository = FakeMealPlanRepository(lunches)
         val dinnerRepository = FakeDinnerPlanRepository(dinners)
-        val useCase = AutoFillMonthDinnersUseCase(FakeDishRepository(dishes), lunchRepository, dinnerRepository, Random(seed), TestDishes.fixedClock)
+        val useCase = AutoFillMonthDinnersUseCase(FakeDishRepository(dishes), lunchRepository, dinnerRepository, FakeSettingsRepository(), Random(seed), TestDishes.fixedClock)
         Run(dinnerRepository, lunchRepository, useCase(month).filledDays)
     }
 

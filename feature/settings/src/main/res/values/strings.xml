@@ -10,6 +10,12 @@
     <string name="settings_theme_dark">Oscuro</string>
     <string name="settings_theme_dark_hint">Fondo oscuro con texto claro</string>
 
+    <string name="settings_section_calendar">Calendario</string>
+    <string name="settings_repeat_window">Días sin repetir plato</string>
+    <string name="settings_repeat_window_hint">Al autorrellenar, un plato no se repite en comidas ni cenas tantos días antes y después</string>
+    <string name="settings_repeat_window_decrease">Menos días</string>
+    <string name="settings_repeat_window_increase">Más días</string>
+
     <string name="settings_section_backup">Copia de seguridad</string>
     <string name="settings_backup_connect">Conectar con Google</string>
     <string name="settings_backup_connect_hint">Guarda tus recetas y tu calendario en una carpeta privada de tu Google Drive y recupéralos en otro móvil</string>

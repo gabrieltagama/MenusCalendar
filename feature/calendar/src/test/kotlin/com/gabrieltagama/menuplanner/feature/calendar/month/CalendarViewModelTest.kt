@@ -5,6 +5,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakePlanQueries
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
@@ -78,13 +79,14 @@ class CalendarViewModelTest {
     private val repository = FakeMealPlanRepository(listOf(todayPlan, novemberPlan))
     private val dinnerRepository = FakeDinnerPlanRepository(listOf(todayDinner))
     private var dishRepository = FakeDishRepository(listOf(starter, main))
+    private val settingsRepository = FakeSettingsRepository()
     private val queries = FakePlanQueries(repository, dinnerRepository)
     private val viewModel by lazy {
         CalendarViewModel(
             ObserveMonthPlanUseCase(queries),
             ObserveMonthDinnersUseCase(queries),
-            AutoFillMonthUseCase(dishRepository, repository, Random(42), clock),
-            AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, Random(42), clock),
+            AutoFillMonthUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
+            AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
             ClearMealDaysUseCase(repository),
             ClearDinnerDaysUseCase(dinnerRepository),
             RestoreMealDaysUseCase(repository),
@@ -237,7 +239,7 @@ class CalendarViewModelTest {
     }
 
     @Test
-    fun `autofill fills empty days of visible month and emits result`() = runTest {
+    fun `autofill fills empty days of the current month from today and emits result`() = runTest {
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
 
@@ -247,14 +249,14 @@ class CalendarViewModelTest {
                 viewModel.onAutoFill()
 
                 val event = awaitItem() as CalendarEvent.AutoFillCompleted
-                assertEquals(30, event.result.filledDays)
+                assertEquals(22, event.result.filledDays)
                 assertEquals(0, event.result.unfilledDays)
             }
 
-            val state = awaitItemMatching { it.days.size == 31 && !it.isAutoFilling }
+            val state = awaitItemMatching { it.days.size == 23 && !it.isAutoFilling }
             assertFalse(state.showAutoFillConfirm)
             assertEquals(todayPlan.toPlannedLunch(), state.selectedDay)
-            assertTrue(repository.saved.all { YearMonth.from(it.date) == YearMonth.of(2026, 10) })
+            assertTrue(repository.saved.all { YearMonth.from(it.date) == YearMonth.of(2026, 10) && !it.date.isBefore(today) })
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -285,7 +287,7 @@ class CalendarViewModelTest {
         viewModel.events.test {
             viewModel.onAutoFill()
 
-            assertEquals(CalendarEvent.AutoFillCompleted(AutoFillResult(0, 0, 0, 30), PlanView.LUNCH), awaitItem())
+            assertEquals(CalendarEvent.AutoFillCompleted(AutoFillResult(0, 0, 0, 22), PlanView.LUNCH), awaitItem())
         }
         assertTrue(repository.saved.isEmpty())
     }
@@ -318,10 +320,10 @@ class CalendarViewModelTest {
 
                 val event = awaitItem() as CalendarEvent.AutoFillCompleted
                 assertEquals(PlanView.DINNER, event.view)
-                assertEquals(30, event.result.filledDays)
+                assertEquals(22, event.result.filledDays)
             }
 
-            awaitItemMatching { it.dinners.size == 31 && !it.isAutoFilling }
+            awaitItemMatching { it.dinners.size == 23 && !it.isAutoFilling }
             assertTrue(repository.saved.isEmpty())
             assertTrue(dinnerRepository.saved.all { YearMonth.from(it.date) == YearMonth.of(2026, 10) })
             cancelAndIgnoreRemainingEvents()

@@ -6,13 +6,16 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
+import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.BackUpUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ConnectCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.DisconnectCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ObserveCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.RestoreBackupUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveRepeatWindowUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveThemeModeUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetRepeatWindowUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetThemeModeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -26,7 +29,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Settings screen state: the chosen theme mode and the optional Google backup of recipes and calendar, which can
+ * Settings screen state: the chosen theme mode, the days without repeating a dish of the autofill
+ * and the optional Google backup of recipes and calendar, which can
  * be linked, run or restored on demand and unlinked. Only one backup operation runs at a time and
  * the busy flag is always released, even when the operation fails or is cancelled. Backup results surface as a nullable
  * [BackupMessage] in [BackupUiState].
@@ -47,8 +51,10 @@ sealed interface BackupMessage {
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     observeThemeMode: ObserveThemeModeUseCase,
+    observeRepeatWindow: ObserveRepeatWindowUseCase,
     observeCloudAccount: ObserveCloudAccountUseCase,
     private val setThemeMode: SetThemeModeUseCase,
+    private val setRepeatWindow: SetRepeatWindowUseCase,
     private val connectCloudAccount: ConnectCloudAccountUseCase,
     private val backUp: BackUpUseCase,
     private val restoreBackup: RestoreBackupUseCase,
@@ -57,6 +63,9 @@ class SettingsViewModel @Inject constructor(
 
     val themeMode: StateFlow<ThemeMode> =
         observeThemeMode().stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), ThemeMode.SYSTEM)
+
+    val repeatWindow: StateFlow<RepeatWindow> =
+        observeRepeatWindow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), RepeatWindow.DEFAULT)
 
     val cloudAccount: StateFlow<CloudAccount> =
         observeCloudAccount().stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), CloudAccount.Disconnected)
@@ -68,6 +77,10 @@ class SettingsViewModel @Inject constructor(
 
     fun onThemeModeSelect(mode: ThemeMode) {
         viewModelScope.launch { setThemeMode(mode) }
+    }
+
+    fun onRepeatWindowChange(days: Int) {
+        viewModelScope.launch { setRepeatWindow(days) }
     }
 
     fun onConnectStarted() = _backupState.update { it.copy(isBusy = true, message = null) }
