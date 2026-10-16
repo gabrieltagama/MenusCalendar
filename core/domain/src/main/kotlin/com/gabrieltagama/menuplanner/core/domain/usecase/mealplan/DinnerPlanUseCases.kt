@@ -14,7 +14,8 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Use cases of the monthly dinner calendar. Saving accepts only dishes served at dinner (DINNER
- * or ANY) that are not desserts, because a dinner is a single dish.
+ * or ANY) that are not desserts, because a dinner is a single dish. Clearing several dinners
+ * returns the removed ones so they can be restored (undo).
  */
 class ObserveMonthDinnersUseCase @Inject constructor(private val repository: DinnerPlanRepository) {
     operator fun invoke(month: YearMonth): Flow<List<DinnerDay>> = repository.observeMonth(month)
@@ -38,4 +39,17 @@ class SaveDinnerDayUseCase @Inject constructor(
 
 class ClearDinnerDayUseCase @Inject constructor(private val repository: DinnerPlanRepository) {
     suspend operator fun invoke(date: LocalDate) = repository.clear(date)
+}
+
+class ClearDinnerDaysUseCase @Inject constructor(private val repository: DinnerPlanRepository) {
+    suspend operator fun invoke(dates: Set<LocalDate>): List<DinnerDay> {
+        if (dates.isEmpty()) return emptyList()
+        val removed = repository.getRange(dates.min()..dates.max()).filter { it.date in dates }
+        if (removed.isNotEmpty()) repository.clearAll(removed.map(DinnerDay::date))
+        return removed
+    }
+}
+
+class RestoreDinnerDaysUseCase @Inject constructor(private val repository: DinnerPlanRepository) {
+    suspend operator fun invoke(days: List<DinnerDay>) = repository.saveAll(days)
 }

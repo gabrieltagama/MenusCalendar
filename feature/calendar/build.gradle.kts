@@ -5,3 +5,7 @@ plugins {
 android {
     namespace = "com.gabrieltagama.menuplanner.feature.calendar"
 }
+
+dependencies {
+    implementation(libs.androidx.activity.compose)
+}

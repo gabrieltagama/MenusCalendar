@@ -53,6 +53,8 @@ internal class RoomMealPlanRepository @Inject constructor(
 
     override suspend fun clear(date: LocalDate) = mealDayDao.deleteByDate(date.toEpochDay())
 
+    override suspend fun clearAll(dates: Collection<LocalDate>) = mealDayDao.deleteByDates(dates.map(LocalDate::toEpochDay))
+
     private suspend fun resolve(days: List<MealDayEntity>): List<MealDay> {
         val dishesById = loadDishes(days.flatMap { it.dishIds }.distinct())
         return days.mapNotNull { it.toDomain(dishesById) }

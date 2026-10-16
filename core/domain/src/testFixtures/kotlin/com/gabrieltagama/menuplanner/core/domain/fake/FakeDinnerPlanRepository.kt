@@ -37,4 +37,9 @@ class FakeDinnerPlanRepository(initial: List<DinnerDay> = emptyList()) : DinnerP
         cleared += date
         days.value = days.value - date
     }
+
+    override suspend fun clearAll(dates: Collection<LocalDate>) {
+        cleared += dates
+        days.value = days.value - dates.toSet()
+    }
 }

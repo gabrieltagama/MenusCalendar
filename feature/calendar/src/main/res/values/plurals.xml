@@ -20,4 +20,19 @@
         <item quantity="many">%d sin rellenar (faltan platos)</item>
         <item quantity="other">%d sin rellenar (faltan platos)</item>
     </plurals>
+    <plurals name="calendar_selection_count">
+        <item quantity="one">%d día seleccionado</item>
+        <item quantity="many">%d días seleccionados</item>
+        <item quantity="other">%d días seleccionados</item>
+    </plurals>
+    <plurals name="calendar_deleted_lunches">
+        <item quantity="one">%d comida borrada</item>
+        <item quantity="many">%d comidas borradas</item>
+        <item quantity="other">%d comidas borradas</item>
+    </plurals>
+    <plurals name="calendar_deleted_dinners">
+        <item quantity="one">%d cena borrada</item>
+        <item quantity="many">%d cenas borradas</item>
+        <item quantity="other">%d cenas borradas</item>
+    </plurals>
 </resources>

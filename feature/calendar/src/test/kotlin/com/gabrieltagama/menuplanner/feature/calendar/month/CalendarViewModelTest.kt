@@ -16,8 +16,12 @@ import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.testing.awaitItemMatching
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthPlanUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreDinnerDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreMealDaysUseCase
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -37,7 +41,8 @@ import org.junit.Test
  * CalendarViewModel over the real ObserveMonthPlanUseCase with a controllable clock (2026-10-09 UTC):
  * month navigation, selected day summary, the "today" shortcut and the month autofill over the
  * real AutoFillMonthUseCase with in-memory repositories and a seeded Random; the lunches/dinners
- * view switch, the dinner autofill and the refresh of "today" when the screen resumes.
+ * view switch, the dinner autofill and the refresh of "today" when the screen resumes; the selection
+ * mode (tap, drag, select all, view change) and the bulk deletion of the active view with undo.
  */
 class CalendarViewModelTest {
 
@@ -60,6 +65,7 @@ class CalendarViewModelTest {
     private val novemberPlan = MealDay(date = LocalDate.of(2026, 11, 3), menu = DailyMenu.Single(single = main.copy(type = DishType.SINGLE)), updatedAt = Instant.EPOCH)
 
     private val todayDinner = DinnerDay(date = today, dish = main, updatedAt = Instant.EPOCH)
+    private val nextPlan = todayPlan.copy(date = today.plusDays(2))
 
     private val repository = FakeMealPlanRepository(listOf(todayPlan, novemberPlan))
     private val dinnerRepository = FakeDinnerPlanRepository(listOf(todayDinner))
@@ -70,6 +76,10 @@ class CalendarViewModelTest {
             ObserveMonthDinnersUseCase(dinnerRepository),
             AutoFillMonthUseCase(dishRepository, repository, Random(42), clock),
             AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, Random(42), clock),
+            ClearMealDaysUseCase(repository),
+            ClearDinnerDaysUseCase(dinnerRepository),
+            RestoreMealDaysUseCase(repository),
+            RestoreDinnerDaysUseCase(dinnerRepository),
             clock
         )
     }
@@ -301,6 +311,121 @@ class CalendarViewModelTest {
             awaitItemMatching { it.dinners.size == 31 && !it.isAutoFilling }
             assertTrue(repository.saved.isEmpty())
             assertTrue(dinnerRepository.saved.all { YearMonth.from(it.date) == YearMonth.of(2026, 10) })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `selection starts empty and tap toggles only planned days`() = runTest {
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+
+            viewModel.onSelectionStart()
+            viewModel.onSelectionToggle(today)
+            viewModel.onSelectionToggle(today.plusDays(1))
+
+            val state = awaitItemMatching { it.selection?.dates == setOf(today) }
+            assertTrue(state.isSelecting)
+            assertTrue(state.isMarked(today))
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `long press drag enters selection and marks the planned range`() = runTest {
+        repository.saveAll(listOf(nextPlan))
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+
+            viewModel.onSelectionDragStart(today)
+            viewModel.onSelectionDragMove(today.plusDays(3))
+            viewModel.onSelectionDragEnd()
+
+            awaitItemMatching { it.selection?.dates == setOf(today, nextPlan.date) }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `select all marks every planned day and cancel leaves selection mode`() = runTest {
+        repository.saveAll(listOf(nextPlan))
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+
+            viewModel.onSelectionStart()
+            viewModel.onSelectAllInMonth()
+            awaitItemMatching { it.selection?.dates == setOf(today, nextPlan.date) }
+            viewModel.onSelectionCancel()
+
+            awaitItemMatching { !it.isSelecting }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `changing view keeps selection mode but clears marked days`() = runTest {
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+            viewModel.onSelectionStart()
+            viewModel.onSelectionToggle(today)
+            awaitItemMatching { it.selection?.count == 1 }
+
+            viewModel.onViewChange(PlanView.DINNER)
+
+            val state = awaitItemMatching { it.view == PlanView.DINNER }
+            assertEquals(0, state.selection?.count)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `deleting selected lunches removes them, leaves dinners and can be undone`() = runTest {
+        repository.saveAll(listOf(nextPlan))
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+            viewModel.onSelectionStart()
+            viewModel.onSelectAllInMonth()
+            awaitItemMatching { it.selection?.count == 2 }
+
+            lateinit var deletion: PlanDeletion
+            viewModel.events.test {
+                viewModel.onDeleteSelected()
+
+                deletion = (awaitItem() as CalendarEvent.DaysDeleted).deletion
+            }
+            assertEquals(PlanView.LUNCH, deletion.view)
+            assertEquals(2, deletion.count)
+
+            val cleared = awaitItemMatching { it.days.isEmpty() && !it.isLoading }
+            assertFalse(cleared.isSelecting)
+            assertEquals(setOf(today), dinnerRepository.current.keys)
+
+            viewModel.onUndoDelete(deletion)
+
+            awaitItemMatching { it.days.keys == setOf(today, nextPlan.date) }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `deleting in the dinner view removes only dinners`() = runTest {
+        repository.saveAll(listOf(nextPlan))
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+            viewModel.onViewChange(PlanView.DINNER)
+            awaitItemMatching { it.view == PlanView.DINNER }
+            viewModel.onSelectionStart()
+            viewModel.onSelectionToggle(today)
+            awaitItemMatching { it.selection?.count == 1 }
+
+            viewModel.events.test {
+                viewModel.onDeleteSelected()
+
+                assertEquals(PlanView.DINNER, (awaitItem() as CalendarEvent.DaysDeleted).deletion.view)
+            }
+
+            awaitItemMatching { it.dinners.isEmpty() }
+            assertEquals(setOf(today, nextPlan.date, novemberPlan.date), repository.current.keys)
             cancelAndIgnoreRemainingEvents()
         }
     }
