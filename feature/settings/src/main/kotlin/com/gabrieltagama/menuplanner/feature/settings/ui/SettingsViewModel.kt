@@ -17,8 +17,10 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetThemeModeUs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -51,9 +53,11 @@ class SettingsViewModel @Inject constructor(
     private val disconnectCloudAccount: DisconnectCloudAccountUseCase
 ) : ViewModel() {
 
-    val themeMode: StateFlow<ThemeMode> = observeThemeMode()
+    val themeMode: StateFlow<ThemeMode> =
+        observeThemeMode().stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), ThemeMode.SYSTEM)
 
-    val cloudAccount: StateFlow<CloudAccount> = observeCloudAccount()
+    val cloudAccount: StateFlow<CloudAccount> =
+        observeCloudAccount().stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), CloudAccount.Disconnected)
 
     private val _backupState = MutableStateFlow(BackupUiState())
     val backupState: StateFlow<BackupUiState> = _backupState.asStateFlow()
@@ -92,5 +96,9 @@ class SettingsViewModel @Inject constructor(
     private fun <T> Outcome<T>.toMessage(onSuccess: (T) -> BackupMessage): BackupMessage = when (this) {
         is Outcome.Success -> onSuccess(value)
         is Outcome.Failure -> BackupMessage.Failed(error)
+    }
+
+    private companion object {
+        const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

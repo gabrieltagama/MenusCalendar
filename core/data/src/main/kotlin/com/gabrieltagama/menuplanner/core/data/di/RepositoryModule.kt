@@ -5,7 +5,7 @@ import com.gabrieltagama.menuplanner.core.data.repository.JsonMenuShareRepositor
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
-import com.gabrieltagama.menuplanner.core.data.settings.SharedPreferencesSettingsRepository
+import com.gabrieltagama.menuplanner.core.data.settings.DataStoreSettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.InitialDishesRepository
@@ -43,7 +43,7 @@ internal abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindSettingsRepository(implementation: SharedPreferencesSettingsRepository): SettingsRepository
+    abstract fun bindSettingsRepository(implementation: DataStoreSettingsRepository): SettingsRepository
 
     @Binds
     @Singleton

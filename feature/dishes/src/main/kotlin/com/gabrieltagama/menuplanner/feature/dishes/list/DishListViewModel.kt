@@ -10,11 +10,18 @@ import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
@@ -22,7 +29,8 @@ import kotlinx.coroutines.flow.update
  * Recipe book table: observes every dish and applies search and the multiple-selection type,
  * heaviness, rating and meal time filters through [DishFilter]. The selected filters live in one
  * DishFilterCriteria (without query); the raw query is exposed on its own synchronous StateFlow
- * so the text field never lags behind typing, and the state carries the applied query.
+ * so the text field never lags behind typing, while filtering waits for a short pause in typing
+ * and runs off the main thread on a search index rebuilt only when the recipe book changes.
  */
 data class DishListUiState(
     val isLoading: Boolean = true,
@@ -44,22 +52,28 @@ class DishListViewModel @Inject constructor(observeDishes: ObserveDishesUseCase)
     private val filters = MutableStateFlow(DishFilterCriteria())
 
     val uiState: StateFlow<DishListUiState> =
-        combine(observeDishes(), _query, filters) { dishes, query, criteria ->
+        combine(observeDishes().map(DishFilter::index), debouncedQuery(), filters) { index, query, criteria ->
             DishListUiState(
                 isLoading = false,
-                hasDishes = dishes.isNotEmpty(),
+                hasDishes = index.isNotEmpty(),
                 query = query,
                 selectedTypes = criteria.types,
                 selectedHeaviness = criteria.heaviness,
                 selectedRatings = criteria.ratings,
                 selectedMealTimes = criteria.mealTimes,
-                dishes = DishFilter.apply(dishes, criteria.copy(query = query))
+                dishes = DishFilter.filter(index, criteria.copy(query = query))
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DishListUiState())
+        }
+            .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DishListUiState())
 
     fun onQueryChange(value: String) {
         _query.value = value
     }
+
+    @OptIn(FlowPreview::class)
+    private fun debouncedQuery(): Flow<String> =
+        _query.debounce { if (it.isEmpty()) 0L else QUERY_DEBOUNCE_MILLIS }.distinctUntilChanged()
 
     fun onTypesChange(types: Set<DishType>) = filters.update { it.copy(types = types) }
 
@@ -68,4 +82,8 @@ class DishListViewModel @Inject constructor(observeDishes: ObserveDishesUseCase)
     fun onRatingsChange(ratings: Set<Rating>) = filters.update { it.copy(ratings = ratings) }
 
     fun onMealTimesChange(mealTimes: Set<MealTime>) = filters.update { it.copy(mealTimes = mealTimes) }
+
+    private companion object {
+        const val QUERY_DEBOUNCE_MILLIS = 250L
+    }
 }

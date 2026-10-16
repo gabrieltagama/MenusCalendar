@@ -20,6 +20,9 @@ internal class FakeMealDayDao : MealDayDao {
     override fun observeRange(fromEpochDay: Long, toEpochDay: Long): Flow<List<MealDayEntity>> =
         days.map { all -> all.values.filter { it.date in fromEpochDay..toEpochDay }.sortedBy(MealDayEntity::date) }
 
+    override suspend fun getRange(fromEpochDay: Long, toEpochDay: Long): List<MealDayEntity> =
+        days.value.values.filter { it.date in fromEpochDay..toEpochDay }.sortedBy(MealDayEntity::date)
+
     override suspend fun getByDate(epochDay: Long): MealDayEntity? = days.value[epochDay]
 
     override suspend fun getAll(): List<MealDayEntity> = days.value.values.sortedBy(MealDayEntity::date)
@@ -28,6 +31,8 @@ internal class FakeMealDayDao : MealDayDao {
         upserted += day
         days.value = days.value + (day.date to day)
     }
+
+    override suspend fun upsertAll(days: List<MealDayEntity>) = days.forEach { upsert(it) }
 
     override suspend fun deleteByDate(epochDay: Long) {
         days.value = days.value - epochDay

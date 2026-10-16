@@ -7,7 +7,8 @@ import org.gradle.kotlin.dsl.project
 
 /**
  * Feature module: an Android library with Compose, Hilt, type-safe navigation routes and the
- * dependencies every screen uses (domain, shared UI, lifecycle, navigation and Hilt ViewModels).
+ * dependencies every screen uses (domain, shared UI, lifecycle, navigation and Hilt ViewModels),
+ * plus the shared domain fakes for its tests.
  */
 class AndroidFeatureConventionPlugin : Plugin<Project> {
 
@@ -25,6 +26,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             "implementation"(library("androidx-navigation-compose"))
             "implementation"(library("androidx-hilt-lifecycle-viewmodel-compose"))
             "implementation"(library("kotlinx-serialization-json"))
+            "testImplementation"(testFixtures(project(":core:domain")))
         }
     }
 }

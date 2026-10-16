@@ -4,7 +4,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.repository.CloudBackupRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
 /**
  * In-memory CloudBackupRepository: keeps the remote backup as a string and records uploads;
@@ -19,7 +19,7 @@ class FakeCloudBackupRepository(
     private var fingerprint: String? = null
     val uploads = mutableListOf<String>()
 
-    override val account: StateFlow<CloudAccount> = state
+    override val account: Flow<CloudAccount> = state
 
     override suspend fun connect(accessToken: String): Outcome<CloudAccount.Connected> {
         failure?.let { return it }

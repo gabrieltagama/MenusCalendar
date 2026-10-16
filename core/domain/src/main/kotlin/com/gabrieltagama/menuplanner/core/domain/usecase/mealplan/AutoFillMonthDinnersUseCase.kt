@@ -13,13 +13,13 @@ import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 import kotlin.random.Random
-import kotlinx.coroutines.flow.first
 
 /**
  * Fills every empty dinner of a month with one random dinner option (DinnerPicker). Dinners
- * already planned are never modified. Lunches and dinners of the neighbouring months are taken
- * into account so the rules also hold across month boundaries. Dinners have no heaviness rule,
- * so heavyStreakDays is always 0.
+ * already planned are never modified. Lunches and dinners of the neighbouring months within
+ * MenuPicker.RECENT_DAYS are taken into account so the rules also hold across month boundaries.
+ * Every filled dinner is saved at the end in a single transaction. Dinners have no heaviness
+ * rule, so heavyStreakDays is always 0.
  */
 class AutoFillMonthDinnersUseCase @Inject constructor(
     private val dishRepository: DishRepository,
@@ -29,17 +29,20 @@ class AutoFillMonthDinnersUseCase @Inject constructor(
     private val clock: Clock
 ) {
     suspend operator fun invoke(month: YearMonth): AutoFillResult {
-        val picker = DinnerPicker(dishRepository.observeDishes().first().filter(Dish::isDinnerOption), random)
-        val lunches = month.window().flatMap { mealPlanRepository.observeMonth(it).first() }.associate { it.date to it.menu }
-        val dinners = month.window().flatMap { dinnerPlanRepository.observeMonth(it).first() }.associate { it.date to it.dish }.toMutableMap()
+        val picker = DinnerPicker(dishRepository.getDishes().filter(Dish::isDinnerOption), random)
+        val window = month.window()
+        val lunches = mealPlanRepository.getRange(window).associate { it.date to it.menu }
+        val dinners = dinnerPlanRepository.getRange(window).associate { it.date to it.dish }.toMutableMap()
         val emptyDays = month.days().filterNot(dinners::containsKey)
         val picks = mutableListOf<DinnerPick>()
+        val filled = mutableListOf<DinnerDay>()
         for (date in emptyDays) {
             val pick = picker.pick(date, lunches, dinners) ?: continue
             dinners[date] = pick.dish
-            dinnerPlanRepository.save(DinnerDay(date = date, dish = pick.dish, updatedAt = Instant.now(clock)))
+            filled += DinnerDay(date = date, dish = pick.dish, updatedAt = Instant.now(clock))
             picks += pick
         }
+        dinnerPlanRepository.saveAll(filled)
         return AutoFillResult(
             filledDays = picks.size,
             repeatedDishDays = picks.count(DinnerPick::repeated),
@@ -48,7 +51,8 @@ class AutoFillMonthDinnersUseCase @Inject constructor(
         )
     }
 
-    private fun YearMonth.window(): List<YearMonth> = listOf(minusMonths(1), this, plusMonths(1))
+    private fun YearMonth.window(): ClosedRange<LocalDate> =
+        atDay(1).minusDays(MenuPicker.RECENT_DAYS)..atEndOfMonth().plusDays(MenuPicker.RECENT_DAYS)
 
     private fun YearMonth.days(): List<LocalDate> = (1..lengthOfMonth()).map(::atDay)
 }

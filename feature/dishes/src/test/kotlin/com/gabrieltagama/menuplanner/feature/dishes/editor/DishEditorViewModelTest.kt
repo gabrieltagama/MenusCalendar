@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.feature.dishes.editor
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
@@ -10,12 +11,11 @@ import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
+import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.DeleteDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.GetDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.SaveDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
-import com.gabrieltagama.menuplanner.feature.dishes.testing.FakeDishRepository
-import com.gabrieltagama.menuplanner.feature.dishes.testing.MainDispatcherRule
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset

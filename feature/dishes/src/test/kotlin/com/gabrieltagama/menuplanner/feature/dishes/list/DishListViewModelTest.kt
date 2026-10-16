@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.feature.dishes.list
 
 import app.cash.turbine.test
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
@@ -8,10 +9,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
+import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
+import com.gabrieltagama.menuplanner.core.domain.testing.awaitItemMatching
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
-import com.gabrieltagama.menuplanner.feature.dishes.testing.FakeDishRepository
-import com.gabrieltagama.menuplanner.feature.dishes.testing.MainDispatcherRule
-import com.gabrieltagama.menuplanner.feature.dishes.testing.awaitItemMatching
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

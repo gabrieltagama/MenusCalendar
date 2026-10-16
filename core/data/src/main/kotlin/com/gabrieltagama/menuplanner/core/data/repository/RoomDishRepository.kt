@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Room-backed recipe book. Saving a dish replaces its ingredient lines atomically and deleting it
- * checks that it is not planned in the same transaction.
+ * Room-backed recipe book. Saving a dish replaces its ingredient lines atomically, saving several
+ * dishes is one transaction and deleting a dish checks that it is not planned in the same transaction.
  */
 internal class RoomDishRepository @Inject constructor(
     private val dishDao: DishDao
@@ -25,9 +25,14 @@ internal class RoomDishRepository @Inject constructor(
     override fun observeDishesByType(type: DishType): Flow<List<Dish>> =
         dishDao.observeByType(type.name).map { it.toDomainList() }
 
+    override suspend fun getDishes(): List<Dish> = dishDao.getAll().toDomainList()
+
     override suspend fun getDish(id: String): Dish? = dishDao.getById(id)?.toDomain()
 
     override suspend fun upsert(dish: Dish) = dishDao.upsertWithIngredients(dish.toEntity(), dish.toIngredientEntities())
+
+    override suspend fun upsertAll(dishes: List<Dish>) =
+        dishDao.upsertAllWithIngredients(dishes.map { it.toEntity() to it.toIngredientEntities() })
 
     override suspend fun deleteIfUnused(id: String): Boolean = dishDao.deleteIfUnused(id)
 

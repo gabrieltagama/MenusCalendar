@@ -1,6 +1,9 @@
 package com.gabrieltagama.menuplanner.feature.calendar.month
 
 import app.cash.turbine.test
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
@@ -8,15 +11,12 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
+import com.gabrieltagama.menuplanner.core.domain.testing.awaitItemMatching
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthPlanUseCase
-import com.gabrieltagama.menuplanner.feature.calendar.testing.FakeDinnerPlanRepository
-import com.gabrieltagama.menuplanner.feature.calendar.testing.FakeDishRepository
-import com.gabrieltagama.menuplanner.feature.calendar.testing.FakeMealPlanRepository
-import com.gabrieltagama.menuplanner.feature.calendar.testing.MainDispatcherRule
-import com.gabrieltagama.menuplanner.feature.calendar.testing.awaitItemMatching
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate

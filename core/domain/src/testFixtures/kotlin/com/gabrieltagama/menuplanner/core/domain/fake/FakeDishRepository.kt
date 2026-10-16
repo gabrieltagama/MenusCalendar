@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.feature.dishes.testing
+package com.gabrieltagama.menuplanner.core.domain.fake
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
@@ -16,16 +16,22 @@ class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository {
     val upserted = mutableListOf<Dish>()
     val deletedIds = mutableListOf<String>()
 
+    val current: Map<String, Dish> get() = dishes.value
+
     override fun observeDishes(): Flow<List<Dish>> = dishes.map { it.values.toList() }
 
     override fun observeDishesByType(type: DishType): Flow<List<Dish>> =
         dishes.map { all -> all.values.filter { it.type == type } }
 
+    override suspend fun getDishes(): List<Dish> = dishes.value.values.toList()
+
     override suspend fun getDish(id: String): Dish? = dishes.value[id]
 
-    override suspend fun upsert(dish: Dish) {
-        upserted += dish
-        dishes.value = dishes.value + (dish.id to dish)
+    override suspend fun upsert(dish: Dish) = upsertAll(listOf(dish))
+
+    override suspend fun upsertAll(dishes: List<Dish>) {
+        upserted += dishes
+        this.dishes.value = this.dishes.value + dishes.associateBy { it.id }
     }
 
     override suspend fun deleteIfUnused(id: String): Boolean {

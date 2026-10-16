@@ -4,32 +4,32 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import javax.inject.Inject
-import kotlinx.coroutines.flow.first
 
 /**
  * Leaves the whole recipe book in standard units (see IngredientStandardizer), so a product has
- * the same unit in every dish. Runs on app start, after imports and when a dish is saved; save
- * also stores the edited dish already converted. Other dishes are written only when they change,
- * keeping their updatedAt because the user did not edit them.
+ * the same unit in every dish. Runs after imports, when a dish is saved and once per conversion
+ * version on app start (MigrateRecipeUnitsUseCase); save also stores the edited dish already
+ * converted. Other dishes are written only when they change, keeping their updatedAt because the
+ * user did not edit them, and every write of one run goes in a single transaction.
  */
 class StandardizeRecipeBookUseCase @Inject constructor(private val repository: DishRepository) {
 
-    suspend operator fun invoke() = upsertChanged(storedDishes())
+    suspend operator fun invoke() {
+        val stored = repository.getDishes()
+        val changed = changedDishes(stored, IngredientStandardizer.standardize(stored))
+        if (changed.isNotEmpty()) repository.upsertAll(changed)
+    }
 
     suspend fun save(edited: Dish): Dish {
-        val stored = storedDishes(excludedId = edited.id)
+        val stored = repository.getDishes().filterNot { it.id == edited.id }
         val standard = IngredientStandardizer.standardize(stored + edited)
         val saved = standard.last()
-        repository.upsert(saved)
-        upsertChanged(stored, standard)
+        repository.upsertAll(changedDishes(stored, standard) + saved)
         return saved
     }
 
-    private suspend fun storedDishes(excludedId: String? = null): List<Dish> =
-        repository.observeDishes().first().filterNot { it.id == excludedId }
-
-    private suspend fun upsertChanged(stored: List<Dish>, standard: List<Dish> = IngredientStandardizer.standardize(stored)) =
+    private fun changedDishes(stored: List<Dish>, standard: List<Dish>): List<Dish> =
         standard.zip(stored)
             .filter { (converted, original) -> converted != original }
-            .forEach { (converted, _) -> repository.upsert(converted) }
+            .map { (converted, _) -> converted }
 }

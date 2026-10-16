@@ -14,10 +14,13 @@ import java.time.YearMonth
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /**
- * Room-backed monthly dinner calendar. Like the lunch calendar, the month flow is combined with
- * the dish versions flow so an edited dish refreshes it; dishes are resolved with one query.
+ * Room-backed dinner calendar. Like the lunch calendar, the month flow only refreshes when one of
+ * the dishes it references changes; dishes are resolved with one query and several dinners are
+ * saved in one transaction.
  */
 internal class RoomDinnerPlanRepository @Inject constructor(
     private val dinnerDayDao: DinnerDayDao,
@@ -28,12 +31,22 @@ internal class RoomDinnerPlanRepository @Inject constructor(
         combine(
             dinnerDayDao.observeRange(month.atDay(1).toEpochDay(), month.atEndOfMonth().toEpochDay()),
             dishDao.observeVersions()
-        ) { days, _ -> resolve(days) }
+        ) { days, versions ->
+            val referenced = days.map { it.dishId }.toSet()
+            days to versions.filter { it.id in referenced }.toSet()
+        }
+            .distinctUntilChanged()
+            .map { (days, _) -> resolve(days) }
 
     override suspend fun getDay(date: LocalDate): DinnerDay? =
         dinnerDayDao.getByDate(date.toEpochDay())?.let { resolve(listOf(it)).firstOrNull() }
 
+    override suspend fun getRange(dates: ClosedRange<LocalDate>): List<DinnerDay> =
+        resolve(dinnerDayDao.getRange(dates.start.toEpochDay(), dates.endInclusive.toEpochDay()))
+
     override suspend fun save(day: DinnerDay) = dinnerDayDao.upsert(day.toEntity())
+
+    override suspend fun saveAll(days: List<DinnerDay>) = dinnerDayDao.upsertAll(days.map { it.toEntity() })
 
     override suspend fun clear(date: LocalDate) = dinnerDayDao.deleteByDate(date.toEpochDay())
 

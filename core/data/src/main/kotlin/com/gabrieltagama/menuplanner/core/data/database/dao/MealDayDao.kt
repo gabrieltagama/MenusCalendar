@@ -15,6 +15,9 @@ internal interface MealDayDao {
     @Query("SELECT * FROM meal_days WHERE date BETWEEN :fromEpochDay AND :toEpochDay ORDER BY date")
     fun observeRange(fromEpochDay: Long, toEpochDay: Long): Flow<List<MealDayEntity>>
 
+    @Query("SELECT * FROM meal_days WHERE date BETWEEN :fromEpochDay AND :toEpochDay ORDER BY date")
+    suspend fun getRange(fromEpochDay: Long, toEpochDay: Long): List<MealDayEntity>
+
     @Query("SELECT * FROM meal_days WHERE date = :epochDay")
     suspend fun getByDate(epochDay: Long): MealDayEntity?
 
@@ -23,6 +26,9 @@ internal interface MealDayDao {
 
     @Upsert
     suspend fun upsert(day: MealDayEntity)
+
+    @Upsert
+    suspend fun upsertAll(days: List<MealDayEntity>)
 
     @Query("DELETE FROM meal_days WHERE date = :epochDay")
     suspend fun deleteByDate(epochDay: Long)
