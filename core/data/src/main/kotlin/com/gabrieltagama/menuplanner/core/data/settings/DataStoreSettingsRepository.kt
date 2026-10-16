@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.gabrieltagama.menuplanner.core.data.di.SettingsDataStore
+import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
 import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
 import java.io.IOException
@@ -36,8 +37,15 @@ internal class DataStoreSettingsRepository @Inject constructor(
 
     override val isOnboardingCompleted: Flow<Boolean> = preferences.map { it[ONBOARDING_COMPLETED] ?: false }.distinctUntilChanged()
 
+    override val repeatWindow: Flow<RepeatWindow> =
+        preferences.map { stored -> stored[REPEAT_WINDOW_DAYS]?.let { RepeatWindow.of(it) } ?: RepeatWindow.DEFAULT }.distinctUntilChanged()
+
     override suspend fun setThemeMode(mode: ThemeMode) {
         dataStore.edit { it[THEME_MODE] = mode.name }
+    }
+
+    override suspend fun setRepeatWindow(window: RepeatWindow) {
+        dataStore.edit { it[REPEAT_WINDOW_DAYS] = window.days }
     }
 
     override suspend fun completeOnboarding() {
@@ -54,5 +62,6 @@ internal class DataStoreSettingsRepository @Inject constructor(
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val RECIPE_UNITS_VERSION = intPreferencesKey("recipe_units_version")
+        val REPEAT_WINDOW_DAYS = intPreferencesKey("repeat_window_days")
     }
 }

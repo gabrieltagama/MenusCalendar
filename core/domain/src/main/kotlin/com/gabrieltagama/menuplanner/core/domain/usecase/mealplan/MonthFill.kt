@@ -7,7 +7,8 @@ import java.time.YearMonth
 /**
  * Skeleton shared by the lunch and dinner autofill: picks each empty day in date order (a pick may
  * see the days picked before it) and summarizes the run as an AutoFillResult. A null pick leaves
- * the day empty.
+ * the day empty. The days of a whole month to fill start today when the month is the current one,
+ * so past days are never filled.
  */
 internal class DayPick<D>(val day: D, val repeated: Boolean, val breaksHeavyRule: Boolean = false)
 
@@ -26,4 +27,7 @@ internal inline fun <D> fillEmptyDays(emptyDays: List<LocalDate>, pick: (LocalDa
     )
 }
 
-internal fun YearMonth.days(): List<LocalDate> = (1..lengthOfMonth()).map(::atDay)
+internal fun YearMonth.daysToFill(today: LocalDate): List<LocalDate> {
+    val firstDay = if (YearMonth.from(today) == this) today.dayOfMonth else 1
+    return (firstDay..lengthOfMonth()).map(::atDay)
+}

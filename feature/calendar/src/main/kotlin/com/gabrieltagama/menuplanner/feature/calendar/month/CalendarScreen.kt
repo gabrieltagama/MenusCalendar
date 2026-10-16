@@ -281,7 +281,7 @@ fun CalendarScreen(
         if (state.showAutoFillConfirm)
             ConfirmDialog(
                 title = stringResource(R.string.calendar_autofill_title),
-                text = stringResource(state.view.autoFillTextRes(), state.month.inlineText()),
+                text = stringResource(state.view.autoFillTextRes(), state.autoFillPeriodText()),
                 onConfirm = autoFillActions.onConfirm,
                 onDismiss = autoFillActions.onDismiss,
                 confirmLabel = stringResource(R.string.calendar_autofill_confirm)
@@ -661,6 +661,10 @@ private fun CalendarUiState.plannedDishes(date: LocalDate): List<DishSummary> = 
     PlanView.LUNCH -> days[date]?.dishes.orEmpty()
     PlanView.DINNER -> listOfNotNull(dinners[date]?.dish)
 }
+
+@Composable
+private fun CalendarUiState.autoFillPeriodText(): String =
+    if (isShowingCurrentMonth) stringResource(R.string.calendar_autofill_from_today, month.inlineText()) else month.inlineText()
 
 private fun PlanView.autoFillTextRes(): Int = when (this) {
     PlanView.LUNCH -> R.string.calendar_autofill_text

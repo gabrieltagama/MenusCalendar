@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.feature.settings.ui
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,13 +14,16 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -44,6 +49,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gabrieltagama.menuplanner.core.cloud.ui.rememberGoogleDriveConnect
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
+import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
@@ -51,13 +57,14 @@ import com.gabrieltagama.menuplanner.feature.settings.R
 
 /**
  * Settings tab: stateful route bound to [SettingsViewModel] and the Google consent flow, and a
- * stateless screen grouped in sections: "Apariencia" with the theme choice (system, light or dark)
- * and the optional Google Drive backup of recipes and calendar. Bottom insets are left to the app shell, which
+ * stateless screen grouped in sections: "Apariencia" with the theme choice (system, light or dark),
+ * "Calendario" with the days without repeating a dish of the autofill (RepeatWindow) and the optional Google Drive backup of recipes and calendar. Bottom insets are left to the app shell, which
  * draws the NavigationBar below this screen.
  */
 @Composable
 fun SettingsScreenRoute(viewModel: SettingsViewModel = hiltViewModel()) {
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val repeatWindow by viewModel.repeatWindow.collectAsStateWithLifecycle()
     val cloudAccount by viewModel.cloudAccount.collectAsStateWithLifecycle()
     val backupState by viewModel.backupState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -73,6 +80,8 @@ fun SettingsScreenRoute(viewModel: SettingsViewModel = hiltViewModel()) {
     SettingsScreen(
         themeMode = themeMode,
         onThemeModeSelect = viewModel::onThemeModeSelect,
+        repeatWindow = repeatWindow,
+        onRepeatWindowChange = viewModel::onRepeatWindowChange,
         cloudAccount = cloudAccount,
         isBackupBusy = backupState.isBusy,
         backupActions = BackupActions(
@@ -100,6 +109,8 @@ class BackupActions(
 fun SettingsScreen(
     themeMode: ThemeMode,
     onThemeModeSelect: (ThemeMode) -> Unit,
+    repeatWindow: RepeatWindow,
+    onRepeatWindowChange: (Int) -> Unit,
     cloudAccount: CloudAccount,
     isBackupBusy: Boolean,
     backupActions: BackupActions,
@@ -112,6 +123,8 @@ fun SettingsScreen(
     Column(modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
         SectionHeader(R.string.settings_section_appearance)
         ThemeModeOptions(selected = themeMode, onSelect = onThemeModeSelect)
+        SectionHeader(R.string.settings_section_calendar)
+        RepeatWindowOption(window = repeatWindow, onChange = onRepeatWindowChange)
         SectionHeader(R.string.settings_section_backup)
         BackupOptions(account = cloudAccount, isBusy = isBackupBusy, actions = backupActions)
     }
@@ -137,6 +150,23 @@ private fun ThemeModeOptions(selected: ThemeMode, onSelect: (ThemeMode) -> Unit)
         ThemeModeOption(mode = mode, isSelected = mode == selected, onSelect = { onSelect(mode) })
     }
 }
+
+@Composable
+private fun RepeatWindowOption(window: RepeatWindow, onChange: (Int) -> Unit) = ListItem(
+    headlineContent = { Text(stringResource(R.string.settings_repeat_window)) },
+    supportingContent = { Text(stringResource(R.string.settings_repeat_window_hint)) },
+    trailingContent = {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { onChange(window.days - 1) }, enabled = window.canDecrease()) {
+                Icon(Icons.Filled.Remove, contentDescription = stringResource(R.string.settings_repeat_window_decrease))
+            }
+            Text(text = window.days.toString(), style = MaterialTheme.typography.titleMedium)
+            IconButton(onClick = { onChange(window.days + 1) }, enabled = window.canIncrease()) {
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.settings_repeat_window_increase))
+            }
+        }
+    }
+)
 
 @Composable
 private fun BackupOptions(account: CloudAccount, isBusy: Boolean, actions: BackupActions) = Column {
@@ -210,6 +240,8 @@ private fun SettingsScreenPreview() = MenuPlannerTheme {
     SettingsScreen(
         themeMode = ThemeMode.LIGHT,
         onThemeModeSelect = {},
+        repeatWindow = RepeatWindow.DEFAULT,
+        onRepeatWindowChange = {},
         cloudAccount = CloudAccount.Connected("usuario@gmail.com"),
         isBackupBusy = false,
         backupActions = BackupActions(onConnect = {}, onBackUpNow = {}, onRestore = {}, onDisconnect = {})

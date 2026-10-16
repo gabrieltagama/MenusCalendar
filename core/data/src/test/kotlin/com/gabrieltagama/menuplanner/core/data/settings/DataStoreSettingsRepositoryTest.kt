@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.data.di.DataStoreModule
+import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +38,7 @@ class DataStoreSettingsRepositoryTest {
         assertEquals(ThemeMode.SYSTEM, repository.themeMode.first())
         assertFalse(repository.isOnboardingCompleted.first())
         assertEquals(0, repository.recipeUnitsVersion())
+        assertEquals(RepeatWindow.DEFAULT, repository.repeatWindow.first())
     }
 
     @Test
@@ -59,10 +61,12 @@ class DataStoreSettingsRepositoryTest {
         repository.setThemeMode(ThemeMode.LIGHT)
         repository.completeOnboarding()
         repository.setRecipeUnitsVersion(3)
+        repository.setRepeatWindow(RepeatWindow.of(9))
 
         assertEquals(ThemeMode.LIGHT, repository.themeMode.first())
         assertTrue(repository.isOnboardingCompleted.first())
         assertEquals(3, repository.recipeUnitsVersion())
+        assertEquals(9, repository.repeatWindow.first().days)
     }
 
     private fun repository() = DataStoreSettingsRepository(DataStoreModule.settingsDataStore(context, scope))
