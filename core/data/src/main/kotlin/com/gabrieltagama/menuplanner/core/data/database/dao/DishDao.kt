@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Data access for dishes and their ingredients. The dish row is upserted (never REPLACE) so
- * neither the ingredient cascade nor the calendar RESTRICT constraint fire on update.
+ * neither the ingredient cascade nor the calendar RESTRICT constraint fire on update; a dish is
+ * deleted only when it is not planned, checked and deleted in one transaction.
  */
 @Dao
 internal interface DishDao {
@@ -26,7 +27,7 @@ internal interface DishDao {
     @Query("SELECT * FROM dishes WHERE type = :type ORDER BY name COLLATE NOCASE")
     fun observeByType(type: String): Flow<List<DishWithIngredients>>
 
-    @Query("SELECT id, type, updated_at FROM dishes")
+    @Query("SELECT id, type, meal_time, updated_at FROM dishes")
     fun observeVersions(): Flow<List<DishVersion>>
 
     @Transaction
@@ -41,7 +42,7 @@ internal interface DishDao {
     @Query("SELECT * FROM dishes ORDER BY name COLLATE NOCASE")
     suspend fun getAll(): List<DishWithIngredients>
 
-    @Query("SELECT id, type, updated_at FROM dishes")
+    @Query("SELECT id, type, meal_time, updated_at FROM dishes")
     suspend fun getVersions(): List<DishVersion>
 
     @Query(
@@ -61,6 +62,13 @@ internal interface DishDao {
 
     @Query("DELETE FROM dishes WHERE id = :id")
     suspend fun deleteById(id: String)
+
+    @Transaction
+    suspend fun deleteIfUnused(id: String): Boolean {
+        if (countUsages(id) > 0) return false
+        deleteById(id)
+        return true
+    }
 
     @Transaction
     suspend fun upsertWithIngredients(dish: DishEntity, ingredients: List<IngredientEntity>) {

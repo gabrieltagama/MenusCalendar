@@ -20,5 +20,9 @@ data class Dish(
     val mealTime: MealTime = MealTime.ANY,
     val updatedAt: Instant = Instant.now()
 ) {
-    val isDinnerOption: Boolean get() = mealTime.isServedAtDinner && type != DishType.DESSERT
+    val isDinnerOption: Boolean get() = isDinnerOption(type, mealTime)
+
+    companion object {
+        fun isDinnerOption(type: DishType, mealTime: MealTime): Boolean = mealTime.isServedAtDinner && type != DishType.DESSERT
+    }
 }

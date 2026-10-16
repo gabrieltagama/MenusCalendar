@@ -115,15 +115,14 @@ class DishDaoTest {
     fun deletingUnplannedDishCascadesIngredients() = runTest {
         dishRepository.upsert(DatabaseTestData.dish("d1", ingredients = listOf(Ingredient("Rice", 1.0, MeasureUnit.CUP))))
 
-        assertFalse(dishRepository.isUsedInCalendar("d1"))
-        dishRepository.delete("d1")
+        assertTrue(dishRepository.deleteIfUnused("d1"))
 
         assertNull(dishRepository.getDish("d1"))
         assertEquals(0, countIngredientRows("d1"))
     }
 
     @Test
-    fun deletingPlannedDishFailsWithConstraintViolation() = runTest {
+    fun plannedDishIsNotDeleted() = runTest {
         val starter = DatabaseTestData.dish("st", type = DishType.STARTER)
         val main = DatabaseTestData.dish("mn", type = DishType.MAIN)
         listOf(starter, main).forEach { dishRepository.upsert(it) }
@@ -132,12 +131,20 @@ class DishDaoTest {
         listOf(starter, main).forEach { assertPlannedDishCannotBeDeleted(it) }
     }
 
-    private suspend fun assertPlannedDishCannotBeDeleted(dish: Dish) {
-        assertTrue(dishRepository.isUsedInCalendar(dish.id))
+    @Test
+    fun plannedDishCannotBeDeletedBypassingTheCheck() = runTest {
+        val single = DatabaseTestData.dish("s", type = DishType.SINGLE)
+        dishRepository.upsert(single)
+        mealPlanRepository.save(DatabaseTestData.singleDay(date, single))
 
-        val error = runCatching { dishRepository.delete(dish.id) }.exceptionOrNull()
+        val error = runCatching { dishDao.deleteById(single.id) }.exceptionOrNull()
 
         assertTrue("Expected SQLiteConstraintException but was $error", error is SQLiteConstraintException)
+        assertEquals(single, dishRepository.getDish(single.id))
+    }
+
+    private suspend fun assertPlannedDishCannotBeDeleted(dish: Dish) {
+        assertFalse(dishRepository.deleteIfUnused(dish.id))
         assertEquals(dish, dishRepository.getDish(dish.id))
     }
 

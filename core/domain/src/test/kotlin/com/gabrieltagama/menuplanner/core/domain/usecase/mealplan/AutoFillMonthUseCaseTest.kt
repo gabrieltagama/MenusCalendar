@@ -24,8 +24,8 @@ import org.junit.Test
 
 /**
  * Property-style tests of AutoFillMonthUseCase (and MenuPicker) over many seeds: only empty days are
- * filled, menu shapes are mixed, desserts are never planned, no dish repeats within 7 days (also across the month
- * boundary), dinner-only dishes are never used, no VERY_HIGH main dish follows a heavy day, and the fallback order when dishes are scarce
+ * filled, menu shapes are mixed, desserts are never planned, no dish repeats within 7 days (also across both month
+ * boundaries), dinner-only dishes are never used, no VERY_HIGH main dish follows a heavy day, and the fallback order when dishes are scarce
  * is "repeat first, break the heavy rule last".
  */
 class AutoFillMonthUseCaseTest {
@@ -198,6 +198,28 @@ class AutoFillMonthUseCaseTest {
         assertNoRepeatWithinWeek(run.plan, seed)
         assertEquals(0, run.result.repeatedDishDays)
         assertEquals(31, run.result.filledDays)
+    }
+
+    @Test
+    fun `no dish repeats within seven days across the next month boundary`() = seeds.forEach { seed ->
+        val singles = richCatalog.filter { it.type == DishType.SINGLE && it.heaviness != Heaviness.VERY_HIGH }
+        val nextMonth = month.plusMonths(1)
+        val planned = (0 until 6).map { offset ->
+            MealDay(nextMonth.atDay(1).plusDays(offset.toLong()), DailyMenu.Single(singles[offset]), TestDishes.OLD_INSTANT)
+        }
+
+        val run = autoFill(richCatalog, seed, planned)
+
+        assertNoRepeatWithinWeek(run.plan, seed)
+        assertEquals(0, run.result.repeatedDishDays)
+        assertEquals(31, run.result.filledDays)
+    }
+
+    @Test
+    fun `last day of the month before a planned heavy day of the next month is not heavy`() = seeds.forEach { seed ->
+        val run = autoFill(richCatalog, seed, listOf(heavyDay(month.plusMonths(1).atDay(1))))
+
+        assertFalse("seed $seed", run.plan.getValue(month.atEndOfMonth()).isHeavy())
     }
 
     @Test
