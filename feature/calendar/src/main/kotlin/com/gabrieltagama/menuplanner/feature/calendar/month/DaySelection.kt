@@ -37,6 +37,6 @@ data class DaySelection(
 data class DragRange(val anchor: LocalDate, val baseline: Set<LocalDate>, val isAdding: Boolean) {
     fun datesTo(target: LocalDate): List<LocalDate> {
         val (from, to) = if (target < anchor) target to anchor else anchor to target
-        return from.datesUntil(to.plusDays(1)).toList()
+        return generateSequence(from) { it.plusDays(1) }.takeWhile { it <= to }.toList()
     }
 }
