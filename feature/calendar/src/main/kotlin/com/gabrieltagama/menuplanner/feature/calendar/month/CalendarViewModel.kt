@@ -5,14 +5,19 @@ import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.PastedDays
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthPlanUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteDinnerDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteMealDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreDinnerDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreMealDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteDinnerDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteMealDaysUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -36,9 +41,11 @@ import kotlinx.coroutines.launch
  * dinners), and switches the observed lunch and dinner plans with flatMapLatest whenever the
  * month changes. It also runs the random autofill of the active view for the visible month after
  * confirmation and reports its result as a one-shot event. "Today" is refreshed whenever the screen
- * resumes, so the highlight stays right after midnight. A selection mode marks planned days of the
- * active view (tap, drag over a range or the whole month, kept across months) and deletes them at
- * once; the deletion is reported as an event that carries the removed plan so it can be undone.
+ * resumes, so the highlight stays right after midnight. A selection mode marks any days (tap, drag
+ * over a range or the whole month, kept across months and views) and acts on the active view: it
+ * deletes the planned ones, autofills the empty ones or copies them; a copy is pasted by tapping
+ * the first target day. Deletions and pastes are reported as events that carry what changed so
+ * they can be undone.
  */
 enum class PlanView { LUNCH, DINNER }
 
@@ -52,9 +59,12 @@ data class CalendarUiState(
     val dinners: Map<LocalDate, DinnerDay> = emptyMap(),
     val isAutoFilling: Boolean = false,
     val showAutoFillConfirm: Boolean = false,
-    val selection: DaySelection? = null
+    val selection: DaySelection? = null,
+    val clipboard: PlanClipboard? = null
 ) {
     val isSelecting: Boolean get() = selection != null
+
+    val isPasting: Boolean get() = clipboard != null
 
     val plannedDates: Set<LocalDate> get() = when (view) {
         PlanView.LUNCH -> days.keys
@@ -78,6 +88,28 @@ data class CalendarUiState(
 sealed interface CalendarEvent {
     data class AutoFillCompleted(val result: AutoFillResult, val view: PlanView) : CalendarEvent
     data class DaysDeleted(val deletion: PlanDeletion) : CalendarEvent
+    data class SelectionFilled(val result: AutoFillResult, val view: PlanView) : CalendarEvent
+    data class DaysPasted(val paste: PlanPaste) : CalendarEvent
+    data object NothingPlanned : CalendarEvent
+}
+
+data class PlanClipboard(val dates: Set<LocalDate>, val view: PlanView) {
+    val count: Int get() = dates.size
+}
+
+sealed interface PlanPaste {
+    val count: Int
+    val view: PlanView
+
+    data class Lunches(val days: PastedDays<MealDay>) : PlanPaste {
+        override val count: Int get() = days.count
+        override val view: PlanView get() = PlanView.LUNCH
+    }
+
+    data class Dinners(val days: PastedDays<DinnerDay>) : PlanPaste {
+        override val count: Int get() = days.count
+        override val view: PlanView get() = PlanView.DINNER
+    }
 }
 
 sealed interface PlanDeletion {
@@ -99,7 +131,7 @@ private data class MonthPlan(val month: YearMonth, val days: Map<LocalDate, Meal
 
 private data class AutoFillStatus(val isRunning: Boolean = false, val showConfirm: Boolean = false)
 
-private data class Modes(val autoFill: AutoFillStatus, val selection: DaySelection?)
+private data class Modes(val autoFill: AutoFillStatus, val selection: DaySelection?, val clipboard: PlanClipboard?)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -112,6 +144,10 @@ class CalendarViewModel @Inject constructor(
     private val clearDinnerDays: ClearDinnerDaysUseCase,
     private val restoreMealDays: RestoreMealDaysUseCase,
     private val restoreDinnerDays: RestoreDinnerDaysUseCase,
+    private val pasteMealDays: PasteMealDaysUseCase,
+    private val pasteDinnerDays: PasteDinnerDaysUseCase,
+    private val undoPasteMealDays: UndoPasteMealDaysUseCase,
+    private val undoPasteDinnerDays: UndoPasteDinnerDaysUseCase,
     private val clock: Clock
 ) : ViewModel() {
 
@@ -121,6 +157,7 @@ class CalendarViewModel @Inject constructor(
     private val view = MutableStateFlow(PlanView.LUNCH)
     private val autoFillStatus = MutableStateFlow(AutoFillStatus())
     private val selection = MutableStateFlow<DaySelection?>(null)
+    private val clipboard = MutableStateFlow<PlanClipboard?>(null)
 
     private val monthPlan = month.flatMapLatest { visibleMonth ->
         combine(observeMonthPlan(visibleMonth), observeMonthDinners(visibleMonth)) { days, dinners ->
@@ -130,10 +167,10 @@ class CalendarViewModel @Inject constructor(
 
     private val dates = combine(selectedDate, today) { selected, current -> selected to current }
 
-    private val modes = combine(autoFillStatus, selection, ::Modes)
+    private val modes = combine(autoFillStatus, selection, clipboard, ::Modes)
 
     val uiState: StateFlow<CalendarUiState> =
-        combine(month, dates, view, monthPlan, modes) { visibleMonth, (selected, current), activeView, plan, (status, marked) ->
+        combine(month, dates, view, monthPlan, modes) { visibleMonth, (selected, current), activeView, plan, (status, marked, copied) ->
             val isCurrentPlan = plan.month == visibleMonth
             CalendarUiState(
                 month = visibleMonth,
@@ -145,7 +182,8 @@ class CalendarViewModel @Inject constructor(
                 dinners = if (isCurrentPlan) plan.dinners else emptyMap(),
                 isAutoFilling = status.isRunning,
                 showAutoFillConfirm = status.showConfirm,
-                selection = marked
+                selection = marked,
+                clipboard = copied
             )
         }.stateIn(
             viewModelScope,
@@ -175,23 +213,28 @@ class CalendarViewModel @Inject constructor(
     }
 
     fun onViewChange(target: PlanView) {
-        if (target != view.value) selection.update { it?.let { DaySelection() } }
         view.value = target
     }
 
-    fun onSelectionStart() = selection.update { it ?: DaySelection() }
+    fun onSelectionStart() {
+        clipboard.value = null
+        selection.update { it ?: DaySelection() }
+    }
 
     fun onSelectionCancel() {
         selection.value = null
     }
 
-    fun onSelectionToggle(date: LocalDate) = selection.update { it?.toggle(date, selectableDates()) }
+    fun onSelectionToggle(date: LocalDate) = selection.update { it?.toggle(date) }
 
-    fun onSelectAllInMonth() = selection.update { it?.selectAll(selectableDates()) }
+    fun onSelectAllInMonth() = selection.update { it?.selectAll(month.value.daysOfMonth()) }
 
-    fun onSelectionDragStart(date: LocalDate) = selection.update { (it ?: DaySelection()).startDrag(date, selectableDates()) }
+    fun onSelectionDragStart(date: LocalDate) {
+        if (clipboard.value != null) return
+        selection.update { (it ?: DaySelection()).startDrag(date) }
+    }
 
-    fun onSelectionDragMove(date: LocalDate) = selection.update { it?.dragTo(date, selectableDates()) }
+    fun onSelectionDragMove(date: LocalDate) = selection.update { it?.dragTo(date) }
 
     fun onSelectionDragEnd() = selection.update { it?.endDrag() }
 
@@ -202,7 +245,51 @@ class CalendarViewModel @Inject constructor(
         selection.value = null
         viewModelScope.launch {
             val deletion = delete(marked, targetView)
-            if (deletion.count > 0) _events.send(CalendarEvent.DaysDeleted(deletion))
+            _events.send(if (deletion.count > 0) CalendarEvent.DaysDeleted(deletion) else CalendarEvent.NothingPlanned)
+        }
+    }
+
+    fun onFillSelected() {
+        val marked = selection.value?.dates.orEmpty()
+        if (marked.isEmpty() || autoFillStatus.value.isRunning) return
+        val targetView = view.value
+        selection.value = null
+        autoFillStatus.value = AutoFillStatus(isRunning = true)
+        viewModelScope.launch {
+            try {
+                _events.send(CalendarEvent.SelectionFilled(autoFill(marked, targetView), targetView))
+            } finally {
+                autoFillStatus.update { it.copy(isRunning = false) }
+            }
+        }
+    }
+
+    fun onCopySelected() {
+        val marked = selection.value?.dates.orEmpty()
+        if (marked.isEmpty()) return
+        selection.value = null
+        clipboard.value = PlanClipboard(marked, view.value)
+    }
+
+    fun onPasteAt(target: LocalDate) {
+        val copied = clipboard.value ?: return
+        clipboard.value = null
+        viewModelScope.launch {
+            val paste = paste(copied, target)
+            _events.send(if (paste.count > 0) CalendarEvent.DaysPasted(paste) else CalendarEvent.NothingPlanned)
+        }
+    }
+
+    fun onPasteCancel() {
+        clipboard.value = null
+    }
+
+    fun onUndoPaste(paste: PlanPaste) {
+        viewModelScope.launch {
+            when (paste) {
+                is PlanPaste.Lunches -> undoPasteMealDays(paste.days)
+                is PlanPaste.Dinners -> undoPasteDinnerDays(paste.days)
+            }
         }
     }
 
@@ -214,13 +301,6 @@ class CalendarViewModel @Inject constructor(
             }
         }
     }
-
-    private suspend fun delete(marked: Set<LocalDate>, targetView: PlanView): PlanDeletion = when (targetView) {
-        PlanView.LUNCH -> PlanDeletion.Lunches(clearMealDays(marked))
-        PlanView.DINNER -> PlanDeletion.Dinners(clearDinnerDays(marked))
-    }
-
-    private fun selectableDates(): Set<LocalDate> = uiState.value.plannedDates
 
     fun onAutoFillRequest() = autoFillStatus.update { if (it.isRunning) it else it.copy(showConfirm = true) }
 
@@ -239,6 +319,23 @@ class CalendarViewModel @Inject constructor(
             }
         }
     }
+
+    private suspend fun delete(marked: Set<LocalDate>, targetView: PlanView): PlanDeletion = when (targetView) {
+        PlanView.LUNCH -> PlanDeletion.Lunches(clearMealDays(marked))
+        PlanView.DINNER -> PlanDeletion.Dinners(clearDinnerDays(marked))
+    }
+
+    private suspend fun paste(copied: PlanClipboard, target: LocalDate): PlanPaste = when (copied.view) {
+        PlanView.LUNCH -> PlanPaste.Lunches(pasteMealDays(copied.dates, target))
+        PlanView.DINNER -> PlanPaste.Dinners(pasteDinnerDays(copied.dates, target))
+    }
+
+    private suspend fun autoFill(dates: Set<LocalDate>, targetView: PlanView): AutoFillResult = when (targetView) {
+        PlanView.LUNCH -> autoFillMonth(dates)
+        PlanView.DINNER -> autoFillMonthDinners(dates)
+    }
+
+    private fun YearMonth.daysOfMonth(): Set<LocalDate> = (1..lengthOfMonth()).map(::atDay).toSet()
 
     private suspend fun autoFill(target: YearMonth, targetView: PlanView): AutoFillResult = when (targetView) {
         PlanView.LUNCH -> autoFillMonth(target)

@@ -20,8 +20,12 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDay
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthPlanUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteDinnerDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteMealDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreDinnerDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreMealDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteDinnerDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteMealDaysUseCase
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -42,7 +46,8 @@ import org.junit.Test
  * month navigation, selected day summary, the "today" shortcut and the month autofill over the
  * real AutoFillMonthUseCase with in-memory repositories and a seeded Random; the lunches/dinners
  * view switch, the dinner autofill and the refresh of "today" when the screen resumes; the selection
- * mode (tap, drag, select all, view change) and the bulk deletion of the active view with undo.
+ * mode (tap, drag, select all, view change) and its actions on the active view: bulk deletion with
+ * undo, autofill of the marked empty days and copy/paste with undo.
  */
 class CalendarViewModelTest {
 
@@ -80,6 +85,10 @@ class CalendarViewModelTest {
             ClearDinnerDaysUseCase(dinnerRepository),
             RestoreMealDaysUseCase(repository),
             RestoreDinnerDaysUseCase(dinnerRepository),
+            PasteMealDaysUseCase(repository, clock),
+            PasteDinnerDaysUseCase(dinnerRepository, clock),
+            UndoPasteMealDaysUseCase(repository),
+            UndoPasteDinnerDaysUseCase(dinnerRepository),
             clock
         )
     }
@@ -316,7 +325,7 @@ class CalendarViewModelTest {
     }
 
     @Test
-    fun `selection starts empty and tap toggles only planned days`() = runTest {
+    fun `selection starts empty and tap toggles any day`() = runTest {
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
 
@@ -324,16 +333,15 @@ class CalendarViewModelTest {
             viewModel.onSelectionToggle(today)
             viewModel.onSelectionToggle(today.plusDays(1))
 
-            val state = awaitItemMatching { it.selection?.dates == setOf(today) }
+            val state = awaitItemMatching { it.selection?.dates == setOf(today, today.plusDays(1)) }
             assertTrue(state.isSelecting)
-            assertTrue(state.isMarked(today))
+            assertTrue(state.isMarked(today.plusDays(1)))
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `long press drag enters selection and marks the planned range`() = runTest {
-        repository.saveAll(listOf(nextPlan))
+    fun `long press drag enters selection and marks the range`() = runTest {
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
 
@@ -341,20 +349,19 @@ class CalendarViewModelTest {
             viewModel.onSelectionDragMove(today.plusDays(3))
             viewModel.onSelectionDragEnd()
 
-            awaitItemMatching { it.selection?.dates == setOf(today, nextPlan.date) }
+            awaitItemMatching { it.selection?.dates == (0L..3L).map(today::plusDays).toSet() }
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `select all marks every planned day and cancel leaves selection mode`() = runTest {
-        repository.saveAll(listOf(nextPlan))
+    fun `select all marks the whole month and cancel leaves selection mode`() = runTest {
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
 
             viewModel.onSelectionStart()
             viewModel.onSelectAllInMonth()
-            awaitItemMatching { it.selection?.dates == setOf(today, nextPlan.date) }
+            awaitItemMatching { it.selection?.count == 31 }
             viewModel.onSelectionCancel()
 
             awaitItemMatching { !it.isSelecting }
@@ -363,7 +370,7 @@ class CalendarViewModelTest {
     }
 
     @Test
-    fun `changing view keeps selection mode but clears marked days`() = runTest {
+    fun `changing view keeps the marked days`() = runTest {
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
             viewModel.onSelectionStart()
@@ -373,19 +380,20 @@ class CalendarViewModelTest {
             viewModel.onViewChange(PlanView.DINNER)
 
             val state = awaitItemMatching { it.view == PlanView.DINNER }
-            assertEquals(0, state.selection?.count)
+            assertEquals(setOf(today), state.selection?.dates)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `deleting selected lunches removes them, leaves dinners and can be undone`() = runTest {
+    fun `deleting selected lunches removes only planned ones, leaves dinners and can be undone`() = runTest {
         repository.saveAll(listOf(nextPlan))
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
-            viewModel.onSelectionStart()
-            viewModel.onSelectAllInMonth()
-            awaitItemMatching { it.selection?.count == 2 }
+            viewModel.onSelectionDragStart(today)
+            viewModel.onSelectionDragMove(nextPlan.date)
+            viewModel.onSelectionDragEnd()
+            awaitItemMatching { it.selection?.count == 3 }
 
             lateinit var deletion: PlanDeletion
             viewModel.events.test {
@@ -403,6 +411,23 @@ class CalendarViewModelTest {
             viewModel.onUndoDelete(deletion)
 
             awaitItemMatching { it.days.keys == setOf(today, nextPlan.date) }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `deleting days without plan reports nothing planned`() = runTest {
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+            viewModel.onSelectionStart()
+            viewModel.onSelectionToggle(today.plusDays(10))
+            awaitItemMatching { it.selection?.count == 1 }
+
+            viewModel.events.test {
+                viewModel.onDeleteSelected()
+
+                assertEquals(CalendarEvent.NothingPlanned, awaitItem())
+            }
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -426,6 +451,83 @@ class CalendarViewModelTest {
 
             awaitItemMatching { it.dinners.isEmpty() }
             assertEquals(setOf(today, nextPlan.date, novemberPlan.date), repository.current.keys)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `filling the selection fills only its empty days`() = runTest {
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+            viewModel.onSelectionDragStart(today)
+            viewModel.onSelectionDragMove(today.plusDays(2))
+            viewModel.onSelectionDragEnd()
+            awaitItemMatching { it.selection?.count == 3 }
+
+            viewModel.events.test {
+                viewModel.onFillSelected()
+
+                val event = awaitItem() as CalendarEvent.SelectionFilled
+                assertEquals(2, event.result.filledDays)
+            }
+
+            val state = awaitItemMatching { it.days.size == 3 && !it.isAutoFilling }
+            assertFalse(state.isSelecting)
+            assertEquals(todayPlan, state.days[today])
+            assertEquals(setOf(today.plusDays(1), today.plusDays(2)), repository.saved.map { it.date }.toSet())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `copying and pasting keeps the gaps and can be undone`() = runTest {
+        repository.saveAll(listOf(nextPlan))
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+            viewModel.onSelectionDragStart(today)
+            viewModel.onSelectionDragMove(nextPlan.date)
+            viewModel.onSelectionDragEnd()
+            awaitItemMatching { it.selection?.count == 3 }
+
+            viewModel.onCopySelected()
+            val pasting = awaitItemMatching { it.isPasting }
+            assertFalse(pasting.isSelecting)
+            assertEquals(3, pasting.clipboard?.count)
+
+            val target = today.plusDays(7)
+            lateinit var paste: PlanPaste
+            viewModel.events.test {
+                viewModel.onPasteAt(target)
+
+                paste = (awaitItem() as CalendarEvent.DaysPasted).paste
+            }
+            assertEquals(2, paste.count)
+
+            val pasted = awaitItemMatching { it.days.size == 4 && !it.isPasting }
+            assertEquals(todayPlan.menu, pasted.days[target]?.menu)
+            assertEquals(nextPlan.menu, pasted.days[target.plusDays(2)]?.menu)
+            assertNull(pasted.days[target.plusDays(1)])
+
+            viewModel.onUndoPaste(paste)
+
+            awaitItemMatching { it.days.keys == setOf(today, nextPlan.date) }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `cancelling a paste leaves the plan untouched`() = runTest {
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+            viewModel.onSelectionStart()
+            viewModel.onSelectionToggle(today)
+            viewModel.onCopySelected()
+            awaitItemMatching { it.isPasting }
+
+            viewModel.onPasteCancel()
+
+            awaitItemMatching { !it.isPasting && !it.isSelecting }
+            assertTrue(repository.saved.isEmpty())
             cancelAndIgnoreRemainingEvents()
         }
     }

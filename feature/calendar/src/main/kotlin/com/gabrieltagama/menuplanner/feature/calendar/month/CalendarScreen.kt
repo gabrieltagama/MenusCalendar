@@ -21,6 +21,8 @@ import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,12 +46,14 @@ import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
@@ -77,7 +81,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -126,9 +129,11 @@ import java.time.YearMonth
  * view for the visible month is a FAB confirmed with a dialog and summarised in a snackbar;
  * "Hoy" only appears when another month is shown. Below the day summary a button opens the
  * shopping list of the visible month. Bottom insets are left to the app shell, which draws the
- * NavigationBar below this screen. The trash button (or a long press on a day) opens a selection
- * mode with a contextual top bar: tap toggles a day, dragging marks a continuous range, month swipe
- * is paused, and "Borrar (N)" deletes the marked days of the active view with an undo snackbar.
+ * NavigationBar below this screen. The selection button (or a long press on a day) opens a
+ * selection mode with a contextual top bar: tap toggles any day, dragging marks a continuous range
+ * and month swipe is paused. A bottom bar acts on the active view: fill the empty marked days,
+ * copy them (then tap the first target day to paste) or delete the planned ones; deletions and
+ * pastes can be undone from the snackbar.
  */
 data class AutoFillActions(
     val onRequest: () -> Unit = {},
@@ -144,11 +149,14 @@ data class SelectionActions(
     val onDragStart: (LocalDate) -> Unit = {},
     val onDragMove: (LocalDate) -> Unit = {},
     val onDragEnd: () -> Unit = {},
-    val onDelete: () -> Unit = {}
+    val onDelete: () -> Unit = {},
+    val onFill: () -> Unit = {},
+    val onCopy: () -> Unit = {},
+    val onPasteAt: (LocalDate) -> Unit = {},
+    val onPasteCancel: () -> Unit = {}
 )
 
 private const val MaxDotsPerDay = 3
-private const val DisabledAlpha = 0.38f
 private val FabClearance = 96.dp
 private val CellHeight = 56.dp
 private val GridGap = 4.dp
@@ -180,6 +188,16 @@ fun CalendarScreenRoute(
                     val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel, duration = SnackbarDuration.Long)
                     if (result == SnackbarResult.ActionPerformed) viewModel.onUndoDelete(event.deletion)
                 }
+                is CalendarEvent.DaysPasted -> {
+                    val message = resources.getQuantityString(event.paste.view.pastedTextRes(), event.paste.count, event.paste.count)
+                    val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel, duration = SnackbarDuration.Long)
+                    if (result == SnackbarResult.ActionPerformed) viewModel.onUndoPaste(event.paste)
+                }
+                is CalendarEvent.SelectionFilled -> snackbarHostState.showSnackbar(
+                    if (event.result.filledDays == 0 && event.result.unfilledDays == 0) resources.getString(R.string.calendar_selection_nothing_to_fill)
+                    else formatter.format(event.result, event.view)
+                )
+                CalendarEvent.NothingPlanned -> snackbarHostState.showSnackbar(resources.getString(R.string.calendar_selection_nothing_planned))
             }
         }
     }
@@ -207,7 +225,11 @@ fun CalendarScreenRoute(
             onDragStart = viewModel::onSelectionDragStart,
             onDragMove = viewModel::onSelectionDragMove,
             onDragEnd = viewModel::onSelectionDragEnd,
-            onDelete = viewModel::onDeleteSelected
+            onDelete = viewModel::onDeleteSelected,
+            onFill = viewModel::onFillSelected,
+            onCopy = viewModel::onCopySelected,
+            onPasteAt = viewModel::onPasteAt,
+            onPasteCancel = viewModel::onPasteCancel
         ),
         snackbarHostState = snackbarHostState
     )
@@ -231,21 +253,25 @@ fun CalendarScreen(
 ) {
     val scrollState = rememberScrollState()
     BackHandler(enabled = state.isSelecting, onBack = selectionActions.onCancel)
+    BackHandler(enabled = state.isPasting, onBack = selectionActions.onPasteCancel)
     Scaffold(
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
         topBar = {
             val selection = state.selection
-            if (selection == null)
-                MonthTopBar(state = state, onToday = onToday, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth, onStartSelection = selectionActions.onStart)
-            else
-                SelectionTopBar(count = selection.count, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth, actions = selectionActions)
+            val clipboard = state.clipboard
+            when {
+                clipboard != null -> PasteTopBar(count = clipboard.count, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth, onCancel = selectionActions.onPasteCancel)
+                selection != null -> SelectionTopBar(count = selection.count, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth, actions = selectionActions)
+                else -> MonthTopBar(state = state, onToday = onToday, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth, onStartSelection = selectionActions.onStart)
+            }
+        },
+        bottomBar = {
+            val selection = state.selection
+            if (selection != null) SelectionActionBar(hasMarkedDays = selection.count > 0 && !state.isAutoFilling, actions = selectionActions)
         },
         floatingActionButton = {
-            val selection = state.selection
-            when {
-                selection != null -> if (selection.count > 0) DeleteSelectedFab(count = selection.count, onClick = selectionActions.onDelete)
-                !state.isLoading && !state.isAutoFilling -> AutoFillFab(scrollState = scrollState, onClick = autoFillActions.onRequest)
-            }
+            if (!state.isSelecting && !state.isPasting && !state.isLoading && !state.isAutoFilling)
+                AutoFillFab(scrollState = scrollState, onClick = autoFillActions.onRequest)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
@@ -298,7 +324,7 @@ private fun MonthTopBar(
     actions = {
         if (!state.isShowingCurrentMonth) TextButton(onClick = onToday) { Text(stringResource(R.string.calendar_today)) }
         IconButton(onClick = onStartSelection, enabled = !state.isLoading && !state.isAutoFilling) {
-            Icon(Icons.Filled.DeleteSweep, contentDescription = stringResource(R.string.calendar_selection_start))
+            Icon(Icons.Filled.Checklist, contentDescription = stringResource(R.string.calendar_selection_start))
         }
         MonthArrows(onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth)
     }
@@ -333,14 +359,53 @@ private fun MonthArrows(onPreviousMonth: () -> Unit, onNextMonth: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DeleteSelectedFab(count: Int, onClick: () -> Unit) = ExtendedFloatingActionButton(
-    text = { Text(stringResource(R.string.calendar_selection_delete, count)) },
-    icon = { Icon(Icons.Filled.Delete, contentDescription = null) },
-    onClick = onClick,
-    containerColor = MaterialTheme.colorScheme.errorContainer,
-    contentColor = MaterialTheme.colorScheme.onErrorContainer
+private fun PasteTopBar(count: Int, onPreviousMonth: () -> Unit, onNextMonth: () -> Unit, onCancel: () -> Unit) = TopAppBar(
+    navigationIcon = {
+        IconButton(onClick = onCancel) {
+            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.calendar_paste_cancel))
+        }
+    },
+    title = { Text(pluralStringResource(R.plurals.calendar_paste_hint, count, count)) },
+    actions = { MonthArrows(onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth) }
 )
+
+@Composable
+private fun SelectionActionBar(hasMarkedDays: Boolean, actions: SelectionActions) = Surface(
+    color = MaterialTheme.colorScheme.surfaceContainer,
+    modifier = Modifier.fillMaxWidth()
+) {
+    Row(
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        SelectionActionButton(text = stringResource(R.string.calendar_selection_fill), icon = Icons.Filled.AutoAwesome, enabled = hasMarkedDays, onClick = actions.onFill)
+        SelectionActionButton(text = stringResource(R.string.calendar_selection_copy), icon = Icons.Filled.ContentCopy, enabled = hasMarkedDays, onClick = actions.onCopy)
+        SelectionActionButton(
+            text = stringResource(R.string.calendar_selection_delete),
+            icon = Icons.Filled.Delete,
+            enabled = hasMarkedDays,
+            onClick = actions.onDelete,
+            isDestructive = true
+        )
+    }
+}
+
+@Composable
+private fun RowScope.SelectionActionButton(text: String, icon: ImageVector, enabled: Boolean, onClick: () -> Unit, isDestructive: Boolean = false) = FilledTonalButton(
+    onClick = onClick,
+    enabled = enabled,
+    modifier = Modifier.weight(1f),
+    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+    colors = if (isDestructive)
+        ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
+    else ButtonDefaults.filledTonalButtonColors()
+) {
+    Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+    Spacer(modifier = Modifier.width(6.dp))
+    Text(text = text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+}
 
 @Composable
 private fun AutoFillFab(scrollState: ScrollState, onClick: () -> Unit) = ExtendedFloatingActionButton(
@@ -412,7 +477,7 @@ private fun WeekdayHeader() = Row(modifier = Modifier.fillMaxWidth()) {
 
 @Composable
 private fun MonthGrid(month: YearMonth, state: CalendarUiState, onDateSelect: (LocalDate) -> Unit, selectionActions: SelectionActions) = Column(
-    modifier = Modifier.daySelectionGestures(month = month, isSelecting = state.isSelecting, actions = selectionActions),
+    modifier = Modifier.daySelectionGestures(month = month, isSelecting = state.isSelecting, isEnabled = !state.isPasting, actions = selectionActions),
     verticalArrangement = Arrangement.spacedBy(GridGap)
 ) {
     month.weeks().forEach { week ->
@@ -424,9 +489,15 @@ private fun MonthGrid(month: YearMonth, state: CalendarUiState, onDateSelect: (L
                             date = date,
                             dishes = state.plannedDishes(date),
                             isToday = date == state.today,
-                            isSelected = !state.isSelecting && date == state.selectedDate,
-                            mark = state.markOf(date),
-                            onClick = { if (state.isSelecting) selectionActions.onToggle(date) else onDateSelect(date) }
+                            isSelected = !state.isSelecting && !state.isPasting && date == state.selectedDate,
+                            isMarked = state.isMarked(date),
+                            onClick = {
+                                when {
+                                    state.isPasting -> selectionActions.onPasteAt(date)
+                                    state.isSelecting -> selectionActions.onToggle(date)
+                                    else -> onDateSelect(date)
+                                }
+                            }
                         )
                 }
             }
@@ -434,24 +505,17 @@ private fun MonthGrid(month: YearMonth, state: CalendarUiState, onDateSelect: (L
     }
 }
 
-private enum class DayMark { NONE, MARKED, UNMARKED, DISABLED }
-
-private fun CalendarUiState.markOf(date: LocalDate): DayMark = when {
-    !isSelecting -> DayMark.NONE
-    isMarked(date) -> DayMark.MARKED
-    date in plannedDates -> DayMark.UNMARKED
-    else -> DayMark.DISABLED
-}
-
 @Composable
-private fun Modifier.daySelectionGestures(month: YearMonth, isSelecting: Boolean, actions: SelectionActions): Modifier {
+private fun Modifier.daySelectionGestures(month: YearMonth, isSelecting: Boolean, isEnabled: Boolean, actions: SelectionActions): Modifier {
     val currentIsSelecting by rememberUpdatedState(isSelecting)
+    val currentIsEnabled by rememberUpdatedState(isEnabled)
     val currentActions by rememberUpdatedState(actions)
     val haptics = LocalHapticFeedback.current
     return pointerInput(month) {
         val gap = GridGap.toPx()
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false)
+            if (!currentIsEnabled) return@awaitEachGesture
             val start =
                 if (currentIsSelecting) awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
                 else awaitLongPressOrCancellation(down.id)
@@ -483,18 +547,17 @@ private fun YearMonth.dateAt(position: Offset, size: IntSize, gap: Float): Local
 }
 
 @Composable
-private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSelected: Boolean, mark: DayMark, onClick: () -> Unit) {
+private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSelected: Boolean, isMarked: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
-    val isMarked = mark == DayMark.MARKED
     val background = when {
-        isMarked -> colors.error
+        isMarked -> colors.tertiary
         isSelected -> colors.primary
         isToday -> colors.primaryContainer
         dishes.isNotEmpty() -> colors.surfaceContainerHighest
         else -> Color.Transparent
     }
     val textColor = when {
-        isMarked -> colors.onError
+        isMarked -> colors.onTertiary
         isSelected -> colors.onPrimary
         isToday -> colors.onPrimaryContainer
         else -> colors.onSurface
@@ -504,7 +567,6 @@ private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSel
         modifier = Modifier
             .fillMaxWidth()
             .height(CellHeight)
-            .alpha(if (mark == DayMark.DISABLED) DisabledAlpha else 1f)
             .clip(shape)
             .background(background)
             .border(width = 1.dp, color = if (isToday && !isSelected) colors.primary else Color.Transparent, shape = shape)
@@ -520,7 +582,7 @@ private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSel
             color = textColor
         )
         if (isMarked)
-            Icon(Icons.Filled.CheckCircle, contentDescription = stringResource(R.string.calendar_selection_marked), tint = colors.onError, modifier = Modifier.size(14.dp))
+            Icon(Icons.Filled.CheckCircle, contentDescription = stringResource(R.string.calendar_selection_marked), tint = colors.onTertiary, modifier = Modifier.size(14.dp))
         else
             Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.height(6.dp)) {
                 dishes.take(MaxDotsPerDay).forEach { HeavinessDot(heaviness = it.heaviness, size = 6.dp) }
@@ -605,6 +667,11 @@ private fun PlanView.autoFillTextRes(): Int = when (this) {
 private fun PlanView.deletedTextRes(): Int = when (this) {
     PlanView.LUNCH -> R.plurals.calendar_deleted_lunches
     PlanView.DINNER -> R.plurals.calendar_deleted_dinners
+}
+
+private fun PlanView.pastedTextRes(): Int = when (this) {
+    PlanView.LUNCH -> R.plurals.calendar_pasted_lunches
+    PlanView.DINNER -> R.plurals.calendar_pasted_dinners
 }
 
 @Composable

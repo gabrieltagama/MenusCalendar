@@ -35,6 +35,16 @@
     <string name="error_cloud_unavailable">No se ha podido conectar con Google Drive. Inténtalo de nuevo más tarde</string>
     <string name="error_cloud_authorization_required">Google Drive necesita que vuelvas a dar permiso. Conecta de nuevo la cuenta en Ajustes</string>
 
+    <string name="dish_sort_title">Ordenar</string>
+    <string name="dish_sort_name">Nombre</string>
+    <string name="dish_sort_last_served">Última vez</string>
+    <string name="dish_sort_rating">Valoración</string>
+    <string name="dish_sort_heaviness">Pesadez</string>
+
+    <string name="last_served_never">Nunca</string>
+    <string name="last_served_today">Hoy</string>
+    <string name="last_served_yesterday">Ayer</string>
+
     <string name="action_accept">Aceptar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="loading">Cargando…</string>

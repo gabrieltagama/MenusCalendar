@@ -5,6 +5,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
+import com.gabrieltagama.menuplanner.core.domain.text.normalizedForSearch
+import com.gabrieltagama.menuplanner.core.domain.text.searchableTexts
 
 /**
  * Pure filtering of the recipe book table. Every filter is a set of accepted values (multiple
@@ -23,8 +25,8 @@ data class DishFilterCriteria(
 )
 
 internal class SearchableDish(val dish: Dish) {
-    val sortKey: String = dish.name.normalizedForSearch()
-    private val searchableTexts: List<String> = listOf(sortKey) + dish.ingredients.map { it.name.normalizedForSearch() }
+    private val searchableTexts: List<String> = dish.searchableTexts()
+    val sortKey: String = searchableTexts.first()
 
     fun matches(normalizedQuery: String): Boolean = normalizedQuery.isEmpty() || searchableTexts.any { normalizedQuery in it }
 }

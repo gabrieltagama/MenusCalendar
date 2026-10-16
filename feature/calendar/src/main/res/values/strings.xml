@@ -32,17 +32,23 @@
     <string name="calendar_autofill_not_enough_dishes">No hay platos suficientes: crea primeros y segundos o platos únicos</string>
     <string name="calendar_autofill_not_enough_dinner_dishes">No hay platos para cenar: marca platos con el momento Cena o Indiferente</string>
     <string name="calendar_shopping_list">Obtener lista de ingredientes</string>
-    <string name="calendar_selection_start">Seleccionar días para borrar</string>
+    <string name="calendar_selection_start">Seleccionar días</string>
     <string name="calendar_selection_cancel">Cancelar selección</string>
     <string name="calendar_selection_hint">Toca o arrastra días</string>
     <string name="calendar_selection_all">Seleccionar todo el mes</string>
     <string name="calendar_selection_marked">Seleccionado</string>
-    <string name="calendar_selection_delete">Borrar (%1$d)</string>
+    <string name="calendar_selection_delete">Borrar</string>
+    <string name="calendar_selection_fill">Rellenar</string>
+    <string name="calendar_selection_copy">Copiar</string>
+    <string name="calendar_selection_nothing_to_fill">Los días seleccionados ya están planificados</string>
+    <string name="calendar_selection_nothing_planned">No hay nada planificado en los días seleccionados</string>
+    <string name="calendar_paste_cancel">Cancelar copia</string>
     <string name="calendar_undo">Deshacer</string>
 
     <string name="shopping_list_title">Lista de la compra</string>
     <string name="shopping_list_back">Volver</string>
     <string name="shopping_list_share">Compartir lista</string>
+    <string name="shopping_list_clear_checks">Desmarcar todo</string>
     <string name="shopping_list_share_chooser">Compartir lista de la compra</string>
     <string name="shopping_list_share_header">Lista de la compra · %1$s · %2$s</string>
     <string name="shopping_list_summary">%1$s · %2$s, sin postres</string>

@@ -17,7 +17,7 @@ import javax.inject.Inject
 import kotlin.random.Random
 
 /**
- * Fills every empty dinner of a month with one random dinner option (DinnerPicker). Dinners
+ * Fills every empty dinner of a month (or of a given set of dates) with one random dinner option (DinnerPicker). Dinners
  * already planned are never modified. Lunches and dinners of the neighbouring months within
  * PlanningPolicy.RECENT_DAYS are taken into account so the rules also hold across month boundaries.
  * Every filled dinner is saved at the end in a single transaction. Dinners have no heaviness
@@ -30,12 +30,15 @@ class AutoFillMonthDinnersUseCase @Inject constructor(
     private val random: Random,
     private val clock: Clock
 ) {
-    suspend operator fun invoke(month: YearMonth): AutoFillResult {
+    suspend operator fun invoke(month: YearMonth): AutoFillResult = invoke(month.days())
+
+    suspend operator fun invoke(dates: Collection<LocalDate>): AutoFillResult {
+        if (dates.isEmpty()) return AutoFillResult(0, 0, 0, 0)
         val picker = DinnerPicker(dishRepository.getDishes().filter(Dish::isDinnerOption), random)
-        val window = PlanningPolicy.window(month.atDay(1)..month.atEndOfMonth())
+        val window = PlanningPolicy.window(dates.min()..dates.max())
         val lunches = mealPlanRepository.getRange(window).associate { it.date to it.menu }
         val dinners = dinnerPlanRepository.getRange(window).associate { it.date to it.dish }.toMutableMap()
-        val fill = fillEmptyDays(month.days().filterNot(dinners::containsKey)) { date ->
+        val fill = fillEmptyDays(dates.sorted().filterNot(dinners::containsKey)) { date ->
             picker.pick(date, lunches, dinners)?.let { pick ->
                 dinners[date] = pick.dish
                 DayPick(DinnerDay(date = date, dish = pick.dish, updatedAt = Instant.now(clock)), pick.repeated)

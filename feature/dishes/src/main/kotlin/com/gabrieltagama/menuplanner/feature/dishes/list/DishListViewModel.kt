@@ -3,10 +3,13 @@ package com.gabrieltagama.menuplanner.feature.dishes.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishSort
+import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -30,7 +33,8 @@ import kotlinx.coroutines.flow.update
  * heaviness, rating and meal time filters through [DishFilter]. The selected filters live in one
  * DishFilterCriteria (without query); the raw query is exposed on its own synchronous StateFlow
  * so the text field never lags behind typing, while filtering waits for a short pause in typing
- * and runs off the main thread on a search index rebuilt only when the recipe book changes.
+ * and runs off the main thread on a search index rebuilt only when the recipe book changes. The
+ * filtered dishes are then ordered by the chosen DishSort, using when each dish was last served.
  */
 data class DishListUiState(
     val isLoading: Boolean = true,
@@ -40,19 +44,28 @@ data class DishListUiState(
     val selectedHeaviness: Set<Heaviness> = emptySet(),
     val selectedRatings: Set<Rating> = emptySet(),
     val selectedMealTimes: Set<MealTime> = emptySet(),
+    val sort: DishSort = DishSort.NAME,
+    val usage: DishUsage = DishUsage.NONE,
     val dishes: List<Dish> = emptyList()
 )
 
+private data class Listing(val criteria: DishFilterCriteria, val sort: DishSort)
+
 @HiltViewModel
-class DishListViewModel @Inject constructor(observeDishes: ObserveDishesUseCase) : ViewModel() {
+class DishListViewModel @Inject constructor(
+    observeDishes: ObserveDishesUseCase,
+    observeDishUsage: ObserveDishUsageUseCase
+) : ViewModel() {
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
 
     private val filters = MutableStateFlow(DishFilterCriteria())
+    private val sort = MutableStateFlow(DishSort.NAME)
+    private val listing = combine(filters, sort, ::Listing)
 
     val uiState: StateFlow<DishListUiState> =
-        combine(observeDishes().map(DishFilter::index), debouncedQuery(), filters) { index, query, criteria ->
+        combine(observeDishes().map(DishFilter::index), debouncedQuery(), listing, observeDishUsage()) { index, query, (criteria, order), usage ->
             DishListUiState(
                 isLoading = false,
                 hasDishes = index.isNotEmpty(),
@@ -61,7 +74,9 @@ class DishListViewModel @Inject constructor(observeDishes: ObserveDishesUseCase)
                 selectedHeaviness = criteria.heaviness,
                 selectedRatings = criteria.ratings,
                 selectedMealTimes = criteria.mealTimes,
-                dishes = DishFilter.filter(index, criteria.copy(query = query))
+                sort = order,
+                usage = usage,
+                dishes = DishFilter.filter(index, criteria.copy(query = query)).let { if (order == DishSort.NAME) it else order.sorted(it, usage) }
             )
         }
             .flowOn(Dispatchers.Default)
@@ -82,6 +97,10 @@ class DishListViewModel @Inject constructor(observeDishes: ObserveDishesUseCase)
     fun onRatingsChange(ratings: Set<Rating>) = filters.update { it.copy(ratings = ratings) }
 
     fun onMealTimesChange(mealTimes: Set<MealTime>) = filters.update { it.copy(mealTimes = mealTimes) }
+
+    fun onSortChange(target: DishSort) {
+        sort.value = target
+    }
 
     private companion object {
         const val QUERY_DEBOUNCE_MILLIS = 250L

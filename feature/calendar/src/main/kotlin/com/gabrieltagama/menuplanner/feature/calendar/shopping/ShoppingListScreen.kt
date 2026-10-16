@@ -40,6 +40,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.filled.RemoveDone
+import androidx.compose.material3.Checkbox
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,7 +64,8 @@ import java.time.ZoneOffset
  * Shopping list of a month: stateful route bound to [ShoppingListViewModel] and a stateless
  * screen listing every ingredient with its total amount. Chips at the top choose whether the list
  * covers lunches, dinners or both, and two date chips open a calendar to pick the first and last
- * day of the range. The top bar shares the list as plain text.
+ * day of the range. Each product has a checkbox to tick it as bought (struck through and moved to
+ * the end); the top bar unticks everything and shares the pending products as plain text.
  */
 @Composable
 fun ShoppingListScreenRoute(
@@ -77,7 +83,9 @@ fun ShoppingListScreenRoute(
         onShare = { context.sendText(shareText, chooserTitle) },
         onMealToggle = viewModel::onMealToggle,
         onFromChange = viewModel::onFromChange,
-        onToChange = viewModel::onToChange
+        onToChange = viewModel::onToChange,
+        onItemCheck = viewModel::onItemCheck,
+        onClearChecks = viewModel::onClearChecks
     )
 }
 
@@ -89,7 +97,9 @@ fun ShoppingListScreen(
     onShare: () -> Unit,
     onMealToggle: (Meal) -> Unit,
     onFromChange: (LocalDate) -> Unit,
-    onToChange: (LocalDate) -> Unit
+    onToChange: (LocalDate) -> Unit,
+    onItemCheck: (ShoppingItem, Boolean) -> Unit = { _, _ -> },
+    onClearChecks: () -> Unit = {}
 ) = Scaffold(
     topBar = {
         TopAppBar(
@@ -100,6 +110,9 @@ fun ShoppingListScreen(
                 }
             },
             actions = {
+                IconButton(onClick = onClearChecks, enabled = state.hasChecked) {
+                    Icon(Icons.Filled.RemoveDone, contentDescription = stringResource(R.string.shopping_list_clear_checks))
+                }
                 IconButton(onClick = onShare, enabled = state.canShare) {
                     Icon(Icons.Filled.Share, contentDescription = stringResource(R.string.shopping_list_share))
                 }
@@ -114,7 +127,7 @@ fun ShoppingListScreen(
         when {
             state.isLoading -> LoadingIndicator(modifier = contentModifier)
             state.items.isEmpty() -> EmptyState(message = stringResource(R.string.shopping_list_empty), modifier = contentModifier)
-            else -> ShoppingItems(state = state, modifier = contentModifier)
+            else -> ShoppingItems(state = state, onItemCheck = onItemCheck, modifier = contentModifier)
         }
     }
 }
@@ -189,7 +202,7 @@ private fun LocalDate.toUtcMillis(): Long = atStartOfDay(ZoneOffset.UTC).toInsta
 private fun Long.toUtcDate(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
 
 @Composable
-private fun ShoppingItems(state: ShoppingListUiState, modifier: Modifier = Modifier) = LazyColumn(modifier = modifier) {
+private fun ShoppingItems(state: ShoppingListUiState, onItemCheck: (ShoppingItem, Boolean) -> Unit, modifier: Modifier = Modifier) = LazyColumn(modifier = modifier) {
     item {
         Text(
             text = stringResource(R.string.shopping_list_summary, state.rangeText(), state.mealsText()),
@@ -198,20 +211,29 @@ private fun ShoppingItems(state: ShoppingListUiState, modifier: Modifier = Modif
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         )
     }
-    items(state.items, key = { "${it.name}|${it.unit}" }) { item ->
-        ShoppingItemRow(item = item)
-        HorizontalDivider()
+    items(state.sortedItems, key = { "${it.name}|${it.unit}" }) { item ->
+        val isChecked = state.isChecked(item)
+        Column(modifier = Modifier.animateItem()) {
+            ShoppingItemRow(item = item, isChecked = isChecked, onCheck = { onItemCheck(item, it) })
+            HorizontalDivider()
+        }
     }
 }
 
 @Composable
-private fun ShoppingItemRow(item: ShoppingItem) = Row(
-    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+private fun ShoppingItemRow(item: ShoppingItem, isChecked: Boolean, onCheck: (Boolean) -> Unit) = Row(
+    modifier = Modifier
+        .fillMaxWidth()
+        .toggleable(value = isChecked, role = Role.Checkbox, onValueChange = onCheck)
+        .padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
     horizontalArrangement = Arrangement.SpaceBetween,
     verticalAlignment = Alignment.CenterVertically
 ) {
-    Text(text = item.name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-    Text(text = item.amountText(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+    val color = if (isChecked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+    val decoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
+    Checkbox(checked = isChecked, onCheckedChange = null, modifier = Modifier.padding(12.dp))
+    Text(text = item.name, style = MaterialTheme.typography.bodyLarge, color = color, textDecoration = decoration, modifier = Modifier.weight(1f))
+    Text(text = item.amountText(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = color, textDecoration = decoration)
 }
 
 private fun Context.sendText(text: String, chooserTitle: String) {

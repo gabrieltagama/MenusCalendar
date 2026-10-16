@@ -11,6 +11,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.ChronoUnit
@@ -368,5 +369,18 @@ class AutoFillMonthUseCaseTest {
         val run = autoFill(richCatalog.map { it.copy(mealTime = MealTime.DINNER) }, seed)
 
         assertEquals(AutoFillResult(filledDays = 0, repeatedDishDays = 0, heavyStreakDays = 0, unfilledDays = 31), run.result)
+    }
+
+    @Test
+    fun `filling given dates fills only those that are empty`() = seeds.forEach { seed ->
+        val planned = MealDay(date = month.atDay(3), menu = DailyMenu.Single(single = dish(id = "kept", type = DishType.SINGLE)), updatedAt = Instant.EPOCH)
+        val repository = FakeMealPlanRepository(listOf(planned))
+        val useCase = AutoFillMonthUseCase(FakeDishRepository(richCatalog), repository, Random(seed), TestDishes.fixedClock)
+
+        val result = runBlocking { useCase(setOf(month.atDay(2), month.atDay(3), month.atDay(4))) }
+
+        assertEquals("seed $seed", 2, result.filledDays)
+        assertEquals("seed $seed", setOf(month.atDay(2), month.atDay(3), month.atDay(4)), repository.current.keys)
+        assertEquals("seed $seed", planned, repository.current[month.atDay(3)])
     }
 }
