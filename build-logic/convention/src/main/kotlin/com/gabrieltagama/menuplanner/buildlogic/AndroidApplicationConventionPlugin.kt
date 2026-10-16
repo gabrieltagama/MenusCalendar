@@ -26,7 +26,10 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             }
             testOptions.unitTests {
                 isIncludeAndroidResources = true
-                all { it.jvmArgs(BuildConfig.ROBOLECTRIC_JVM_ARGS) }
+                all { test ->
+                    test.jvmArgs(BuildConfig.ROBOLECTRIC_JVM_ARGS)
+                    test.failOnNoDiscoveredTests.set(false)
+                }
             }
         }
         addUnitTestDependencies(android = true)

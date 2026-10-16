@@ -27,6 +27,7 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
             "testImplementation"(bom)
             "debugImplementation"(library("androidx-compose-ui-tooling"))
             "testImplementation"(library("androidx-compose-ui-test-junit4"))
+            "testImplementation"(library("androidx-test-espresso-core"))
             "debugImplementation"(library("androidx-compose-ui-test-manifest"))
         }
     }
