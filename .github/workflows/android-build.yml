@@ -58,7 +58,8 @@ jobs:
           fi
           reports=$(find . -path '*/build/reports/ktlint/*' -name '*.txt' -size +0c)
           if [ -n "$reports" ]; then
-            summary=$(cat $reports | sed -nE 's/.*\(([a-z]+:[a-z0-9-]+)\)[[:space:]]*$/\1/p' | sort | uniq -c | sort -rn | head -30 | encode)
+            summary=$(cat $reports | sed -nE 's/.*\(([a-z_]+:[a-z0-9_-]+)\)[[:space:]]*$/\1/p' | sort | uniq -c | sort -rn | head -30 | encode)
+            [ -z "$summary" ] && summary=$(cat $reports | head -25 | encode)
           else
             summary=$(tail -40 "$RUNNER_TEMP/ktlint.log" | encode)
           fi
