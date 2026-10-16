@@ -8,10 +8,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 /**
- * In-memory DishRepository backed by a MutableStateFlow, used by the autofill tests of the calendar.
+ * In-memory DishRepository backed by a MutableStateFlow; usedInCalendar marks ids planned in the calendar.
  */
 class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository {
     private val dishes = MutableStateFlow(initial.associateBy { it.id })
+    val usedInCalendar = mutableSetOf<String>()
+    val upserted = mutableListOf<Dish>()
+    val deletedIds = mutableListOf<String>()
 
     override fun observeDishes(): Flow<List<Dish>> = dishes.map { it.values.toList() }
 
@@ -21,12 +24,14 @@ class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository {
     override suspend fun getDish(id: String): Dish? = dishes.value[id]
 
     override suspend fun upsert(dish: Dish) {
+        upserted += dish
         dishes.value = dishes.value + (dish.id to dish)
     }
 
     override suspend fun delete(id: String) {
+        deletedIds += id
         dishes.value = dishes.value - id
     }
 
-    override suspend fun isUsedInCalendar(id: String): Boolean = false
+    override suspend fun isUsedInCalendar(id: String): Boolean = id in usedInCalendar
 }
