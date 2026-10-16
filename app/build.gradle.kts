@@ -1,53 +1,50 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
+    id("menuplanner.android.application")
+    id("menuplanner.android.compose")
+    id("menuplanner.hilt")
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
 }
+
+val buildNumber: Int = providers.environmentVariable("GITHUB_RUN_NUMBER").map(String::toInt).getOrElse(1)
+val releaseKeystorePath: String? = providers.environmentVariable("RELEASE_KEYSTORE_PATH").orNull
 
 android {
     namespace = "com.gabrieltagama.menuplanner"
-    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.gabrieltagama.menuplanner"
-        minSdk = 31
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
-        testInstrumentationRunner = "com.gabrieltagama.menuplanner.HiltTestRunner"
+        versionCode = buildNumber
+        versionName = "1.0.$buildNumber"
     }
 
     signingConfigs {
         getByName("debug") {
-            System.getenv("DEBUG_KEYSTORE_PATH")?.let { path ->
+            providers.environmentVariable("DEBUG_KEYSTORE_PATH").orNull?.let { path ->
                 storeFile = file(path)
                 storePassword = "android"
                 keyAlias = "androiddebugkey"
                 keyPassword = "android"
             }
         }
+        if (releaseKeystorePath != null)
+            create("release") {
+                storeFile = file(releaseKeystorePath)
+                storePassword = providers.environmentVariable("RELEASE_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("RELEASE_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("RELEASE_KEY_PASSWORD").get()
+            }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        compose = true
     }
 }
 
@@ -66,20 +63,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.hilt.work)
     implementation(libs.kotlinx.serialization.json)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-
-    testImplementation(libs.junit)
-
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestImplementation(libs.hilt.android.testing)
-    kspAndroidTest(libs.hilt.compiler)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
