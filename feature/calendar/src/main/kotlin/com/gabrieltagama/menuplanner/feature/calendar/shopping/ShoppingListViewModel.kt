@@ -7,6 +7,9 @@ import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.BuildShoppingListUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearShoppingChecksUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveShoppingChecksUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SetShoppingItemCheckedUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.ShoppingListRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -24,23 +27,37 @@ import kotlinx.coroutines.launch
  * Shopping list opened from the month carried by [ShoppingListRoute]. It covers a date range,
  * from today (or the first day, when the month is not the current one) to the end of the month
  * by default, and lunches and dinners. The list is rebuilt whenever the range or the meals change;
- * the range never ends before it starts and at least one meal stays selected.
+ * the range never ends before it starts and at least one meal stays selected. Products can be
+ * ticked as bought; ticks are kept until unticked or cleared, bought products move to the end of
+ * the list and only the pending ones are shared.
  */
 data class ShoppingListUiState(
     val from: LocalDate,
     val to: LocalDate,
     val isLoading: Boolean = true,
     val items: List<ShoppingItem> = emptyList(),
-    val selectedMeals: Set<Meal> = Meal.entries.toSet()
+    val selectedMeals: Set<Meal> = Meal.entries.toSet(),
+    val checked: Set<String> = emptySet()
 ) {
-    val canShare: Boolean get() = !isLoading && items.isNotEmpty()
+    val pendingItems: List<ShoppingItem> get() = items.filterNot(::isChecked)
+
+    val sortedItems: List<ShoppingItem> get() = items.sortedBy(::isChecked)
+
+    val hasChecked: Boolean get() = items.any(::isChecked)
+
+    val canShare: Boolean get() = !isLoading && pendingItems.isNotEmpty()
+
+    fun isChecked(item: ShoppingItem): Boolean = item.key in checked
 }
 
 @HiltViewModel
 class ShoppingListViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     clock: Clock,
-    private val buildShoppingList: BuildShoppingListUseCase
+    observeShoppingChecks: ObserveShoppingChecksUseCase,
+    private val buildShoppingList: BuildShoppingListUseCase,
+    private val setShoppingItemChecked: SetShoppingItemCheckedUseCase,
+    private val clearShoppingChecks: ClearShoppingChecksUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -52,6 +69,15 @@ class ShoppingListViewModel @Inject constructor(
 
     init {
         load()
+        viewModelScope.launch { observeShoppingChecks().collect { keys -> _uiState.update { it.copy(checked = keys) } } }
+    }
+
+    fun onItemCheck(item: ShoppingItem, isChecked: Boolean) {
+        viewModelScope.launch { setShoppingItemChecked(item, isChecked) }
+    }
+
+    fun onClearChecks() {
+        viewModelScope.launch { clearShoppingChecks() }
     }
 
     fun onMealToggle(meal: Meal) {

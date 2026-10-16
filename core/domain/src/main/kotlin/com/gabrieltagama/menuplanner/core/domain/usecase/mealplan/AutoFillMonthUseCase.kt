@@ -14,7 +14,7 @@ import javax.inject.Inject
 import kotlin.random.Random
 
 /**
- * Fills every empty day of a month with a random menu built by MenuPicker, using only dishes
+ * Fills every empty day of a month (or of a given set of dates) with a random menu built by MenuPicker, using only dishes
  * served at lunch (MealTime LUNCH or ANY). Days already planned are never modified; the days of
  * the previous and next months within PlanningPolicy.RECENT_DAYS are taken into account so the
  * no-repeat and heavy-streak rules also hold across both month boundaries. Every filled day is
@@ -26,11 +26,14 @@ class AutoFillMonthUseCase @Inject constructor(
     private val random: Random,
     private val clock: Clock
 ) {
-    suspend operator fun invoke(month: YearMonth): AutoFillResult {
+    suspend operator fun invoke(month: YearMonth): AutoFillResult = invoke(month.days())
+
+    suspend operator fun invoke(dates: Collection<LocalDate>): AutoFillResult {
+        if (dates.isEmpty()) return AutoFillResult(0, 0, 0, 0)
         val lunchDishes = dishRepository.getDishes().filter { it.mealTime.isServedAtLunch }
         val picker = MenuPicker(lunchDishes, random)
-        val history = loadHistory(month)
-        val fill = fillEmptyDays(month.days().filterNot(history::containsKey)) { date ->
+        val history = loadHistory(dates.min()..dates.max())
+        val fill = fillEmptyDays(dates.sorted().filterNot(history::containsKey)) { date ->
             picker.pick(date, history)?.let { pick ->
                 history[date] = pick.menu
                 DayPick(MealDay(date = date, menu = pick.menu, updatedAt = Instant.now(clock)), pick.repeated, pick.breaksHeavyRule)
@@ -40,8 +43,8 @@ class AutoFillMonthUseCase @Inject constructor(
         return fill.result
     }
 
-    private suspend fun loadHistory(month: YearMonth): MutableMap<LocalDate, DailyMenu> {
-        val window = PlanningPolicy.window(month.atDay(1)..month.atEndOfMonth())
+    private suspend fun loadHistory(dates: ClosedRange<LocalDate>): MutableMap<LocalDate, DailyMenu> {
+        val window = PlanningPolicy.window(dates)
         return mealPlanRepository.getRange(window).associate { it.date to it.menu }.toMutableMap()
     }
 }

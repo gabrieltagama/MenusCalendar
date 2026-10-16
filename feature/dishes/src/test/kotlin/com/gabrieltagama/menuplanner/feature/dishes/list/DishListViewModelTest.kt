@@ -2,8 +2,11 @@ package com.gabrieltagama.menuplanner.feature.dishes.list
 
 import app.cash.turbine.test
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
+import com.gabrieltagama.menuplanner.core.domain.model.DishSort
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
@@ -12,8 +15,10 @@ import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.testing.awaitItemMatching
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import java.time.Instant
+import java.time.LocalDate
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -23,7 +28,7 @@ import org.junit.Test
 /**
  * DishListViewModel over the real ObserveDishesUseCase: loading, multiple-selection type,
  * heaviness, rating and meal time filters, accent- and case-insensitive search by name or
- * ingredient and alphabetical ordering.
+ * ingredient, alphabetical ordering and the order by last time served.
  */
 class DishListViewModelTest {
 
@@ -36,7 +41,14 @@ class DishListViewModelTest {
     private val flan = dish("flan", "Flan de huevo", DishType.DESSERT)
 
     private val repository = FakeDishRepository(listOf(puree, salad, chicken, flan))
-    private val viewModel by lazy { DishListViewModel(ObserveDishesUseCase(repository)) }
+    private val usageRepository = FakeDishUsageRepository(
+        mapOf(
+            puree.id to listOf(LocalDate.of(2026, 1, 10)),
+            chicken.id to listOf(LocalDate.of(2025, 12, 1), LocalDate.of(2026, 2, 1)),
+            salad.id to listOf(LocalDate.of(2026, 1, 14))
+        )
+    )
+    private val viewModel by lazy { DishListViewModel(ObserveDishesUseCase(repository), ObserveDishUsageUseCase(usageRepository, TestDishes.fixedClock)) }
 
     @Test
     fun `loads every dish sorted by name`() = runTest {
@@ -176,13 +188,27 @@ class DishListViewModelTest {
 
     @Test
     fun `empty repository reports no dishes`() = runTest {
-        val emptyViewModel = DishListViewModel(ObserveDishesUseCase(FakeDishRepository()))
+        val emptyViewModel = DishListViewModel(ObserveDishesUseCase(FakeDishRepository()), ObserveDishUsageUseCase(FakeDishUsageRepository(), TestDishes.fixedClock))
 
         emptyViewModel.uiState.test {
             val state = awaitItemMatching { !it.isLoading }
 
             assertEquals(false, state.hasDishes)
             assertTrue(state.dishes.isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `sorting by last served puts never served first and then the oldest`() = runTest {
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+
+            viewModel.onSortChange(DishSort.LAST_SERVED)
+
+            val state = awaitItemMatching { it.sort == DishSort.LAST_SERVED }
+            assertEquals(listOf(flan, chicken, puree, salad), state.dishes)
+            assertEquals(LocalDate.of(2025, 12, 1), state.usage.lastServedOf(chicken.id))
             cancelAndIgnoreRemainingEvents()
         }
     }

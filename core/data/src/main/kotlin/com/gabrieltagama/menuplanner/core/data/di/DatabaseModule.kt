@@ -6,6 +6,7 @@ import com.gabrieltagama.menuplanner.core.data.database.MenuPlannerDatabase
 import com.gabrieltagama.menuplanner.core.data.database.Migrations
 import com.gabrieltagama.menuplanner.core.data.database.dao.DinnerDayDao
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishDao
+import com.gabrieltagama.menuplanner.core.data.database.dao.DishUsageDao
 import com.gabrieltagama.menuplanner.core.data.database.dao.MealDayDao
 import dagger.Module
 import dagger.Provides
@@ -36,4 +37,7 @@ internal object DatabaseModule {
 
     @Provides
     fun provideDinnerDayDao(database: MenuPlannerDatabase): DinnerDayDao = database.dinnerDayDao()
+
+    @Provides
+    fun provideDishUsageDao(database: MenuPlannerDatabase): DishUsageDao = database.dishUsageDao()
 }

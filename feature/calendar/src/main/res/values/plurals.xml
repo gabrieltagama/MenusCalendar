@@ -35,4 +35,19 @@
         <item quantity="many">%d cenas borradas</item>
         <item quantity="other">%d cenas borradas</item>
     </plurals>
+    <plurals name="calendar_paste_hint">
+        <item quantity="one">Toca dónde pegar %d día</item>
+        <item quantity="many">Toca dónde empieza la copia de %d días</item>
+        <item quantity="other">Toca dónde empieza la copia de %d días</item>
+    </plurals>
+    <plurals name="calendar_pasted_lunches">
+        <item quantity="one">%d comida pegada</item>
+        <item quantity="many">%d comidas pegadas</item>
+        <item quantity="other">%d comidas pegadas</item>
+    </plurals>
+    <plurals name="calendar_pasted_dinners">
+        <item quantity="one">%d cena pegada</item>
+        <item quantity="many">%d cenas pegadas</item>
+        <item quantity="other">%d cenas pegadas</item>
+    </plurals>
 </resources>

@@ -168,7 +168,8 @@ fun DayEditorScreen(
             options = state.optionsFor(slot),
             selected = state.selectionFor(slot),
             onSelect = { actions.onDishSelect(slot, it) },
-            onDismiss = { pickingSlot = null }
+            onDismiss = { pickingSlot = null },
+            usage = state.usage
         )
     }
 

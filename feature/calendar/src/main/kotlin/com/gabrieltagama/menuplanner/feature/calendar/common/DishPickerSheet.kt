@@ -38,13 +38,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishSort
+import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
+import com.gabrieltagama.menuplanner.core.domain.text.matchesSearch
+import com.gabrieltagama.menuplanner.core.ui.component.DishSortChip
+import com.gabrieltagama.menuplanner.core.ui.text.lastServedText
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import kotlinx.coroutines.launch
 
 /**
- * Searchable bottom sheet to choose one dish, shared by the lunch and dinner editors. When
+ * Searchable bottom sheet to choose one dish, shared by the lunch and dinner editors. The search
+ * ignores case and accents and also looks into ingredients; a chip orders the list (name, last
+ * time served, rating or heaviness) and every row says when the dish was last served. When
  * noneLabel is given, a first row lets the user leave the slot empty.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,12 +62,14 @@ internal fun DishPickerSheet(
     options: List<Dish>,
     selected: Dish?,
     onSelect: (Dish?) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    usage: DishUsage = DishUsage.NONE
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     var query by rememberSaveable { mutableStateOf("") }
-    val visible = remember(options, query) { options.filter { it.name.contains(query.trim(), ignoreCase = true) } }
+    var sort by rememberSaveable { mutableStateOf(DishSort.NAME) }
+    val visible = remember(options, query, sort, usage) { sort.sorted(options.filter { it.matchesSearch(query) }, usage) }
     val choose: (Dish?) -> Unit = { dish ->
         onSelect(dish)
         scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
@@ -86,6 +95,7 @@ internal fun DishPickerSheet(
                 singleLine = true,
                 shape = MaterialTheme.shapes.extraLarge
             )
+            DishSortChip(sort = sort, onSortChange = { sort = it }, modifier = Modifier.padding(horizontal = 16.dp))
             LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
                 if (noneLabel != null)
                     item(key = "none") {
@@ -99,6 +109,7 @@ internal fun DishPickerSheet(
                 items(items = visible, key = { it.id.value }) { dish ->
                     PickerRow(
                         headline = dish.name,
+                        supporting = usage.lastServedText(dish.id),
                         leading = { DishTypeAvatar(type = dish.type, size = 36.dp) },
                         trailing = { HeavinessChip(heaviness = dish.heaviness) },
                         isSelected = dish.id == selected?.id,
@@ -125,9 +136,11 @@ private fun PickerRow(
     leading: @Composable () -> Unit,
     isSelected: Boolean,
     onClick: () -> Unit,
+    supporting: String? = null,
     trailing: @Composable () -> Unit = {}
 ) = ListItem(
     headlineContent = { Text(text = headline, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+    supportingContent = if (supporting == null) null else { { Text(text = supporting, maxLines = 1) } },
     leadingContent = leading,
     trailingContent = {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

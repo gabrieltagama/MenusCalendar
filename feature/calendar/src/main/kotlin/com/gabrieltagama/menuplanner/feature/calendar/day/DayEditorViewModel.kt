@@ -6,9 +6,11 @@ import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetMealDayUseCase
@@ -31,8 +33,8 @@ import kotlinx.coroutines.launch
  * Editor of the lunch of one day. The form keeps a selection for every slot, so switching
  * between "starter + main" and "single dish" never loses what was picked; only the slots of the
  * active mode are saved. Options come from a single observation of the recipe book grouped by dish
- * type. A slot can also be filled with a random dish of its type, different from the current one
- * when possible.
+ * type, together with when each dish was last served. A slot can also be filled with a random
+ * dish of its type, different from the current one when possible.
  */
 enum class MenuMode { COURSES, SINGLE }
 
@@ -50,7 +52,8 @@ data class DayEditorUiState(
     val date: LocalDate,
     val form: DayEditorForm = DayEditorForm(),
     val options: Map<DishType, List<Dish>> = emptyMap(),
-    val isOptionsLoading: Boolean = true
+    val isOptionsLoading: Boolean = true,
+    val usage: DishUsage = DishUsage.NONE
 ) {
     val visibleSlots: List<MenuSlot>
         get() = when (form.mode) {
@@ -79,6 +82,7 @@ data class DayEditorUiState(
 class DayEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     observeDishes: ObserveDishesUseCase,
+    observeDishUsage: ObserveDishUsageUseCase,
     private val getMealDay: GetMealDayUseCase,
     private val saveMealDay: SaveMealDayUseCase,
     private val clearMealDay: ClearMealDayUseCase
@@ -94,8 +98,8 @@ class DayEditorViewModel @Inject constructor(
         }
 
     val uiState: StateFlow<DayEditorUiState> =
-        combine(form, options) { currentForm, currentOptions ->
-            DayEditorUiState(date = date, form = currentForm, options = currentOptions, isOptionsLoading = false)
+        combine(form, options, observeDishUsage()) { currentForm, currentOptions, usage ->
+            DayEditorUiState(date = date, form = currentForm, options = currentOptions, isOptionsLoading = false, usage = usage)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DayEditorUiState(date = date))
 
     init {

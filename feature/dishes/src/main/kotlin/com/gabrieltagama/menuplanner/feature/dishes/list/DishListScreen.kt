@@ -58,18 +58,22 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishSort
+import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
+import com.gabrieltagama.menuplanner.core.ui.component.DishSortChip
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.EmptyState
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
 import com.gabrieltagama.menuplanner.core.ui.preview.PreviewDishes
 import com.gabrieltagama.menuplanner.core.ui.text.label
+import com.gabrieltagama.menuplanner.core.ui.text.lastServedText
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.dishes.R
 
@@ -85,7 +89,8 @@ data class DishListActions(
     val onHeavinessChange: (Set<Heaviness>) -> Unit,
     val onRatingsChange: (Set<Rating>) -> Unit,
     val onMealTimesChange: (Set<MealTime>) -> Unit,
-    val onOpenDish: (String?) -> Unit
+    val onOpenDish: (String?) -> Unit,
+    val onSortChange: (DishSort) -> Unit = {}
 )
 
 @Composable
@@ -104,7 +109,8 @@ fun DishListScreenRoute(
             onHeavinessChange = viewModel::onHeavinessChange,
             onRatingsChange = viewModel::onRatingsChange,
             onMealTimesChange = viewModel::onMealTimesChange,
-            onOpenDish = onOpenDish
+            onOpenDish = onOpenDish,
+            onSortChange = viewModel::onSortChange
         )
     )
 }
@@ -149,7 +155,7 @@ private fun DishListContent(state: DishListUiState, listState: LazyListState, on
         onAction = { onOpenDish(null) }
     )
     state.dishes.isEmpty() -> EmptyState(message = stringResource(R.string.dishes_no_results), icon = Icons.Filled.SearchOff)
-    else -> DishList(dishes = state.dishes, listState = listState, onOpenDish = onOpenDish)
+    else -> DishList(dishes = state.dishes, usage = state.usage.takeIf { state.sort == DishSort.LAST_SERVED }, listState = listState, onOpenDish = onOpenDish)
 }
 
 @Composable
@@ -174,6 +180,7 @@ private fun FilterRow(state: DishListUiState, actions: DishListActions) = Row(
     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp)
 ) {
+    DishSortChip(sort = state.sort, onSortChange = actions.onSortChange)
     MultiSelectFilterChip(
         title = stringResource(R.string.dishes_column_type),
         allLabel = stringResource(R.string.dishes_filter_all_types),
@@ -248,26 +255,29 @@ private fun <T : Any> MultiSelectFilterChip(
 }
 
 @Composable
-private fun DishList(dishes: List<Dish>, listState: LazyListState, onOpenDish: (String?) -> Unit) = LazyColumn(
+private fun DishList(dishes: List<Dish>, usage: DishUsage?, listState: LazyListState, onOpenDish: (String?) -> Unit) = LazyColumn(
     state = listState,
     modifier = Modifier.fillMaxSize(),
     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp)
 ) {
     items(items = dishes, key = { it.id.value }) { dish ->
-        DishCard(dish = dish, onClick = { onOpenDish(dish.id.value) }, modifier = Modifier.animateItem())
+        DishCard(dish = dish, usage = usage, onClick = { onOpenDish(dish.id.value) }, modifier = Modifier.animateItem())
     }
 }
 
 @Composable
-private fun DishCard(dish: Dish, onClick: () -> Unit, modifier: Modifier = Modifier) = Surface(
+private fun DishCard(dish: Dish, usage: DishUsage?, onClick: () -> Unit, modifier: Modifier = Modifier) = Surface(
     shape = MaterialTheme.shapes.large,
     color = MaterialTheme.colorScheme.surfaceContainerLow,
     modifier = modifier.fillMaxWidth()
 ) {
     ListItem(
         headlineContent = { Text(text = dish.name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-        supportingContent = { Text(text = dish.supportingText(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        supportingContent = {
+            val supporting = usage?.let { "${dish.supportingText()} · ${it.lastServedText(dish.id)}" } ?: dish.supportingText()
+            Text(text = supporting, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
         leadingContent = { DishTypeAvatar(type = dish.type) },
         trailingContent = { HeavinessChip(heaviness = dish.heaviness) },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),

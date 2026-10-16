@@ -184,7 +184,8 @@ fun DinnerEditorScreen(
             options = state.options,
             selected = state.form.selected,
             onSelect = actions.onDishSelect,
-            onDismiss = { isPicking = false }
+            onDismiss = { isPicking = false },
+            usage = state.usage
         )
 
     if (state.form.showClearConfirm)

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetDinnerDayUseCase
@@ -26,7 +28,7 @@ import kotlinx.coroutines.launch
 /**
  * Editor of the dinner of one day: a single dish chosen among the dinner options (dishes served
  * at dinner or at any time, desserts excluded), picked from a list or at random, different from
- * the current one when possible.
+ * the current one when possible. The options come with when each dish was last served.
  */
 data class DinnerEditorForm(
     val selected: Dish? = null,
@@ -41,7 +43,8 @@ data class DinnerEditorUiState(
     val date: LocalDate,
     val form: DinnerEditorForm = DinnerEditorForm(),
     val options: List<Dish> = emptyList(),
-    val isOptionsLoading: Boolean = true
+    val isOptionsLoading: Boolean = true,
+    val usage: DishUsage = DishUsage.NONE
 ) {
     val canSave: Boolean get() = !form.isLoading && !form.isSaving && form.selected != null
 }
@@ -50,6 +53,7 @@ data class DinnerEditorUiState(
 class DinnerEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     observeDishes: ObserveDishesUseCase,
+    observeDishUsage: ObserveDishUsageUseCase,
     private val getDinnerDay: GetDinnerDayUseCase,
     private val saveDinnerDay: SaveDinnerDayUseCase,
     private val clearDinnerDay: ClearDinnerDayUseCase
@@ -61,8 +65,8 @@ class DinnerEditorViewModel @Inject constructor(
         observeDishes().map { dishes -> dishes.filter(Dish::isDinnerOption).sortedBy { it.name.lowercase() } }
 
     val uiState: StateFlow<DinnerEditorUiState> =
-        combine(form, options) { currentForm, currentOptions ->
-            DinnerEditorUiState(date = date, form = currentForm, options = currentOptions, isOptionsLoading = false)
+        combine(form, options, observeDishUsage()) { currentForm, currentOptions, usage ->
+            DinnerEditorUiState(date = date, form = currentForm, options = currentOptions, isOptionsLoading = false, usage = usage)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DinnerEditorUiState(date = date))
 
     init {
