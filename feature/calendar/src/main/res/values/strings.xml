@@ -32,6 +32,13 @@
     <string name="calendar_autofill_not_enough_dishes">No hay platos suficientes: crea primeros y segundos o platos únicos</string>
     <string name="calendar_autofill_not_enough_dinner_dishes">No hay platos para cenar: marca platos con el momento Cena o Indiferente</string>
     <string name="calendar_shopping_list">Obtener lista de ingredientes</string>
+    <string name="calendar_selection_start">Seleccionar días para borrar</string>
+    <string name="calendar_selection_cancel">Cancelar selección</string>
+    <string name="calendar_selection_hint">Toca o arrastra días</string>
+    <string name="calendar_selection_all">Seleccionar todo el mes</string>
+    <string name="calendar_selection_marked">Seleccionado</string>
+    <string name="calendar_selection_delete">Borrar (%1$d)</string>
+    <string name="calendar_undo">Deshacer</string>
 
     <string name="shopping_list_title">Lista de la compra</string>
     <string name="shopping_list_back">Volver</string>

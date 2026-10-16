@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.feature.calendar.month
 
 import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform
@@ -13,6 +14,10 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,8 +41,13 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,7 +61,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -65,17 +77,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -107,7 +126,9 @@ import java.time.YearMonth
  * view for the visible month is a FAB confirmed with a dialog and summarised in a snackbar;
  * "Hoy" only appears when another month is shown. Below the day summary a button opens the
  * shopping list of the visible month. Bottom insets are left to the app shell, which draws the
- * NavigationBar below this screen.
+ * NavigationBar below this screen. The trash button (or a long press on a day) opens a selection
+ * mode with a contextual top bar: tap toggles a day, dragging marks a continuous range, month swipe
+ * is paused, and "Borrar (N)" deletes the marked days of the active view with an undo snackbar.
  */
 data class AutoFillActions(
     val onRequest: () -> Unit = {},
@@ -115,8 +136,22 @@ data class AutoFillActions(
     val onDismiss: () -> Unit = {}
 )
 
+data class SelectionActions(
+    val onStart: () -> Unit = {},
+    val onCancel: () -> Unit = {},
+    val onToggle: (LocalDate) -> Unit = {},
+    val onSelectAll: () -> Unit = {},
+    val onDragStart: (LocalDate) -> Unit = {},
+    val onDragMove: (LocalDate) -> Unit = {},
+    val onDragEnd: () -> Unit = {},
+    val onDelete: () -> Unit = {}
+)
+
 private const val MaxDotsPerDay = 3
+private const val DisabledAlpha = 0.38f
 private val FabClearance = 96.dp
+private val CellHeight = 56.dp
+private val GridGap = 4.dp
 
 @Composable
 fun CalendarScreenRoute(
@@ -129,6 +164,7 @@ fun CalendarScreenRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val formatter = remember(resources) { AutoFillMessageFormatter(ResourcesAutoFillTexts(resources)) }
+    val undoLabel = stringResource(R.string.calendar_undo)
 
     LifecycleResumeEffect(viewModel) {
         viewModel.onScreenResume()
@@ -139,6 +175,11 @@ fun CalendarScreenRoute(
         viewModel.events.collect { event ->
             when (event) {
                 is CalendarEvent.AutoFillCompleted -> snackbarHostState.showSnackbar(formatter.format(event.result, event.view))
+                is CalendarEvent.DaysDeleted -> {
+                    val message = resources.getQuantityString(event.deletion.view.deletedTextRes(), event.deletion.count, event.deletion.count)
+                    val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel, duration = SnackbarDuration.Long)
+                    if (result == SnackbarResult.ActionPerformed) viewModel.onUndoDelete(event.deletion)
+                }
             }
         }
     }
@@ -158,6 +199,16 @@ fun CalendarScreenRoute(
             onConfirm = viewModel::onAutoFill,
             onDismiss = viewModel::onAutoFillDismiss
         ),
+        selectionActions = SelectionActions(
+            onStart = viewModel::onSelectionStart,
+            onCancel = viewModel::onSelectionCancel,
+            onToggle = viewModel::onSelectionToggle,
+            onSelectAll = viewModel::onSelectAllInMonth,
+            onDragStart = viewModel::onSelectionDragStart,
+            onDragMove = viewModel::onSelectionDragMove,
+            onDragEnd = viewModel::onSelectionDragEnd,
+            onDelete = viewModel::onDeleteSelected
+        ),
         snackbarHostState = snackbarHostState
     )
 }
@@ -175,27 +226,26 @@ fun CalendarScreen(
     onViewChange: (PlanView) -> Unit = {},
     onOpenShoppingList: () -> Unit = {},
     autoFillActions: AutoFillActions = AutoFillActions(),
+    selectionActions: SelectionActions = SelectionActions(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val scrollState = rememberScrollState()
+    BackHandler(enabled = state.isSelecting, onBack = selectionActions.onCancel)
     Scaffold(
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
         topBar = {
-            TopAppBar(
-                title = { Text(state.month.titleText()) },
-                actions = {
-                    if (!state.isShowingCurrentMonth) TextButton(onClick = onToday) { Text(stringResource(R.string.calendar_today)) }
-                    IconButton(onClick = onPreviousMonth) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.calendar_previous_month))
-                    }
-                    IconButton(onClick = onNextMonth) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.calendar_next_month))
-                    }
-                }
-            )
+            val selection = state.selection
+            if (selection == null)
+                MonthTopBar(state = state, onToday = onToday, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth, onStartSelection = selectionActions.onStart)
+            else
+                SelectionTopBar(count = selection.count, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth, actions = selectionActions)
         },
         floatingActionButton = {
-            if (!state.isLoading && !state.isAutoFilling) AutoFillFab(scrollState = scrollState, onClick = autoFillActions.onRequest)
+            val selection = state.selection
+            when {
+                selection != null -> if (selection.count > 0) DeleteSelectedFab(count = selection.count, onClick = selectionActions.onDelete)
+                !state.isLoading && !state.isAutoFilling -> AutoFillFab(scrollState = scrollState, onClick = autoFillActions.onRequest)
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
@@ -219,7 +269,7 @@ fun CalendarScreen(
                 if (state.isLoading || state.isAutoFilling) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
             MealViewSwitch(view = state.view, onViewChange = onViewChange)
-            MonthCard(state = state, onDateSelect = onDateSelect, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth)
+            MonthCard(state = state, onDateSelect = onDateSelect, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth, selectionActions = selectionActions)
             DaySummaryCard(
                 date = state.selectedDate,
                 lines = state.summaryLines(),
@@ -235,6 +285,63 @@ fun CalendarScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MonthTopBar(
+    state: CalendarUiState,
+    onToday: () -> Unit,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onStartSelection: () -> Unit
+) = TopAppBar(
+    title = { Text(state.month.titleText()) },
+    actions = {
+        if (!state.isShowingCurrentMonth) TextButton(onClick = onToday) { Text(stringResource(R.string.calendar_today)) }
+        IconButton(onClick = onStartSelection, enabled = !state.isLoading && !state.isAutoFilling) {
+            Icon(Icons.Filled.DeleteSweep, contentDescription = stringResource(R.string.calendar_selection_start))
+        }
+        MonthArrows(onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth)
+    }
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectionTopBar(count: Int, onPreviousMonth: () -> Unit, onNextMonth: () -> Unit, actions: SelectionActions) = TopAppBar(
+    navigationIcon = {
+        IconButton(onClick = actions.onCancel) {
+            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.calendar_selection_cancel))
+        }
+    },
+    title = {
+        Text(if (count == 0) stringResource(R.string.calendar_selection_hint) else pluralStringResource(R.plurals.calendar_selection_count, count, count))
+    },
+    actions = {
+        IconButton(onClick = actions.onSelectAll) {
+            Icon(Icons.Filled.SelectAll, contentDescription = stringResource(R.string.calendar_selection_all))
+        }
+        MonthArrows(onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth)
+    }
+)
+
+@Composable
+private fun MonthArrows(onPreviousMonth: () -> Unit, onNextMonth: () -> Unit) {
+    IconButton(onClick = onPreviousMonth) {
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.calendar_previous_month))
+    }
+    IconButton(onClick = onNextMonth) {
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.calendar_next_month))
+    }
+}
+
+@Composable
+private fun DeleteSelectedFab(count: Int, onClick: () -> Unit) = ExtendedFloatingActionButton(
+    text = { Text(stringResource(R.string.calendar_selection_delete, count)) },
+    icon = { Icon(Icons.Filled.Delete, contentDescription = null) },
+    onClick = onClick,
+    containerColor = MaterialTheme.colorScheme.errorContainer,
+    contentColor = MaterialTheme.colorScheme.onErrorContainer
+)
+
 @Composable
 private fun AutoFillFab(scrollState: ScrollState, onClick: () -> Unit) = ExtendedFloatingActionButton(
     text = { Text(stringResource(R.string.calendar_autofill_short)) },
@@ -248,24 +355,26 @@ private fun MonthCard(
     state: CalendarUiState,
     onDateSelect: (LocalDate) -> Unit,
     onPreviousMonth: () -> Unit,
-    onNextMonth: () -> Unit
+    onNextMonth: () -> Unit,
+    selectionActions: SelectionActions
 ) = Surface(
     shape = MaterialTheme.shapes.large,
     color = MaterialTheme.colorScheme.surfaceContainerLow,
-    modifier = Modifier.fillMaxWidth().monthSwipe(onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth)
+    modifier = Modifier.fillMaxWidth().monthSwipe(enabled = !state.isSelecting, onPreviousMonth = onPreviousMonth, onNextMonth = onNextMonth)
 ) {
     Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         WeekdayHeader()
         AnimatedContent(targetState = state.month, transitionSpec = { monthTransition() }, label = "month") { month ->
-            MonthGrid(month = month, state = state, onDateSelect = onDateSelect)
+            MonthGrid(month = month, state = state, onDateSelect = onDateSelect, selectionActions = selectionActions)
         }
     }
 }
 
 @Composable
-private fun Modifier.monthSwipe(onPreviousMonth: () -> Unit, onNextMonth: () -> Unit): Modifier {
+private fun Modifier.monthSwipe(enabled: Boolean, onPreviousMonth: () -> Unit, onNextMonth: () -> Unit): Modifier {
     val currentOnPrevious by rememberUpdatedState(onPreviousMonth)
     val currentOnNext by rememberUpdatedState(onNextMonth)
+    if (!enabled) return this
     return pointerInput(Unit) {
         val threshold = 64.dp.toPx()
         var totalDrag = 0f
@@ -302,11 +411,12 @@ private fun WeekdayHeader() = Row(modifier = Modifier.fillMaxWidth()) {
 }
 
 @Composable
-private fun MonthGrid(month: YearMonth, state: CalendarUiState, onDateSelect: (LocalDate) -> Unit) = Column(
-    verticalArrangement = Arrangement.spacedBy(4.dp)
+private fun MonthGrid(month: YearMonth, state: CalendarUiState, onDateSelect: (LocalDate) -> Unit, selectionActions: SelectionActions) = Column(
+    modifier = Modifier.daySelectionGestures(month = month, isSelecting = state.isSelecting, actions = selectionActions),
+    verticalArrangement = Arrangement.spacedBy(GridGap)
 ) {
     month.weeks().forEach { week ->
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(GridGap)) {
             week.forEach { date ->
                 Box(modifier = Modifier.weight(1f)) {
                     if (date != null)
@@ -314,8 +424,9 @@ private fun MonthGrid(month: YearMonth, state: CalendarUiState, onDateSelect: (L
                             date = date,
                             dishes = state.plannedDishes(date),
                             isToday = date == state.today,
-                            isSelected = date == state.selectedDate,
-                            onClick = { onDateSelect(date) }
+                            isSelected = !state.isSelecting && date == state.selectedDate,
+                            mark = state.markOf(date),
+                            onClick = { if (state.isSelecting) selectionActions.onToggle(date) else onDateSelect(date) }
                         )
                 }
             }
@@ -323,16 +434,67 @@ private fun MonthGrid(month: YearMonth, state: CalendarUiState, onDateSelect: (L
     }
 }
 
+private enum class DayMark { NONE, MARKED, UNMARKED, DISABLED }
+
+private fun CalendarUiState.markOf(date: LocalDate): DayMark = when {
+    !isSelecting -> DayMark.NONE
+    isMarked(date) -> DayMark.MARKED
+    date in plannedDates -> DayMark.UNMARKED
+    else -> DayMark.DISABLED
+}
+
 @Composable
-private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSelected: Boolean, onClick: () -> Unit) {
+private fun Modifier.daySelectionGestures(month: YearMonth, isSelecting: Boolean, actions: SelectionActions): Modifier {
+    val currentIsSelecting by rememberUpdatedState(isSelecting)
+    val currentActions by rememberUpdatedState(actions)
+    val haptics = LocalHapticFeedback.current
+    return pointerInput(month) {
+        val gap = GridGap.toPx()
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            val start =
+                if (currentIsSelecting) awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                else awaitLongPressOrCancellation(down.id)
+            if (start == null) return@awaitEachGesture
+            if (!currentIsSelecting) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            start.consume()
+            currentActions.onDragStart(month.dateAt(down.position, size, gap))
+            var lastDate = month.dateAt(start.position, size, gap)
+            currentActions.onDragMove(lastDate)
+            while (true) {
+                val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == start.id } ?: break
+                change.consume()
+                if (!change.pressed) break
+                val date = month.dateAt(change.position, size, gap)
+                if (date == lastDate) continue
+                lastDate = date
+                currentActions.onDragMove(date)
+            }
+            currentActions.onDragEnd()
+        }
+    }
+}
+
+private fun YearMonth.dateAt(position: Offset, size: IntSize, gap: Float): LocalDate {
+    val weeks = weeks()
+    val column = (position.x / (size.width + gap) * 7).toInt().coerceIn(0, 6)
+    val row = (position.y / (size.height + gap) * weeks.size).toInt().coerceIn(0, weeks.lastIndex)
+    return weeks[row][column] ?: if (row == 0) atDay(1) else atEndOfMonth()
+}
+
+@Composable
+private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSelected: Boolean, mark: DayMark, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
+    val isMarked = mark == DayMark.MARKED
     val background = when {
+        isMarked -> colors.error
         isSelected -> colors.primary
         isToday -> colors.primaryContainer
         dishes.isNotEmpty() -> colors.surfaceContainerHighest
         else -> Color.Transparent
     }
     val textColor = when {
+        isMarked -> colors.onError
         isSelected -> colors.onPrimary
         isToday -> colors.onPrimaryContainer
         else -> colors.onSurface
@@ -341,7 +503,8 @@ private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSel
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .height(CellHeight)
+            .alpha(if (mark == DayMark.DISABLED) DisabledAlpha else 1f)
             .clip(shape)
             .background(background)
             .border(width = 1.dp, color = if (isToday && !isSelected) colors.primary else Color.Transparent, shape = shape)
@@ -356,9 +519,12 @@ private fun DayCell(date: LocalDate, dishes: List<Dish>, isToday: Boolean, isSel
             fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
             color = textColor
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.height(6.dp)) {
-            dishes.take(MaxDotsPerDay).forEach { HeavinessDot(heaviness = it.heaviness, size = 6.dp) }
-        }
+        if (isMarked)
+            Icon(Icons.Filled.CheckCircle, contentDescription = stringResource(R.string.calendar_selection_marked), tint = colors.onError, modifier = Modifier.size(14.dp))
+        else
+            Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.height(6.dp)) {
+                dishes.take(MaxDotsPerDay).forEach { HeavinessDot(heaviness = it.heaviness, size = 6.dp) }
+            }
     }
 }
 
@@ -434,6 +600,11 @@ private fun CalendarUiState.plannedDishes(date: LocalDate): List<Dish> = when (v
 private fun PlanView.autoFillTextRes(): Int = when (this) {
     PlanView.LUNCH -> R.string.calendar_autofill_text
     PlanView.DINNER -> R.string.calendar_autofill_dinner_text
+}
+
+private fun PlanView.deletedTextRes(): Int = when (this) {
+    PlanView.LUNCH -> R.plurals.calendar_deleted_lunches
+    PlanView.DINNER -> R.plurals.calendar_deleted_dinners
 }
 
 @Composable

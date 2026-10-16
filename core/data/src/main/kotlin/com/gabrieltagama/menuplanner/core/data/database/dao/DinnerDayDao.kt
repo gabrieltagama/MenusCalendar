@@ -32,4 +32,7 @@ internal interface DinnerDayDao {
 
     @Query("DELETE FROM dinner_days WHERE date = :epochDay")
     suspend fun deleteByDate(epochDay: Long)
+
+    @Query("DELETE FROM dinner_days WHERE date IN (:epochDays)")
+    suspend fun deleteByDates(epochDays: List<Long>)
 }

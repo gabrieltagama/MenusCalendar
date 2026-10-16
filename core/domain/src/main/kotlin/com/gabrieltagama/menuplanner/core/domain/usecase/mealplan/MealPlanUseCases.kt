@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Use cases of the monthly calendar. Saving rejects a menu whose dishes are not in the slot of
- * their type (DailyMenu.violation).
+ * their type (DailyMenu.violation). Clearing several days returns the removed days so they can
+ * be restored (undo).
  */
 class ObserveMonthPlanUseCase @Inject constructor(private val repository: MealPlanRepository) {
     operator fun invoke(month: YearMonth): Flow<List<MealDay>> = repository.observeMonth(month)
@@ -37,4 +38,17 @@ class SaveMealDayUseCase @Inject constructor(
 
 class ClearMealDayUseCase @Inject constructor(private val repository: MealPlanRepository) {
     suspend operator fun invoke(date: LocalDate) = repository.clear(date)
+}
+
+class ClearMealDaysUseCase @Inject constructor(private val repository: MealPlanRepository) {
+    suspend operator fun invoke(dates: Set<LocalDate>): List<MealDay> {
+        if (dates.isEmpty()) return emptyList()
+        val removed = repository.getRange(dates.min()..dates.max()).filter { it.date in dates }
+        if (removed.isNotEmpty()) repository.clearAll(removed.map(MealDay::date))
+        return removed
+    }
+}
+
+class RestoreMealDaysUseCase @Inject constructor(private val repository: MealPlanRepository) {
+    suspend operator fun invoke(days: List<MealDay>) = repository.saveAll(days)
 }
