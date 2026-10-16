@@ -12,6 +12,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.BackupResult
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -101,7 +102,7 @@ class BackupUseCasesTest {
         val cloud = FakeCloudBackupRepository(remoteJson = "remote")
 
         assertEquals(Outcome.Success(ImportSummary.EMPTY), connect(cloud)("token"))
-        assertEquals(connected, cloud.account.value)
+        assertEquals(connected, cloud.account.first())
         assertEquals(listOf("remote"), share.importedJson)
         assertEquals(listOf(RECIPES_JSON), cloud.uploads)
         assertTrue(scheduler.isScheduled)
@@ -122,7 +123,7 @@ class BackupUseCasesTest {
         scheduler.scheduleDaily()
         DisconnectCloudAccountUseCase(cloud, scheduler)()
 
-        assertEquals(CloudAccount.Disconnected, cloud.account.value)
+        assertEquals(CloudAccount.Disconnected, cloud.account.first())
         assertFalse(scheduler.isScheduled)
     }
 

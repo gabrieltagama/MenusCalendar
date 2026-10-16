@@ -11,7 +11,7 @@ import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.MenuShareRepository
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
 import javax.inject.Inject
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 /**
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.first
  * Connecting restores, uploads and schedules the daily backup; disconnecting cancels it.
  */
 class ObserveCloudAccountUseCase @Inject constructor(private val cloud: CloudBackupRepository) {
-    operator fun invoke(): StateFlow<CloudAccount> = cloud.account
+    operator fun invoke(): Flow<CloudAccount> = cloud.account
 }
 
 class BackUpRecipesUseCase @Inject constructor(
@@ -30,8 +30,8 @@ class BackUpRecipesUseCase @Inject constructor(
     private val dishes: DishRepository
 ) {
     suspend operator fun invoke(onlyIfChanged: Boolean): Outcome<BackupResult> {
-        if (cloud.account.value is CloudAccount.Disconnected) return Outcome.Success(BackupResult.NOT_CONNECTED)
-        val fingerprint = RecipesFingerprint.of(dishes.observeDishes().first())
+        if (cloud.account.first() is CloudAccount.Disconnected) return Outcome.Success(BackupResult.NOT_CONNECTED)
+        val fingerprint = RecipesFingerprint.of(dishes.getDishes())
         if (onlyIfChanged && fingerprint == cloud.lastUploadedFingerprint()) return Outcome.Success(BackupResult.NO_CHANGES)
         return when (val upload = cloud.upload(share.exportRecipes(), fingerprint)) {
             is Outcome.Failure -> upload

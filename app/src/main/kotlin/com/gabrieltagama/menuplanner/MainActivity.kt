@@ -17,7 +17,8 @@ import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Single activity hosting the whole Compose UI, drawn edge to edge. It applies the theme mode
- * chosen in the settings and keeps the system bar icons readable when it differs from the device.
+ * chosen in the settings, once read, and keeps the system bar icons readable when it differs from
+ * the device.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -29,7 +30,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
-            val darkTheme = themeMode.isDarkTheme()
+            val darkTheme = themeMode?.isDarkTheme() ?: return@setContent
             DisposableEffect(darkTheme) {
                 enableEdgeToEdge(
                     statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },

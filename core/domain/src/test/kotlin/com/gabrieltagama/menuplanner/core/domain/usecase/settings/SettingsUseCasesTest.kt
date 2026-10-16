@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.settings
 
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,23 +16,26 @@ class SettingsUseCasesTest {
     private val repository = FakeSettingsRepository()
 
     @Test
-    fun `theme mode follows the system by default`() =
-        assertEquals(ThemeMode.SYSTEM, ObserveThemeModeUseCase(repository)().value)
+    fun `theme mode follows the system by default`() = runBlocking {
+        assertEquals(ThemeMode.SYSTEM, ObserveThemeModeUseCase(repository)().first())
+    }
 
     @Test
     fun `set theme mode is observed`() = runBlocking {
         SetThemeModeUseCase(repository)(ThemeMode.LIGHT)
 
-        assertEquals(ThemeMode.LIGHT, ObserveThemeModeUseCase(repository)().value)
+        assertEquals(ThemeMode.LIGHT, ObserveThemeModeUseCase(repository)().first())
     }
 
     @Test
-    fun `onboarding is pending by default`() = assertFalse(ObserveOnboardingCompletedUseCase(repository)().value)
+    fun `onboarding is pending by default`() = runBlocking {
+        assertFalse(ObserveOnboardingCompletedUseCase(repository)().first())
+    }
 
     @Test
     fun `completed onboarding is observed`() = runBlocking {
         CompleteOnboardingUseCase(repository)()
 
-        assertTrue(ObserveOnboardingCompletedUseCase(repository)().value)
+        assertTrue(ObserveOnboardingCompletedUseCase(repository)().first())
     }
 }

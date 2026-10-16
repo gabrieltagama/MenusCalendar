@@ -76,4 +76,8 @@ internal interface DishDao {
         deleteIngredients(dish.id)
         insertIngredients(ingredients)
     }
+
+    @Transaction
+    suspend fun upsertAllWithIngredients(dishes: List<Pair<DishEntity, List<IngredientEntity>>>) =
+        dishes.forEach { (dish, ingredients) -> upsertWithIngredients(dish, ingredients) }
 }

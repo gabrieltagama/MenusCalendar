@@ -6,11 +6,14 @@ import java.time.YearMonth
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Persistence port for the monthly calendar. Implemented in :core:data.
+ * Persistence port for the lunch calendar. getRange reads the planned days between two dates (both
+ * included) once; saveAll writes several days in a single transaction. Implemented in :core:data.
  */
 interface MealPlanRepository {
     fun observeMonth(month: YearMonth): Flow<List<MealDay>>
     suspend fun getDay(date: LocalDate): MealDay?
+    suspend fun getRange(dates: ClosedRange<LocalDate>): List<MealDay>
     suspend fun save(day: MealDay)
+    suspend fun saveAll(days: List<MealDay>)
     suspend fun clear(date: LocalDate)
 }

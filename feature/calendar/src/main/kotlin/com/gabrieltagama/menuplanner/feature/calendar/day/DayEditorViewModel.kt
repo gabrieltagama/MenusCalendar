@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -33,8 +34,9 @@ import kotlinx.coroutines.launch
 /**
  * Editor of the lunch of one day. The form keeps a selection for every slot, so switching
  * between "starter + main" and "single dish" never loses what was picked; only the slots of the
- * active mode are saved. Options are observed per dish type. A slot can also be filled with a
- * random dish of its type, different from the current one when possible.
+ * active mode are saved. Options come from a single observation of the recipe book grouped by dish
+ * type. A slot can also be filled with a random dish of its type, different from the current one
+ * when possible.
  */
 enum class MenuMode { COURSES, SINGLE }
 
@@ -101,11 +103,11 @@ class DayEditorViewModel @Inject constructor(
 
     private val form = MutableStateFlow(DayEditorForm())
 
-    private val plannableTypes: List<DishType> = MenuSlot.entries.map { it.dishType }
+    private val plannableTypes: Set<DishType> = MenuSlot.entries.map { it.dishType }.toSet()
 
     private val options: Flow<Map<DishType, List<Dish>>> =
-        combine(plannableTypes.map { type -> observeDishes(type) }) { lists ->
-            plannableTypes.zip(lists) { type, dishes -> type to dishes.sortedBy { it.name.lowercase() } }.toMap()
+        observeDishes().map { dishes ->
+            dishes.filter { it.type in plannableTypes }.sortedBy { it.name.lowercase() }.groupBy(Dish::type)
         }
 
     val uiState: StateFlow<DayEditorUiState> =

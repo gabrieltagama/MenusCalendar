@@ -26,9 +26,14 @@ class FakeMealPlanRepository(initial: List<MealDay> = emptyList()) : MealPlanRep
 
     override suspend fun getDay(date: LocalDate): MealDay? = days.value[date]
 
-    override suspend fun save(day: MealDay) {
-        saved += day
-        days.value = days.value + (day.date to day)
+    override suspend fun getRange(dates: ClosedRange<LocalDate>): List<MealDay> =
+        days.value.values.filter { it.date in dates }.sortedBy { it.date }
+
+    override suspend fun save(day: MealDay) = saveAll(listOf(day))
+
+    override suspend fun saveAll(days: List<MealDay>) {
+        saved += days
+        this.days.value = this.days.value + days.associateBy { it.date }
     }
 
     override suspend fun clear(date: LocalDate) {

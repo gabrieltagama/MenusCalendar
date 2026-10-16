@@ -14,7 +14,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.util.Locale
 import javax.inject.Inject
-import kotlinx.coroutines.flow.first
 
 /**
  * Builds the shopping list of a month or of a date range (both ends included, it may span several
@@ -46,21 +45,10 @@ class BuildShoppingListUseCase @Inject constructor(
         Meal.entries.filter { it in meals }.flatMap { dishesOf(it, dates) }
 
     private suspend fun dishesOf(meal: Meal, dates: ClosedRange<LocalDate>): List<Dish> = when (meal) {
-        Meal.LUNCH -> dates.months()
-            .flatMap { mealPlanRepository.observeMonth(it).first() }
-            .filter { it.date in dates }
-            .flatMap { it.menu.dishes }
-        Meal.DINNER -> dates.months()
-            .flatMap { dinnerPlanRepository.observeMonth(it).first() }
-            .filter { it.date in dates }
-            .map { it.dish }
+        Meal.LUNCH -> mealPlanRepository.getRange(dates).flatMap { it.menu.dishes }
+        Meal.DINNER -> dinnerPlanRepository.getRange(dates).map { it.dish }
     }
 }
-
-private fun ClosedRange<LocalDate>.months(): List<YearMonth> =
-    generateSequence(YearMonth.from(start)) { it.plusMonths(1) }
-        .takeWhile { it <= YearMonth.from(endInclusive) }
-        .toList()
 
 private const val METRIC_FACTOR = 1000.0
 
