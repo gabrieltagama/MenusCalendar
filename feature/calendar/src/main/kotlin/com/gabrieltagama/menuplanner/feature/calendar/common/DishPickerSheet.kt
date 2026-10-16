@@ -40,7 +40,8 @@ import androidx.compose.ui.unit.dp
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishSort
 import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
-import com.gabrieltagama.menuplanner.core.domain.text.matchesSearch
+import com.gabrieltagama.menuplanner.core.domain.text.SearchableDish
+import com.gabrieltagama.menuplanner.core.domain.text.normalizedForSearch
 import com.gabrieltagama.menuplanner.core.ui.component.DishSortChip
 import com.gabrieltagama.menuplanner.core.ui.text.lastServedText
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
@@ -52,7 +53,8 @@ import kotlinx.coroutines.launch
  * Searchable bottom sheet to choose one dish, shared by the lunch and dinner editors. The search
  * ignores case and accents and also looks into ingredients; a chip orders the list (name, last
  * time served, rating or heaviness) and every row says when the dish was last served. When
- * noneLabel is given, a first row lets the user leave the slot empty.
+ * noneLabel is given, a first row lets the user leave the slot empty. The search texts of the options
+ * are normalized once per options list (SearchableDish), not on every keystroke.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,7 +71,11 @@ internal fun DishPickerSheet(
     val scope = rememberCoroutineScope()
     var query by rememberSaveable { mutableStateOf("") }
     var sort by rememberSaveable { mutableStateOf(DishSort.NAME) }
-    val visible = remember(options, query, sort, usage) { sort.sorted(options.filter { it.matchesSearch(query) }, usage) }
+    val index = remember(options) { options.map(::SearchableDish) }
+    val visible = remember(index, query, sort, usage) {
+        val normalizedQuery = query.normalizedForSearch()
+        sort.sorted(index.filter { it.matches(normalizedQuery) }.map(SearchableDish::dish), usage)
+    }
     val choose: (Dish?) -> Unit = { dish ->
         onSelect(dish)
         scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }

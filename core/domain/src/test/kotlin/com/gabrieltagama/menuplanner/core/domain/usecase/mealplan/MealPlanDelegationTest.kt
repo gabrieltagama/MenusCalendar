@@ -1,11 +1,13 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakePlanQueries
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedLunch
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.flow.first
@@ -15,7 +17,8 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Tests that ClearMealDayUseCase, ObserveMonthPlanUseCase and GetMealDayUseCase delegate to the repository.
+ * Tests that ClearMealDayUseCase and GetMealDayUseCase delegate to the repository and that
+ * ObserveMonthPlanUseCase reads the month through CalendarQueries.
  */
 class MealPlanDelegationTest {
     private val menu = DailyMenu.Single(dish(type = DishType.SINGLE))
@@ -34,9 +37,9 @@ class MealPlanDelegationTest {
 
     @Test
     fun `observe month emits only days of that month`() = runBlocking {
-        val days = ObserveMonthPlanUseCase(repository)(YearMonth.of(2026, 3)).first()
+        val days = ObserveMonthPlanUseCase(FakePlanQueries(repository))(YearMonth.of(2026, 3)).first()
 
-        assertEquals(listOf(march10, march20), days)
+        assertEquals(listOf(march10, march20).map(MealDay::toPlannedLunch), days)
     }
 
     @Test

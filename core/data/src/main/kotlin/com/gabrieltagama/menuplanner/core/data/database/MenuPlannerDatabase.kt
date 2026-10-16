@@ -6,6 +6,7 @@ import com.gabrieltagama.menuplanner.core.data.database.dao.DinnerDayDao
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishDao
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishUsageDao
 import com.gabrieltagama.menuplanner.core.data.database.dao.MealDayDao
+import com.gabrieltagama.menuplanner.core.data.database.dao.PlanQueryDao
 import com.gabrieltagama.menuplanner.core.data.database.entity.DinnerDayEntity
 import com.gabrieltagama.menuplanner.core.data.database.entity.DishEntity
 import com.gabrieltagama.menuplanner.core.data.database.entity.IngredientEntity
@@ -25,6 +26,7 @@ internal abstract class MenuPlannerDatabase : RoomDatabase() {
     abstract fun mealDayDao(): MealDayDao
     abstract fun dinnerDayDao(): DinnerDayDao
     abstract fun dishUsageDao(): DishUsageDao
+    abstract fun planQueryDao(): PlanQueryDao
 
     companion object {
         const val NAME = "menuplanner.db"

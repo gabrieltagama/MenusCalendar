@@ -20,10 +20,12 @@ import com.gabrieltagama.menuplanner.feature.calendar.navigation.DayEditorRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -95,7 +97,7 @@ class DayEditorViewModel @Inject constructor(
     private val options: Flow<Map<DishType, List<Dish>>> =
         observeDishes().map { dishes ->
             dishes.filter { it.type in plannableTypes }.sortedBy { it.name.lowercase() }.groupBy(Dish::type)
-        }
+        }.flowOn(Dispatchers.Default)
 
     val uiState: StateFlow<DayEditorUiState> =
         combine(form, options, observeDishUsage()) { currentForm, currentOptions, usage ->

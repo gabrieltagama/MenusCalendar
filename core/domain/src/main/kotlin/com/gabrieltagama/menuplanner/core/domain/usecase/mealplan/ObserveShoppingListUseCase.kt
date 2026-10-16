@@ -1,53 +1,48 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
-import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
-import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.query.ShoppingListQueries
 import java.text.Collator
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.Locale
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 
 /**
- * Builds the shopping list of a month or of a date range (both ends included, it may span several
+ * Observes the shopping list of a month or of a date range (both ends included, it may span several
  * months) from the starters, mains and single dishes planned for lunch and the dishes planned for
- * dinner, limited to the requested meals (both by default). A dish counts once per meal it is
- * planned in. Every line is converted to its standard unit and grouped by IngredientKey
- * (ignoring case, accents and plurals), so each product appears once with its total; the most
- * used spelling names it. Grams and millilitres are shown in kilograms and litres from 1000
- * upwards. The result is sorted alphabetically in Spanish order.
+ * dinner, limited to the requested meals (both by default), and emits it again whenever the plan or
+ * a planned dish changes. It reads only ingredient lines (ShoppingListQueries), never whole dishes.
+ * A dish counts once per meal it is planned in. Every line is converted to its standard unit and
+ * grouped by IngredientKey (ignoring case, accents and plurals), so each product appears once with
+ * its total; the most used spelling names it. Grams and millilitres are shown in kilograms and
+ * litres from 1000 upwards. The result is sorted alphabetically in Spanish order.
  */
-class BuildShoppingListUseCase @Inject constructor(
-    private val mealPlanRepository: MealPlanRepository,
-    private val dinnerPlanRepository: DinnerPlanRepository
-) {
+class ObserveShoppingListUseCase @Inject constructor(private val queries: ShoppingListQueries) {
 
-    suspend operator fun invoke(month: YearMonth, meals: Set<Meal> = Meal.entries.toSet()): List<ShoppingItem> =
+    operator fun invoke(month: YearMonth, meals: Set<Meal> = Meal.entries.toSet()): Flow<List<ShoppingItem>> =
         invoke(month.atDay(1)..month.atEndOfMonth(), meals)
 
-    suspend operator fun invoke(dates: ClosedRange<LocalDate>, meals: Set<Meal> = Meal.entries.toSet()): List<ShoppingItem> =
-        plannedDishes(dates, meals)
-            .flatMap { it.ingredients }
-            .filter { it.name.isNotBlank() }
+    operator fun invoke(dates: ClosedRange<LocalDate>, meals: Set<Meal> = Meal.entries.toSet()): Flow<List<ShoppingItem>> {
+        val lineFlows = Meal.entries.filter { it in meals }.map { queries.observeIngredientLines(dates, it) }
+        if (lineFlows.isEmpty()) return flowOf(emptyList())
+        return combine(lineFlows) { lines -> lines.toList().flatten().toShoppingList() }
+    }
+
+    private fun List<Ingredient>.toShoppingList(): List<ShoppingItem> =
+        filter { it.name.isNotBlank() }
             .let(IngredientStandardizer::standardizeLines)
             .groupBy { IngredientKey.of(it.name) }
             .map { (_, lines) -> lines.toShoppingItem() }
             .sortedWith(compareBy(spanishCollator()) { it.name })
-
-    private suspend fun plannedDishes(dates: ClosedRange<LocalDate>, meals: Set<Meal>): List<Dish> =
-        Meal.entries.filter { it in meals }.flatMap { dishesOf(it, dates) }
-
-    private suspend fun dishesOf(meal: Meal, dates: ClosedRange<LocalDate>): List<Dish> = when (meal) {
-        Meal.LUNCH -> mealPlanRepository.getRange(dates).flatMap { it.menu.dishes }
-        Meal.DINNER -> dinnerPlanRepository.getRange(dates).map { it.dish }
-    }
 }
 
 private const val METRIC_FACTOR = 1000.0

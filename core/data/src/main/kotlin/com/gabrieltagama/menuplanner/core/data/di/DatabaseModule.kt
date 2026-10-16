@@ -8,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.data.database.dao.DinnerDayDao
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishDao
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishUsageDao
 import com.gabrieltagama.menuplanner.core.data.database.dao.MealDayDao
+import com.gabrieltagama.menuplanner.core.data.database.dao.PlanQueryDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -40,4 +41,7 @@ internal object DatabaseModule {
 
     @Provides
     fun provideDishUsageDao(database: MenuPlannerDatabase): DishUsageDao = database.dishUsageDao()
+
+    @Provides
+    fun providePlanQueryDao(database: MenuPlannerDatabase): PlanQueryDao = database.planQueryDao()
 }
