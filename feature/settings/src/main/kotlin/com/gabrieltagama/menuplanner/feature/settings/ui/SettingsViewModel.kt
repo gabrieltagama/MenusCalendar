@@ -16,6 +16,7 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveThemeMo
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetThemeModeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +27,8 @@ import kotlinx.coroutines.launch
 
 /**
  * Settings screen state: the chosen theme mode and the optional Google backup of recipes and calendar, which can
- * be linked, run or restored on demand and unlinked. Backup results surface as a nullable
+ * be linked, run or restored on demand and unlinked. Only one backup operation runs at a time and
+ * the busy flag is always released, even when the operation fails or is cancelled. Backup results surface as a nullable
  * [BackupMessage] in [BackupUiState].
  */
 data class BackupUiState(
@@ -62,6 +64,8 @@ class SettingsViewModel @Inject constructor(
     private val _backupState = MutableStateFlow(BackupUiState())
     val backupState: StateFlow<BackupUiState> = _backupState.asStateFlow()
 
+    private var busyJob: Job? = null
+
     fun onThemeModeSelect(mode: ThemeMode) {
         viewModelScope.launch { setThemeMode(mode) }
     }
@@ -85,9 +89,14 @@ class SettingsViewModel @Inject constructor(
     fun onMessageShown() = _backupState.update { it.copy(message = null) }
 
     private fun runBusy(action: suspend () -> BackupMessage) {
-        viewModelScope.launch {
+        if (busyJob?.isActive == true) return
+        busyJob = viewModelScope.launch {
             _backupState.update { it.copy(isBusy = true, message = null) }
-            showMessage(action())
+            try {
+                showMessage(action())
+            } finally {
+                _backupState.update { it.copy(isBusy = false) }
+            }
         }
     }
 

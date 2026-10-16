@@ -60,6 +60,7 @@ import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import com.gabrieltagama.menuplanner.feature.calendar.common.DishPickerSheet
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
+import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
 import java.time.LocalDate
 
 /**
@@ -92,7 +93,7 @@ fun DayEditorScreenRoute(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                DayEditorEvent.Close -> currentOnBack()
+                PlanEditorEvent.Close -> currentOnBack()
             }
         }
     }

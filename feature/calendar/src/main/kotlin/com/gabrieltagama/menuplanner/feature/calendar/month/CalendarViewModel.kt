@@ -31,7 +31,8 @@ import kotlinx.coroutines.launch
  * Monthly calendar: keeps the visible month, the selected day and the active view (lunches or
  * dinners), and switches the observed lunch and dinner plans with flatMapLatest whenever the
  * month changes. It also runs the random autofill of the active view for the visible month after
- * confirmation and reports its result as a one-shot event.
+ * confirmation and reports its result as a one-shot event. "Today" is refreshed whenever the screen
+ * resumes, so the highlight stays right after midnight.
  */
 enum class PlanView { LUNCH, DINNER }
 
@@ -78,6 +79,7 @@ class CalendarViewModel @Inject constructor(
 
     private val month = MutableStateFlow(YearMonth.now(clock))
     private val selectedDate = MutableStateFlow(LocalDate.now(clock))
+    private val today = MutableStateFlow(LocalDate.now(clock))
     private val view = MutableStateFlow(PlanView.LUNCH)
     private val autoFillStatus = MutableStateFlow(AutoFillStatus())
 
@@ -87,13 +89,15 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
+    private val dates = combine(selectedDate, today) { selected, current -> selected to current }
+
     val uiState: StateFlow<CalendarUiState> =
-        combine(month, selectedDate, view, monthPlan, autoFillStatus) { visibleMonth, selected, activeView, plan, status ->
+        combine(month, dates, view, monthPlan, autoFillStatus) { visibleMonth, (selected, current), activeView, plan, status ->
             val isCurrentPlan = plan.month == visibleMonth
             CalendarUiState(
                 month = visibleMonth,
                 selectedDate = selected,
-                today = LocalDate.now(clock),
+                today = current,
                 view = activeView,
                 isLoading = !isCurrentPlan,
                 days = if (isCurrentPlan) plan.days else emptyMap(),
@@ -104,7 +108,7 @@ class CalendarViewModel @Inject constructor(
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
-            CalendarUiState(month = month.value, selectedDate = selectedDate.value, today = LocalDate.now(clock))
+            CalendarUiState(month = month.value, selectedDate = selectedDate.value, today = today.value)
         )
 
     private val _events = Channel<CalendarEvent>(Channel.BUFFERED)
@@ -115,9 +119,13 @@ class CalendarViewModel @Inject constructor(
     fun onNextMonth() = showMonth(month.value.plusMonths(1))
 
     fun onToday() {
-        val today = LocalDate.now(clock)
-        month.value = YearMonth.from(today)
-        selectedDate.value = today
+        val current = refreshToday()
+        month.value = YearMonth.from(current)
+        selectedDate.value = current
+    }
+
+    fun onScreenResume() {
+        refreshToday()
     }
 
     fun onDateSelect(date: LocalDate) {
@@ -152,8 +160,10 @@ class CalendarViewModel @Inject constructor(
     }
 
     private fun showMonth(target: YearMonth) {
-        val today = LocalDate.now(clock)
+        val current = refreshToday()
         month.value = target
-        selectedDate.value = if (YearMonth.from(today) == target) today else target.atDay(1)
+        selectedDate.value = if (YearMonth.from(current) == target) current else target.atDay(1)
     }
+
+    private fun refreshToday(): LocalDate = LocalDate.now(clock).also { today.value = it }
 }

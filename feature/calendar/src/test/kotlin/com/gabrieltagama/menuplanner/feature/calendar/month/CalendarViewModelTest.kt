@@ -22,6 +22,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlin.random.Random
 import kotlinx.coroutines.test.runTest
@@ -33,10 +34,10 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * CalendarViewModel over the real ObserveMonthPlanUseCase with a fixed clock (2026-10-09 UTC):
+ * CalendarViewModel over the real ObserveMonthPlanUseCase with a controllable clock (2026-10-09 UTC):
  * month navigation, selected day summary, the "today" shortcut and the month autofill over the
  * real AutoFillMonthUseCase with in-memory repositories and a seeded Random; the lunches/dinners
- * view switch and the dinner autofill.
+ * view switch, the dinner autofill and the refresh of "today" when the screen resumes.
  */
 class CalendarViewModelTest {
 
@@ -44,7 +45,14 @@ class CalendarViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val today = LocalDate.of(2026, 10, 9)
-    private val clock = Clock.fixed(Instant.parse("2026-10-09T10:00:00Z"), ZoneOffset.UTC)
+    private var now = Instant.parse("2026-10-09T10:00:00Z")
+    private val clock = object : Clock() {
+        override fun getZone(): ZoneId = ZoneOffset.UTC
+
+        override fun withZone(zone: ZoneId): Clock = this
+
+        override fun instant(): Instant = now
+    }
 
     private val starter = Dish(id = DishId("gazpacho"), name = "Gazpacho", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW, updatedAt = Instant.EPOCH)
     private val main = Dish(id = DishId("chicken"), name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM, updatedAt = Instant.EPOCH)
@@ -75,6 +83,18 @@ class CalendarViewModelTest {
             assertEquals(today, state.today)
             assertEquals(today, state.selectedDate)
             assertEquals(mapOf(today to todayPlan), state.days)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `resuming the screen after midnight refreshes today`() = runTest {
+        viewModel.uiState.test {
+            awaitItemMatching { !it.isLoading }
+            now = Instant.parse("2026-10-10T00:05:00Z")
+            viewModel.onScreenResume()
+
+            assertEquals(today.plusDays(1), awaitItemMatching { it.today != today }.today)
             cancelAndIgnoreRemainingEvents()
         }
     }

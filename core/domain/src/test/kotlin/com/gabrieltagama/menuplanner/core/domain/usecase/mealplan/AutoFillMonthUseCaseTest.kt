@@ -54,11 +54,13 @@ class AutoFillMonthUseCaseTest {
 
     private fun assertNoRepeatWithinWeek(plan: Map<LocalDate, DailyMenu>, seed: Int) {
         val dates = plan.keys.sorted()
-        for (first in dates) for (second in dates) {
-            val gap = ChronoUnit.DAYS.between(first, second)
-            if (gap !in 1..6) continue
-            val shared = plan.getValue(first).dishes.map(Dish::id).intersect(plan.getValue(second).dishes.map(Dish::id).toSet())
-            if (shared.isNotEmpty()) fail("seed $seed: $first and $second share $shared")
+        for (first in dates) {
+            for (second in dates) {
+                val gap = ChronoUnit.DAYS.between(first, second)
+                if (gap !in 1..6) continue
+                val shared = plan.getValue(first).dishes.map(Dish::id).intersect(plan.getValue(second).dishes.map(Dish::id).toSet())
+                if (shared.isNotEmpty()) fail("seed $seed: $first and $second share $shared")
+            }
         }
     }
 

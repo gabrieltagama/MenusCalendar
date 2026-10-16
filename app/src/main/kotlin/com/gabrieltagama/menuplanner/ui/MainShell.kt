@@ -143,4 +143,3 @@ private fun NavHostController.navigateToTopLevel(destination: TopLevelDestinatio
 private fun MenuPlannerNavigationBarPreview() = MenuPlannerTheme {
     MenuPlannerNavigationBar(currentDestination = null, onSelect = {}, onMore = {})
 }
-

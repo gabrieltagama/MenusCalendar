@@ -16,6 +16,7 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCa
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetMealDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveMealDayUseCase
+import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -115,7 +116,7 @@ class DayEditorViewModelTest {
 
         viewModel.onSave()
 
-        assertEquals(DayEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
+        assertEquals(PlanEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
         val saved = mealPlanRepository.saved.single()
         assertEquals(date, saved.date)
         assertEquals(DailyMenu.Single(single = single), saved.menu)
@@ -145,7 +146,7 @@ class DayEditorViewModelTest {
 
             viewModel.onClearConfirm()
 
-            assertEquals(DayEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
+            assertEquals(PlanEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
             assertEquals(listOf(date), mealPlanRepository.cleared)
             assertTrue(mealPlanRepository.current.isEmpty())
         }

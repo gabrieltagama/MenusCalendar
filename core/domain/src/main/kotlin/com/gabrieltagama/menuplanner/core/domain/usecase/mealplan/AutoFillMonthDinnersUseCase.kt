@@ -35,25 +35,15 @@ class AutoFillMonthDinnersUseCase @Inject constructor(
         val window = PlanningPolicy.window(month.atDay(1)..month.atEndOfMonth())
         val lunches = mealPlanRepository.getRange(window).associate { it.date to it.menu }
         val dinners = dinnerPlanRepository.getRange(window).associate { it.date to it.dish }.toMutableMap()
-        val emptyDays = month.days().filterNot(dinners::containsKey)
-        val picks = mutableListOf<DinnerPick>()
-        val filled = mutableListOf<DinnerDay>()
-        for (date in emptyDays) {
-            val pick = picker.pick(date, lunches, dinners) ?: continue
-            dinners[date] = pick.dish
-            filled += DinnerDay(date = date, dish = pick.dish, updatedAt = Instant.now(clock))
-            picks += pick
+        val fill = fillEmptyDays(month.days().filterNot(dinners::containsKey)) { date ->
+            picker.pick(date, lunches, dinners)?.let { pick ->
+                dinners[date] = pick.dish
+                DayPick(DinnerDay(date = date, dish = pick.dish, updatedAt = Instant.now(clock)), pick.repeated)
+            }
         }
-        dinnerPlanRepository.saveAll(filled)
-        return AutoFillResult(
-            filledDays = picks.size,
-            repeatedDishDays = picks.count(DinnerPick::repeated),
-            heavyStreakDays = 0,
-            unfilledDays = emptyDays.size - picks.size
-        )
+        dinnerPlanRepository.saveAll(fill.days)
+        return fill.result
     }
-
-    private fun YearMonth.days(): List<LocalDate> = (1..lengthOfMonth()).map(::atDay)
 }
 
 /**

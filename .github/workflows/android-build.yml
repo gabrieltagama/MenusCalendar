@@ -59,7 +59,8 @@ jobs:
           reports=$(find . -path '*/build/reports/ktlint/*' -name '*.txt' -size +0c)
           if [ -n "$reports" ]; then
             summary=$(cat $reports | sed 's/\x1b\[[0-9;]*m//g' | sed -nE 's/.*\(([a-z_]+:[a-z0-9_-]+)\)[[:space:]]*$/\1/p' | sort | uniq -c | sort -rn | head -30 | encode)
-            [ -z "$summary" ] && summary=$(cat $reports | sed 's/\x1b\[[0-9;]*m//g' | head -25 | encode)
+            details=$(cat $reports | sed 's/\x1b\[[0-9;]*m//g' | sed -E 's#^.*/(app|core|feature|build-logic)/#\1/#' | head -20 | encode)
+            summary="${summary}%0A%0A${details}"
           else
             summary=$(tail -40 "$RUNNER_TEMP/ktlint.log" | encode)
           fi

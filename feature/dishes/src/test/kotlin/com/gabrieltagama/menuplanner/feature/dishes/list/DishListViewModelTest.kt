@@ -160,7 +160,7 @@ class DishListViewModelTest {
             ingredients = listOf(Ingredient("Patatas", 3.0, MeasureUnit.UNIT)),
             type = DishType.SINGLE,
             heaviness = Heaviness.MEDIUM,
-        updatedAt = Instant.EPOCH
+            updatedAt = Instant.EPOCH
         )
         repository.upsert(omelette)
         viewModel.uiState.test {
