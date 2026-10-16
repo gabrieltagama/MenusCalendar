@@ -24,4 +24,4 @@ sealed interface DomainError {
     data object CloudAuthorizationRequired : DomainError
 }
 
-enum class MenuSlot { STARTER, MAIN, SINGLE, DESSERT }
+enum class MenuSlot { STARTER, MAIN, SINGLE }

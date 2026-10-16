@@ -488,14 +488,10 @@ private fun MealViewLabel(text: String, icon: ImageVector, isActive: Boolean, on
 private fun DailyMenu.summaryLines(): List<Pair<String, Dish>> = when (this) {
     is DailyMenu.Courses -> listOf(
         stringResource(R.string.calendar_slot_starter) to starter,
-        stringResource(R.string.calendar_slot_main) to main,
-        stringResource(R.string.calendar_slot_dessert) to dessert
+        stringResource(R.string.calendar_slot_main) to main
     )
-    is DailyMenu.Single -> listOf(
-        stringResource(R.string.calendar_slot_single) to single,
-        stringResource(R.string.calendar_slot_dessert) to dessert
-    )
-}.mapNotNull { (label, dish) -> dish?.let { label to it } }
+    is DailyMenu.Single -> listOf(stringResource(R.string.calendar_slot_single) to single)
+}
 
 private fun YearMonth.weeks(): List<List<LocalDate?>> {
     val leadingBlanks = atDay(1).dayOfWeek.value - 1

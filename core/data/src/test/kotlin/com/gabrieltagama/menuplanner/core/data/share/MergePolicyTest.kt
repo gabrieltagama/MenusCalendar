@@ -28,8 +28,8 @@ class MergePolicyTest {
     fun `incoming item with equal timestamp is skipped`() = assertEquals(MergeDecision.SKIP, MergePolicy.decide(localUpdatedAt = 10L, incomingUpdatedAt = 10L))
 
     @Test
-    fun `single day with known dishes is importable`() =
-        assertTrue(MergePolicy.isImportable(TestData.singleDay(date, "s", dessertId = "d"), mapOf("s" to DishType.SINGLE, "d" to DishType.DESSERT)))
+    fun `single day with known dish is importable`() =
+        assertTrue(MergePolicy.isImportable(TestData.singleDay(date, "s"), mapOf("s" to DishType.SINGLE)))
 
     @Test
     fun `courses day with known dishes is importable`() =
@@ -40,26 +40,22 @@ class MergePolicyTest {
         assertFalse(MergePolicy.isImportable(TestData.coursesDay(date, "a", "missing"), mapOf("a" to DishType.STARTER)))
 
     @Test
-    fun `day referencing unknown dessert is not importable`() =
-        assertFalse(MergePolicy.isImportable(TestData.singleDay(date, "s", dessertId = "missing"), mapOf("s" to DishType.SINGLE)))
-
-    @Test
     fun `day with starter but no main is not importable`() {
-        val day = MealDayEntity(date.toEpochDay(), starterId = "a", mainId = null, singleId = null, dessertId = null, updatedAt = 1L)
+        val day = MealDayEntity(date.toEpochDay(), starterId = "a", mainId = null, singleId = null, updatedAt = 1L)
 
         assertFalse(MergePolicy.isImportable(day, mapOf("a" to DishType.STARTER)))
     }
 
     @Test
-    fun `day with only dessert is not importable`() {
-        val day = MealDayEntity(date.toEpochDay(), starterId = null, mainId = null, singleId = null, dessertId = "d", updatedAt = 1L)
+    fun `day without dishes is not importable`() {
+        val day = MealDayEntity(date.toEpochDay(), starterId = null, mainId = null, singleId = null, updatedAt = 1L)
 
-        assertFalse(MergePolicy.isImportable(day, mapOf("d" to DishType.DESSERT)))
+        assertFalse(MergePolicy.isImportable(day, emptyMap()))
     }
 
     @Test
     fun `day with single and courses at once is not importable`() {
-        val day = MealDayEntity(date.toEpochDay(), starterId = "a", mainId = "b", singleId = "s", dessertId = null, updatedAt = 1L)
+        val day = MealDayEntity(date.toEpochDay(), starterId = "a", mainId = "b", singleId = "s", updatedAt = 1L)
         val types = mapOf("a" to DishType.STARTER, "b" to DishType.MAIN, "s" to DishType.SINGLE)
 
         assertFalse(MergePolicy.isImportable(day, types))
@@ -72,10 +68,6 @@ class MergePolicyTest {
     @Test
     fun `main placed as single is not importable`() =
         assertFalse(MergePolicy.isImportable(TestData.singleDay(date, "b"), mapOf("b" to DishType.MAIN)))
-
-    @Test
-    fun `starter placed as dessert is not importable`() =
-        assertFalse(MergePolicy.isImportable(TestData.singleDay(date, "s", dessertId = "a"), mapOf("s" to DishType.SINGLE, "a" to DishType.STARTER)))
 
     @Test
     fun `merge count aggregates decisions`() {

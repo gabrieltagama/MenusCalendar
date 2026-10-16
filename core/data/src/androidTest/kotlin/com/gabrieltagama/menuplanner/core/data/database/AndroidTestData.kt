@@ -41,9 +41,9 @@ internal object AndroidTestData {
         updatedAt = updatedAt
     )
 
-    fun singleDay(date: LocalDate, single: Dish, dessert: Dish? = null, updatedAt: Instant = OLD_INSTANT) =
-        MealDay(date = date, menu = DailyMenu.Single(single = single, dessert = dessert), updatedAt = updatedAt)
+    fun singleDay(date: LocalDate, single: Dish, updatedAt: Instant = OLD_INSTANT) =
+        MealDay(date = date, menu = DailyMenu.Single(single = single), updatedAt = updatedAt)
 
-    fun coursesDay(date: LocalDate, starter: Dish, main: Dish, dessert: Dish? = null, updatedAt: Instant = OLD_INSTANT) =
-        MealDay(date = date, menu = DailyMenu.Courses(starter = starter, main = main, dessert = dessert), updatedAt = updatedAt)
+    fun coursesDay(date: LocalDate, starter: Dish, main: Dish, updatedAt: Instant = OLD_INSTANT) =
+        MealDay(date = date, menu = DailyMenu.Courses(starter = starter, main = main), updatedAt = updatedAt)
 }

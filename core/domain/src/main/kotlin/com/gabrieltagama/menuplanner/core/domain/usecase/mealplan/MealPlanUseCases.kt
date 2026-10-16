@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Use cases of the monthly calendar. Saving checks that every dish sits in a slot that matches
- * its type (starter, main, single or dessert).
+ * its type (starter, main or single).
  */
 class ObserveMonthPlanUseCase @Inject constructor(private val repository: MealPlanRepository) {
     operator fun invoke(month: YearMonth): Flow<List<MealDay>> = repository.observeMonth(month)
@@ -39,11 +39,11 @@ class SaveMealDayUseCase @Inject constructor(
     }
 
     private fun validate(menu: DailyMenu): DomainError? =
-        slotsOf(menu).firstNotNullOfOrNull { (slot, dish) -> dish?.let { checkSlot(slot, it) } }
+        slotsOf(menu).firstNotNullOfOrNull { (slot, dish) -> checkSlot(slot, dish) }
 
-    private fun slotsOf(menu: DailyMenu): List<Pair<MenuSlot, Dish?>> = when (menu) {
-        is DailyMenu.Courses -> listOf(MenuSlot.STARTER to menu.starter, MenuSlot.MAIN to menu.main, MenuSlot.DESSERT to menu.dessert)
-        is DailyMenu.Single -> listOf(MenuSlot.SINGLE to menu.single, MenuSlot.DESSERT to menu.dessert)
+    private fun slotsOf(menu: DailyMenu): List<Pair<MenuSlot, Dish>> = when (menu) {
+        is DailyMenu.Courses -> listOf(MenuSlot.STARTER to menu.starter, MenuSlot.MAIN to menu.main)
+        is DailyMenu.Single -> listOf(MenuSlot.SINGLE to menu.single)
     }
 
     private fun checkSlot(slot: MenuSlot, dish: Dish): DomainError? {
@@ -55,7 +55,6 @@ class SaveMealDayUseCase @Inject constructor(
         MenuSlot.STARTER -> DishType.STARTER
         MenuSlot.MAIN -> DishType.MAIN
         MenuSlot.SINGLE -> DishType.SINGLE
-        MenuSlot.DESSERT -> DishType.DESSERT
     }
 }
 

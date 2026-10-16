@@ -48,23 +48,21 @@ internal object TestData {
         updatedAt = updatedAt
     )
 
-    fun singleDay(date: LocalDate, singleId: String, dessertId: String? = null, updatedAt: Instant = OLD_INSTANT) =
+    fun singleDay(date: LocalDate, singleId: String, updatedAt: Instant = OLD_INSTANT) =
         MealDayEntity(
             date = date.toEpochDay(),
             starterId = null,
             mainId = null,
             singleId = singleId,
-            dessertId = dessertId,
             updatedAt = updatedAt.toEpochMilli()
         )
 
-    fun coursesDay(date: LocalDate, starterId: String, mainId: String, dessertId: String? = null, updatedAt: Instant = OLD_INSTANT) =
+    fun coursesDay(date: LocalDate, starterId: String, mainId: String, updatedAt: Instant = OLD_INSTANT) =
         MealDayEntity(
             date = date.toEpochDay(),
             starterId = starterId,
             mainId = mainId,
             singleId = null,
-            dessertId = dessertId,
             updatedAt = updatedAt.toEpochMilli()
         )
 }

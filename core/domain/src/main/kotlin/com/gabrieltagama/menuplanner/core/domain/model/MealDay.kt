@@ -5,7 +5,7 @@ import java.time.LocalDate
 
 /**
  * The lunch planned for one calendar day. A day has exactly one menu, which is either
- * starter + main (+ dessert) or a single dish (+ dessert). Dessert is optional in both.
+ * starter + main or a single dish. Desserts are kept in the recipe book but never planned.
  */
 data class MealDay(
     val date: LocalDate,
@@ -14,22 +14,16 @@ data class MealDay(
 )
 
 sealed interface DailyMenu {
-    val dessert: Dish?
-    val mainDishes: List<Dish>
-    val dishes: List<Dish> get() = mainDishes + listOfNotNull(dessert)
+    val dishes: List<Dish>
 
     data class Courses(
         val starter: Dish,
-        val main: Dish,
-        override val dessert: Dish? = null
+        val main: Dish
     ) : DailyMenu {
-        override val mainDishes: List<Dish> get() = listOf(starter, main)
+        override val dishes: List<Dish> get() = listOf(starter, main)
     }
 
-    data class Single(
-        val single: Dish,
-        override val dessert: Dish? = null
-    ) : DailyMenu {
-        override val mainDishes: List<Dish> get() = listOf(single)
+    data class Single(val single: Dish) : DailyMenu {
+        override val dishes: List<Dish> get() = listOf(single)
     }
 }

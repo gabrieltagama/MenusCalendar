@@ -50,7 +50,6 @@ internal data class MealDayDto(
     val starterId: String? = null,
     val mainId: String? = null,
     val singleId: String? = null,
-    val dessertId: String? = null,
     val updatedAt: String
 )
 

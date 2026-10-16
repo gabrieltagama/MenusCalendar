@@ -58,9 +58,9 @@ class DayEditorViewModelTest {
         assertEquals(MenuMode.COURSES, state.form.mode)
         assertFalse(state.form.hasSavedDay)
         assertFalse(state.canSave)
-        assertEquals(listOf(MenuSlot.STARTER, MenuSlot.MAIN, MenuSlot.DESSERT), state.visibleSlots)
+        assertEquals(listOf(MenuSlot.STARTER, MenuSlot.MAIN), state.visibleSlots)
         assertEquals(listOf(starter), state.optionsFor(MenuSlot.STARTER))
-        assertEquals(listOf(dessert), state.optionsFor(MenuSlot.DESSERT))
+        assertFalse(state.options.containsKey(DishType.DESSERT))
     }
 
     @Test
@@ -87,7 +87,7 @@ class DayEditorViewModelTest {
         viewModel.onModeChange(MenuMode.SINGLE)
 
         val singleState = awaitState(viewModel) { it.form.mode == MenuMode.SINGLE }
-        assertEquals(listOf(MenuSlot.SINGLE, MenuSlot.DESSERT), singleState.visibleSlots)
+        assertEquals(listOf(MenuSlot.SINGLE), singleState.visibleSlots)
         assertFalse(singleState.canSave)
 
         viewModel.onDishSelect(MenuSlot.SINGLE, single)
@@ -104,7 +104,6 @@ class DayEditorViewModelTest {
         awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
         viewModel.onDishSelect(MenuSlot.STARTER, starter)
         viewModel.onDishSelect(MenuSlot.SINGLE, single)
-        viewModel.onDishSelect(MenuSlot.DESSERT, dessert)
         viewModel.onModeChange(MenuMode.SINGLE)
         awaitState(viewModel) { it.form.mode == MenuMode.SINGLE && it.canSave }
 
@@ -113,20 +112,19 @@ class DayEditorViewModelTest {
         assertEquals(DayEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
         val saved = mealPlanRepository.saved.single()
         assertEquals(date, saved.date)
-        assertEquals(DailyMenu.Single(single = single, dessert = dessert), saved.menu)
+        assertEquals(DailyMenu.Single(single = single), saved.menu)
         assertEquals(fixedInstant, saved.updatedAt)
     }
 
     @Test
     fun existingSingleDayIsLoadedInSingleMode() {
-        val existing = MealDay(date = date, menu = DailyMenu.Single(single = single, dessert = dessert))
+        val existing = MealDay(date = date, menu = DailyMenu.Single(single = single))
         withViewModel(initialDays = listOf(existing)) { viewModel, _ ->
             val state = awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
 
             assertTrue(state.form.hasSavedDay)
             assertEquals(MenuMode.SINGLE, state.form.mode)
             assertEquals(single, state.selectionFor(MenuSlot.SINGLE))
-            assertEquals(dessert, state.selectionFor(MenuSlot.DESSERT))
             assertTrue(state.canSave)
         }
     }

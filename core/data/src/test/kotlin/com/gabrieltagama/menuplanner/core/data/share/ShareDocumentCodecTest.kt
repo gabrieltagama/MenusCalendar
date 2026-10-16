@@ -21,7 +21,8 @@ import org.junit.Test
 
 /**
  * Tests ShareDocumentCodec together with ShareDocumentMapper: lossless round trip from the model
- * through JSON and back, and the error mapping of malformed, newer or inconsistent files.
+ * through JSON and back, older files with desserts in the calendar, and the error mapping of
+ * malformed, newer or inconsistent files.
  */
 class ShareDocumentCodecTest {
     private val codec = ShareDocumentCodec(TestData.json)
@@ -41,7 +42,7 @@ class ShareDocumentCodecTest {
     private val dessert = TestData.dish(id = "dessert-1", name = "Flan", type = DishType.DESSERT, rating = Rating.ONE, mealTime = MealTime.DINNER)
     private val single = TestData.dish(id = "single-1", name = "Lasagna", type = DishType.SINGLE)
 
-    private val coursesDay = TestData.coursesDay(LocalDate.of(2026, 3, 10), starter.id, main.id, dessert.id, TestData.NEW_INSTANT)
+    private val coursesDay = TestData.coursesDay(LocalDate.of(2026, 3, 10), starter.id, main.id, TestData.NEW_INSTANT)
     private val singleDay = TestData.singleDay(LocalDate.of(2026, 3, 11), single.id)
 
     @Test
@@ -129,6 +130,17 @@ class ShareDocumentCodecTest {
 
         assertTrue(decoded is Outcome.Success)
         assertEquals(ShareDocumentDto.CURRENT_SCHEMA_VERSION, (decoded as Outcome.Success).value.schemaVersion)
+    }
+
+    @Test
+    fun `day of an older file with a dessert imports without it`() {
+        val text = """{"exportedAt":"2026-05-01T00:00:00Z","dishes":[],"mealDays":[{"date":"2026-03-11","singleId":"s1","dessertId":"d1","updatedAt":"2026-01-01T00:00:00Z"}]}"""
+
+        val document = (codec.decode(text) as Outcome.Success).value
+        val day = (ShareDocumentMapper.toImportContent(document) as Outcome.Success).value.mealDays.single()
+
+        assertEquals("s1", day.singleId)
+        assertEquals(LocalDate.of(2026, 3, 11).toEpochDay(), day.date)
     }
 
     @Test

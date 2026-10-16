@@ -78,8 +78,30 @@ class MigrationTest {
     }
 
     @Test
+    fun migrate3To4KeepsPlannedDishesAndDropsDesserts() {
+        helper.createDatabase(TEST_DB, 1).use(::insertVersion1Rows)
+        helper.runMigrationsAndValidate(TEST_DB, 2, true, Migrations.MIGRATION_1_2).close()
+        helper.runMigrationsAndValidate(TEST_DB, 3, true, Migrations.MIGRATION_2_3).use { db ->
+            db.execSQL("INSERT INTO dishes (id, name, description, preparation, type, heaviness, rating, meal_time, updated_at) VALUES ('ds', 'Flan', '', '', 'DESSERT', 'MEDIUM', 'THREE', 'ANY', 1)")
+            db.execSQL("UPDATE meal_days SET dessert_id = 'ds' WHERE date = 20000")
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 4, true, Migrations.MIGRATION_3_4).use { db ->
+            db.query("SELECT single_id FROM meal_days WHERE date = 20000").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals("d1", cursor.getString(0))
+            }
+            db.execSQL("DELETE FROM dishes WHERE id = 'ds'")
+            db.query("SELECT COUNT(*) FROM dishes WHERE id = 'ds'").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(0, cursor.getInt(0))
+            }
+        }
+    }
+
+    @Test
     fun registeredMigrationsMatchCurrentVersion() =
-        assertEquals(listOf(Migrations.MIGRATION_1_2, Migrations.MIGRATION_2_3), Migrations.ALL.toList())
+        assertEquals(listOf(Migrations.MIGRATION_1_2, Migrations.MIGRATION_2_3, Migrations.MIGRATION_3_4), Migrations.ALL.toList())
 
     private fun insertVersion1Rows(db: SupportSQLiteDatabase) {
         db.execSQL("INSERT INTO dishes (id, name, description, preparation, type, heaviness, updated_at) VALUES ('d1', 'Soup', '', '', 'STARTER', 'VERY_LOW', 1)")

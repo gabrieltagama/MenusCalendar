@@ -10,11 +10,10 @@ import kotlin.random.Random
 /**
  * Domain service that builds a random menu for one day. Rules, from strict to relaxed:
  * a dish served within RECENT_DAYS days before or after the date is avoided, and next to a
- * heavy day (a main dish VERY_HIGH; desserts do not count), before or after, no VERY_HIGH main
- * dish is chosen. When no dish meets both rules, repeating is allowed first and only then a
- * heavy streak. Shapes (starter + main or single) are chosen from the first non-empty tier:
- * buildable without breaking rules, buildable by only repeating, any available. Dessert is
- * added at random.
+ * heavy day (a dish VERY_HIGH), before or after, no VERY_HIGH dish is chosen. When no dish meets
+ * both rules, repeating is allowed first and only then a heavy streak. Shapes (starter + main or
+ * single) are chosen from the first non-empty tier: buildable without breaking rules, buildable
+ * by only repeating, any available. Desserts are never planned.
  */
 internal class MenuPicker(dishes: List<Dish>, private val random: Random) {
 
@@ -33,26 +32,21 @@ internal class MenuPicker(dishes: List<Dish>, private val random: Random) {
     }
 
     private fun build(shape: MenuShape, context: PickContext): MenuPick {
-        val mains = shape.requiredTypes.map { pickSlot(it, context, checkHeaviness = true) }
-        val dessert = pickDessert(context)
+        val slots = shape.requiredTypes.map { pickSlot(it, context) }
         val menu = when (shape) {
-            MenuShape.COURSES -> DailyMenu.Courses(starter = mains[0].dish, main = mains[1].dish, dessert = dessert?.dish)
-            MenuShape.SINGLE -> DailyMenu.Single(single = mains[0].dish, dessert = dessert?.dish)
+            MenuShape.COURSES -> DailyMenu.Courses(starter = slots[0].dish, main = slots[1].dish)
+            MenuShape.SINGLE -> DailyMenu.Single(single = slots[0].dish)
         }
-        val slots = mains + listOfNotNull(dessert)
         return MenuPick(menu, repeated = slots.any(SlotPick::repeated), breaksHeavyRule = slots.any(SlotPick::breaksHeavyRule))
     }
 
-    private fun pickDessert(context: PickContext): SlotPick? =
-        if (random.nextBoolean() && candidatesOf(DishType.DESSERT).isNotEmpty()) pickSlot(DishType.DESSERT, context, checkHeaviness = false) else null
-
-    private fun pickSlot(type: DishType, context: PickContext, checkHeaviness: Boolean): SlotPick {
+    private fun pickSlot(type: DishType, context: PickContext): SlotPick {
         val candidates = candidatesOf(type)
-        val pool = candidates.filter { context.isFresh(it) && (!checkHeaviness || context.isLightEnough(it)) }
-            .ifEmpty { candidates.filter { !checkHeaviness || context.isLightEnough(it) } }
+        val pool = candidates.filter { context.isFresh(it) && context.isLightEnough(it) }
+            .ifEmpty { candidates.filter(context::isLightEnough) }
             .ifEmpty { candidates }
         val dish = pool.random(random)
-        return SlotPick(dish, repeated = !context.isFresh(dish), breaksHeavyRule = checkHeaviness && !context.isLightEnough(dish))
+        return SlotPick(dish, repeated = !context.isFresh(dish), breaksHeavyRule = !context.isLightEnough(dish))
     }
 
     private fun MenuShape.isBuildable(candidates: (DishType) -> List<Dish>): Boolean =
@@ -67,7 +61,7 @@ internal class MenuPicker(dishes: List<Dish>, private val random: Random) {
             .map(Dish::id)
             .toSet()
 
-    private fun DailyMenu?.isHeavy(): Boolean = this?.mainDishes.orEmpty().any { it.heaviness == Heaviness.VERY_HIGH }
+    private fun DailyMenu?.isHeavy(): Boolean = this?.dishes.orEmpty().any { it.heaviness == Heaviness.VERY_HIGH }
 
     companion object {
         const val RECENT_DAYS = 6L

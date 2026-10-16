@@ -126,11 +126,10 @@ class DishDaoTest {
     fun deletingPlannedDishFailsWithConstraintViolation() = runTest {
         val starter = AndroidTestData.dish("st", type = DishType.STARTER)
         val main = AndroidTestData.dish("mn", type = DishType.MAIN)
-        val dessert = AndroidTestData.dish("ds", type = DishType.DESSERT)
-        listOf(starter, main, dessert).forEach { dishRepository.upsert(it) }
-        mealPlanRepository.save(AndroidTestData.coursesDay(date, starter, main, dessert))
+        listOf(starter, main).forEach { dishRepository.upsert(it) }
+        mealPlanRepository.save(AndroidTestData.coursesDay(date, starter, main))
 
-        listOf(starter, main, dessert).forEach { assertPlannedDishCannotBeDeleted(it) }
+        listOf(starter, main).forEach { assertPlannedDishCannotBeDeleted(it) }
     }
 
     private suspend fun assertPlannedDishCannotBeDeleted(dish: Dish) {

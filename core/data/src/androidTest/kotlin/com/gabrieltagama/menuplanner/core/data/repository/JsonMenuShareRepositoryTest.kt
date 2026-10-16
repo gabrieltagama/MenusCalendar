@@ -54,7 +54,7 @@ class JsonMenuShareRepositoryTest {
     private val main = AndroidTestData.dish("mn", name = "Paella", type = DishType.MAIN, updatedAt = AndroidTestData.NEW_INSTANT)
     private val single = AndroidTestData.dish("sg", name = "Lasagna", type = DishType.SINGLE)
     private val dessert = AndroidTestData.dish("ds", name = "Flan", type = DishType.DESSERT)
-    private val coursesDay = AndroidTestData.coursesDay(LocalDate.of(2026, 3, 10), starter, main, dessert)
+    private val coursesDay = AndroidTestData.coursesDay(LocalDate.of(2026, 3, 10), starter, main)
     private val singleDay = AndroidTestData.singleDay(LocalDate.of(2026, 3, 11), single, updatedAt = AndroidTestData.NEW_INSTANT)
 
     @Before

@@ -15,13 +15,12 @@ import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
  * Tests that BuildShoppingListUseCase adds up the ingredients of the starters, mains and single
- * dishes of one month and its dinners in standard units, one line per product, leaving desserts and
- * other months out, that it can be limited to lunches or to dinners and to a date range that may
+ * dishes of one month and its dinners in standard units, one line per product, leaving other months
+ * out, that it can be limited to lunches or to dinners and to a date range that may
  * span several months.
  */
 class BuildShoppingListUseCaseTest {
@@ -54,11 +53,6 @@ class BuildShoppingListUseCaseTest {
             Ingredient(name = "SAL", quantity = 0.0, unit = MeasureUnit.TO_TASTE)
         )
     )
-    private val dessert = dish(
-        name = "Flan",
-        type = DishType.DESSERT,
-        ingredients = listOf(Ingredient(name = "Azúcar", quantity = 100.0, unit = MeasureUnit.GRAM))
-    )
 
     private fun day(date: LocalDate, menu: DailyMenu) = MealDay(date = date, menu = menu)
 
@@ -89,13 +83,6 @@ class BuildShoppingListUseCaseTest {
             ),
             items
         )
-    }
-
-    @Test
-    fun `leaves desserts out`() {
-        val items = build(day(LocalDate.of(2026, 10, 5), DailyMenu.Single(single = single, dessert = dessert)))
-
-        assertTrue(items.none { it.name == "Azúcar" })
     }
 
     @Test

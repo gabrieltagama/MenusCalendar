@@ -21,14 +21,12 @@ internal fun MealDay.toEntity(): MealDayEntity = MealDayEntity(
     starterId = (menu as? DailyMenu.Courses)?.starter?.id,
     mainId = (menu as? DailyMenu.Courses)?.main?.id,
     singleId = (menu as? DailyMenu.Single)?.single?.id,
-    dessertId = menu.dessert?.id,
     updatedAt = updatedAt.toEpochMilli()
 )
 
 private fun MealDayEntity.toMenu(dishesById: Map<String, Dish>): DailyMenu? {
-    val dessert = dessertId?.let { dishesById[it] ?: return null }
-    if (singleId != null) return dishesById[singleId]?.let { DailyMenu.Single(single = it, dessert = dessert) }
+    if (singleId != null) return dishesById[singleId]?.let { DailyMenu.Single(single = it) }
     val starter = starterId?.let(dishesById::get) ?: return null
     val main = mainId?.let(dishesById::get) ?: return null
-    return DailyMenu.Courses(starter = starter, main = main, dessert = dessert)
+    return DailyMenu.Courses(starter = starter, main = main)
 }
