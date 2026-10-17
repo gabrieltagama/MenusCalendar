@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,17 +60,24 @@ import com.gabrieltagama.menuplanner.feature.settings.R
 /**
  * Settings tab: stateful route bound to [SettingsViewModel] and the Google consent flow, and a
  * stateless screen grouped in sections: "Apariencia" with the theme choice (system, light or dark),
- * "Calendario" with the days without repeating a dish of the autofill (RepeatWindow) and the optional Google Drive backup of recipes and calendar. Bottom insets are left to the app shell, which
+ * "Calendario" with the days without repeating a dish of the autofill (RepeatWindow), the optional
+ * Google Drive backup of recipes and calendar and "Compartir" with the export and import of a JSON
+ * file. The share flow lives in another feature, so the app shell hands in rememberFileShare, which
+ * reports its results in this screen's snackbar host. Bottom insets are left to the app shell, which
  * draws the NavigationBar below this screen.
  */
 @Composable
-fun SettingsScreenRoute(viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsScreenRoute(
+    rememberFileShare: @Composable (SnackbarHostState) -> FileShareActions,
+    viewModel: SettingsViewModel = hiltViewModel()
+) {
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val repeatWindow by viewModel.repeatWindow.collectAsStateWithLifecycle()
     val cloudAccount by viewModel.cloudAccount.collectAsStateWithLifecycle()
     val backupState by viewModel.backupState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val connectGoogle = rememberGoogleDriveConnect(onResult = viewModel::onGoogleAuthorization)
+    val fileShare = rememberFileShare(snackbarHostState)
 
     val messageText = backupState.message?.text()
     LaunchedEffect(backupState.message) {
@@ -93,6 +102,7 @@ fun SettingsScreenRoute(viewModel: SettingsViewModel = hiltViewModel()) {
             onRestore = viewModel::onRestore,
             onDisconnect = viewModel::onDisconnect
         ),
+        fileShare = fileShare,
         snackbarHostState = snackbarHostState
     )
 }
@@ -102,6 +112,12 @@ class BackupActions(
     val onBackUpNow: () -> Unit,
     val onRestore: () -> Unit,
     val onDisconnect: () -> Unit
+)
+
+class FileShareActions(
+    val isBusy: Boolean,
+    val onExport: () -> Unit,
+    val onImport: () -> Unit
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,6 +130,7 @@ fun SettingsScreen(
     cloudAccount: CloudAccount,
     isBackupBusy: Boolean,
     backupActions: BackupActions,
+    fileShare: FileShareActions,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) = Scaffold(
     contentWindowInsets = ScaffoldDefaults.contentWindowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
@@ -127,6 +144,8 @@ fun SettingsScreen(
         RepeatWindowOption(window = repeatWindow, onChange = onRepeatWindowChange)
         SectionHeader(R.string.settings_section_backup)
         BackupOptions(account = cloudAccount, isBusy = isBackupBusy, actions = backupActions)
+        SectionHeader(R.string.settings_section_share)
+        FileShareOptions(actions = fileShare)
     }
 }
 
@@ -196,6 +215,13 @@ private fun ConnectedBackupOptions(email: String, isBusy: Boolean, actions: Back
 }
 
 @Composable
+private fun FileShareOptions(actions: FileShareActions) = Column {
+    if (actions.isBusy) LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
+    BackupItem(Icons.Filled.FileUpload, stringResource(R.string.settings_share_export), stringResource(R.string.settings_share_export_hint), enabled = !actions.isBusy, onClick = actions.onExport)
+    BackupItem(Icons.Filled.FileDownload, stringResource(R.string.settings_share_import), stringResource(R.string.settings_share_import_hint), enabled = !actions.isBusy, onClick = actions.onImport)
+}
+
+@Composable
 private fun BackupItem(icon: ImageVector, title: String, hint: String?, enabled: Boolean, onClick: () -> Unit) = ListItem(
     headlineContent = { Text(title) },
     supportingContent = if (hint == null) null else ({ Text(hint) }),
@@ -244,6 +270,7 @@ private fun SettingsScreenPreview() = MenuPlannerTheme {
         onRepeatWindowChange = {},
         cloudAccount = CloudAccount.Connected("usuario@gmail.com"),
         isBackupBusy = false,
-        backupActions = BackupActions(onConnect = {}, onBackUpNow = {}, onRestore = {}, onDisconnect = {})
+        backupActions = BackupActions(onConnect = {}, onBackUpNow = {}, onRestore = {}, onDisconnect = {}),
+        fileShare = FileShareActions(isBusy = false, onExport = {}, onImport = {})
     )
 }
