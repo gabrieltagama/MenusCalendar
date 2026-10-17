@@ -16,8 +16,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * Wires the share flow into a screen: it opens the system share sheet for an exported file, the
- * document picker for an import and shows the result in the given snackbar host. The shell only
- * needs isBusy, onExport and onImport.
+ * document picker for an import and shows the result in the given snackbar host. Callers only
+ * need isBusy, onExport and onImport.
  */
 class ShareController(
     val isBusy: Boolean,
