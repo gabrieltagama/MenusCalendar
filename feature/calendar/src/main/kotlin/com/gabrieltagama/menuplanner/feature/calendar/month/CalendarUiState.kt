@@ -1,0 +1,66 @@
+package com.gabrieltagama.menuplanner.feature.calendar.month
+
+import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
+import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedDinner
+import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
+import java.time.LocalDate
+import java.time.YearMonth
+
+/**
+ * State of the monthly calendar: visible month, selected day, active view (lunches or dinners),
+ * the planned lunches and dinners of the month, the autofill status and the interaction mode
+ * (CalendarMode). selection and clipboard are read from the mode, so at most one of them exists.
+ * CalendarEvent carries the one-shot results shown in a snackbar.
+ */
+enum class PlanView { LUNCH, DINNER }
+
+data class CalendarUiState(
+    val month: YearMonth,
+    val selectedDate: LocalDate,
+    val today: LocalDate,
+    val view: PlanView = PlanView.LUNCH,
+    val isLoading: Boolean = true,
+    val days: Map<LocalDate, PlannedLunch> = emptyMap(),
+    val dinners: Map<LocalDate, PlannedDinner> = emptyMap(),
+    val isAutoFilling: Boolean = false,
+    val showAutoFillConfirm: Boolean = false,
+    val mode: CalendarMode = CalendarMode.Browsing
+) {
+    val selection: DaySelection? get() = (mode as? CalendarMode.Selecting)?.selection
+
+    val clipboard: PlanClipboard? get() = (mode as? CalendarMode.Pasting)?.clipboard
+
+    val isSelecting: Boolean get() = mode is CalendarMode.Selecting
+
+    val isPasting: Boolean get() = mode is CalendarMode.Pasting
+
+    val plannedDates: Set<LocalDate> get() = when (view) {
+        PlanView.LUNCH -> days.keys
+        PlanView.DINNER -> dinners.keys
+    }
+
+    val selectedDay: PlannedLunch? get() = days[selectedDate]
+
+    val selectedDinner: PlannedDinner? get() = dinners[selectedDate]
+
+    val isShowingCurrentMonth: Boolean get() = month == YearMonth.from(today)
+
+    fun isMarked(date: LocalDate): Boolean = selection?.dates?.contains(date) == true
+
+    fun isPlanned(date: LocalDate): Boolean = when (view) {
+        PlanView.LUNCH -> date in days
+        PlanView.DINNER -> date in dinners
+    }
+}
+
+sealed interface CalendarEvent {
+    data class AutoFillCompleted(val result: AutoFillResult, val view: PlanView) : CalendarEvent
+
+    data class DaysDeleted(val deletion: PlanDeletion) : CalendarEvent
+
+    data class SelectionFilled(val result: AutoFillResult, val view: PlanView) : CalendarEvent
+
+    data class DaysPasted(val paste: PlanPaste) : CalendarEvent
+
+    data object NothingPlanned : CalendarEvent
+}

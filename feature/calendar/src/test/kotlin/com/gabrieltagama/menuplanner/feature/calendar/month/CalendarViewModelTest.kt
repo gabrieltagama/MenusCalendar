@@ -85,16 +85,18 @@ class CalendarViewModelTest {
         CalendarViewModel(
             ObserveMonthPlanUseCase(queries),
             ObserveMonthDinnersUseCase(queries),
-            AutoFillMonthUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
-            AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
-            ClearMealDaysUseCase(repository),
-            ClearDinnerDaysUseCase(dinnerRepository),
-            RestoreMealDaysUseCase(repository),
-            RestoreDinnerDaysUseCase(dinnerRepository),
-            PasteMealDaysUseCase(repository, clock),
-            PasteDinnerDaysUseCase(dinnerRepository, clock),
-            UndoPasteMealDaysUseCase(repository),
-            UndoPasteDinnerDaysUseCase(dinnerRepository),
+            PlanCommands(
+                AutoFillMonthUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
+                AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
+                ClearMealDaysUseCase(repository),
+                ClearDinnerDaysUseCase(dinnerRepository),
+                RestoreMealDaysUseCase(repository),
+                RestoreDinnerDaysUseCase(dinnerRepository),
+                PasteMealDaysUseCase(repository, clock),
+                PasteDinnerDaysUseCase(dinnerRepository, clock),
+                UndoPasteMealDaysUseCase(repository),
+                UndoPasteDinnerDaysUseCase(dinnerRepository)
+            ),
             clock
         )
     }
