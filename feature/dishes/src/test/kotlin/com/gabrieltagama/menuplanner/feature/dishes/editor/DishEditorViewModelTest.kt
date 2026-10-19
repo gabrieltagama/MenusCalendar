@@ -223,8 +223,85 @@ class DishEditorViewModelTest {
         assertEquals(listOf(existingDish.id.value), repository.deletedIds)
     }
 
-    private fun createViewModel(dishId: String?): DishEditorViewModel = DishEditorViewModel(
-        savedStateHandle = if (dishId == null) SavedStateHandle() else SavedStateHandle(mapOf("dishId" to dishId)),
+    @Test
+    fun backWithoutChangesCloses() = runBlocking {
+        val viewModel = createViewModel(dishId = existingDish.id.value)
+        withTimeout(TIMEOUT_MS) { viewModel.uiState.first { !it.isLoading } }
+
+        viewModel.onBackRequest()
+
+        assertEquals(DishEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
+        assertFalse(viewModel.uiState.value.showDiscardConfirm)
+    }
+
+    @Test
+    fun backWithChangesAsksBeforeDiscarding() = runBlocking {
+        val viewModel = createViewModel(dishId = existingDish.id.value)
+        withTimeout(TIMEOUT_MS) { viewModel.uiState.first { !it.isLoading } }
+        viewModel.onNameChange("Tortilla de patatas con cebolla")
+
+        viewModel.onBackRequest()
+        assertTrue(viewModel.uiState.value.showDiscardConfirm)
+
+        viewModel.onDiscardDismiss()
+        assertFalse(viewModel.uiState.value.showDiscardConfirm)
+        assertEquals("Tortilla de patatas con cebolla", viewModel.uiState.value.name)
+
+        viewModel.onBackRequest()
+        viewModel.onDiscardConfirm()
+        assertEquals(DishEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
+        assertTrue(repository.upserted.isEmpty())
+    }
+
+    @Test
+    fun undoingTheChangesLetsGoBackWithoutAsking() = runBlocking {
+        val viewModel = createViewModel(dishId = null)
+        viewModel.onNameChange("Gazpacho")
+        viewModel.onNameChange("")
+
+        viewModel.onBackRequest()
+
+        assertEquals(DishEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
+    }
+
+    @Test
+    fun typedFormSurvivesTheSystemKillingTheApp() = runBlocking {
+        val handle = SavedStateHandle(mapOf("dishId" to existingDish.id.value))
+        val first = createViewModel(handle)
+        withTimeout(TIMEOUT_MS) { first.uiState.first { !it.isLoading } }
+        first.onNameChange("Tortilla con cebolla")
+        first.onAddIngredient()
+        val key = first.uiState.value.ingredients.last().key
+        first.onIngredientNameChange(key, "Cebolla")
+        first.onIngredientQuantityChange(key, "150")
+        withTimeout(TIMEOUT_MS) { first.uiState.first { it.ingredients.last().quantityText == "150" } }
+        repository.upsert(existingDish.copy(name = "Changed elsewhere"))
+
+        val restored = createViewModel(handle).uiState.value
+
+        assertFalse(restored.isLoading)
+        assertEquals("Tortilla con cebolla", restored.name)
+        assertEquals(listOf("Patata", "Aceite", "Cebolla"), restored.ingredients.map { it.name })
+        assertEquals("150", restored.ingredients.last().quantityText)
+        assertEquals(restored.ingredients.size, restored.ingredients.map { it.key }.toSet().size)
+    }
+
+    @Test
+    fun restoredFormStillKnowsItHasUnsavedChanges() {
+        val handle = SavedStateHandle()
+        createViewModel(handle).onNameChange("Gazpacho")
+
+        val restored = createViewModel(handle)
+        restored.onBackRequest()
+
+        assertTrue(restored.uiState.value.showDiscardConfirm)
+    }
+
+    private fun createViewModel(dishId: String?): DishEditorViewModel =
+        createViewModel(if (dishId == null) SavedStateHandle() else SavedStateHandle(mapOf("dishId" to dishId)))
+
+    private fun createViewModel(handle: SavedStateHandle): DishEditorViewModel = DishEditorViewModel(
+        savedStateHandle = handle,
         getDish = GetDishUseCase(repository),
         saveDish = SaveDishUseCase(repository, clock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository)),
         deleteDish = DeleteDishUseCase(repository)

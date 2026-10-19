@@ -22,8 +22,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Exports the recipe book and calendar to a file to share and imports a file picked by the user,
- * through the ShareFiles port. One operation runs at a time; results surface as a nullable
+ * Exports the recipe book and calendar to a file to share or to save in a document the user picks,
+ * and imports a file picked by the user, through the ShareFiles port. One operation runs at a time; results surface as a nullable
  * [ShareMessage] in [ShareUiState] and the file to share as a one-shot [ShareEvent].
  */
 data class ShareUiState(
@@ -35,6 +35,7 @@ sealed interface ShareMessage {
     data class Imported(val summary: ImportSummary) : ShareMessage
     data class Failed(val error: DomainError) : ShareMessage
     data object ExportFailed : ShareMessage
+    data object Saved : ShareMessage
 }
 
 sealed interface ShareEvent {
@@ -62,6 +63,17 @@ class ShareViewModel @Inject constructor(
         }
         if (uri == null) showMessage(ShareMessage.ExportFailed)
         else _events.send(ShareEvent.ShareFile(uri))
+    }
+
+    fun saveFileName(): String = files.exportFileName()
+
+    fun onSaveTo(uri: Uri) = runBusy {
+        val saved = try {
+            files.save(uri, exportMenus())
+        } catch (exception: IOException) {
+            false
+        }
+        showMessage(if (saved) ShareMessage.Saved else ShareMessage.ExportFailed)
     }
 
     fun onImport(uri: Uri) = runBusy {

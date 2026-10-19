@@ -46,4 +46,7 @@
     <string name="dish_editor_invalid_form">Revisa los campos marcados</string>
     <string name="dish_editor_delete_title">Eliminar plato</string>
     <string name="dish_editor_delete_text">¿Seguro que quieres eliminar «%1$s»?</string>
+    <string name="dish_editor_discard_title">¿Descartar cambios?</string>
+    <string name="dish_editor_discard_text">Tienes cambios sin guardar en este plato. Si sales ahora, se perderán.</string>
+    <string name="dish_editor_discard">Descartar</string>
 </resources>

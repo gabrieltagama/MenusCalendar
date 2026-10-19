@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,8 +62,8 @@ import com.gabrieltagama.menuplanner.feature.settings.R
  * Settings tab: stateful route bound to [SettingsViewModel] and the Google consent flow, and a
  * stateless screen grouped in sections: "Apariencia" with the theme choice (system, light or dark),
  * "Calendario" with the days without repeating a dish of the autofill (RepeatWindow), the optional
- * Google Drive backup of recipes and calendar and "Compartir" with the export and import of a JSON
- * file. The share flow lives in another feature, so the app shell hands in rememberFileShare, which
+ * Google Drive backup of recipes and calendar and "Compartir" with the export (to share or to save
+ * a copy in a folder of the phone) and import of a JSON file. The share flow lives in another feature, so the app shell hands in rememberFileShare, which
  * reports its results in this screen's snackbar host. Bottom insets are left to the app shell, which
  * draws the NavigationBar below this screen.
  */
@@ -117,6 +118,7 @@ class BackupActions(
 class FileShareActions(
     val isBusy: Boolean,
     val onExport: () -> Unit,
+    val onSave: () -> Unit,
     val onImport: () -> Unit
 )
 
@@ -218,6 +220,7 @@ private fun ConnectedBackupOptions(email: String, isBusy: Boolean, actions: Back
 private fun FileShareOptions(actions: FileShareActions) = Column {
     if (actions.isBusy) LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
     BackupItem(Icons.Filled.FileUpload, stringResource(R.string.settings_share_export), stringResource(R.string.settings_share_export_hint), enabled = !actions.isBusy, onClick = actions.onExport)
+    BackupItem(Icons.Filled.Save, stringResource(R.string.settings_share_save), stringResource(R.string.settings_share_save_hint), enabled = !actions.isBusy, onClick = actions.onSave)
     BackupItem(Icons.Filled.FileDownload, stringResource(R.string.settings_share_import), stringResource(R.string.settings_share_import_hint), enabled = !actions.isBusy, onClick = actions.onImport)
 }
 
@@ -271,6 +274,6 @@ private fun SettingsScreenPreview() = MenuPlannerTheme {
         cloudAccount = CloudAccount.Connected("usuario@gmail.com"),
         isBackupBusy = false,
         backupActions = BackupActions(onConnect = {}, onBackUpNow = {}, onRestore = {}, onDisconnect = {}),
-        fileShare = FileShareActions(isBusy = false, onExport = {}, onImport = {})
+        fileShare = FileShareActions(isBusy = false, onExport = {}, onSave = {}, onImport = {})
     )
 }

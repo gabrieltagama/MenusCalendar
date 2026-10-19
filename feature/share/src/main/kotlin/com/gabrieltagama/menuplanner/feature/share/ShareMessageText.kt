@@ -18,4 +18,5 @@ internal fun ShareMessage.text(): String = when (this) {
     )
     is ShareMessage.Failed -> error.message()
     ShareMessage.ExportFailed -> stringResource(R.string.share_export_failed)
+    ShareMessage.Saved -> stringResource(R.string.share_saved)
 }

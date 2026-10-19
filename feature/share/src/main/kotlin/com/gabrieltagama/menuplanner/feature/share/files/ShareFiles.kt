@@ -19,12 +19,16 @@ import kotlinx.coroutines.withContext
 
 /**
  * Port for the files of the share flow: write puts an exported text in a file other apps can read
- * through the app FileProvider, and read loads a file picked by the user (null when it cannot be
- * read). CacheShareFiles keeps only the latest export in the cache, named after the export time.
+ * through the app FileProvider, save writes it into a document the user created with the system
+ * picker (a copy that survives uninstalling the app; false when it cannot be written), read loads a
+ * file picked by the user (null when it cannot be read) and exportFileName names exports after the
+ * current time. CacheShareFiles keeps only the latest shared export in the cache.
  */
 interface ShareFiles {
     suspend fun write(content: String): Uri
+    suspend fun save(uri: Uri, content: String): Boolean
     suspend fun read(uri: Uri): String?
+    fun exportFileName(): String
 }
 
 internal class CacheShareFiles @Inject constructor(
@@ -35,9 +39,21 @@ internal class CacheShareFiles @Inject constructor(
     override suspend fun write(content: String): Uri = withContext(Dispatchers.IO) {
         val directory = File(context.cacheDir, SHARED_DIRECTORY).apply { mkdirs() }
         directory.listFiles()?.forEach(File::delete)
-        val file = File(directory, "menuplanner-${LocalDateTime.now(clock).format(FILE_DATE_FORMAT)}.json").apply { writeText(content) }
+        val file = File(directory, exportFileName()).apply { writeText(content) }
         FileProvider.getUriForFile(context, "${context.packageName}$AUTHORITY_SUFFIX", file)
     }
+
+    override suspend fun save(uri: Uri, content: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.openOutputStream(uri, TRUNCATE_MODE)?.bufferedWriter()?.use { it.write(content) } != null
+        } catch (exception: IOException) {
+            false
+        } catch (exception: SecurityException) {
+            false
+        }
+    }
+
+    override fun exportFileName(): String = "menuplanner-${LocalDateTime.now(clock).format(FILE_DATE_FORMAT)}.json"
 
     override suspend fun read(uri: Uri): String? = withContext(Dispatchers.IO) {
         try {
@@ -52,6 +68,7 @@ internal class CacheShareFiles @Inject constructor(
     private companion object {
         const val SHARED_DIRECTORY = "shared"
         const val AUTHORITY_SUFFIX = ".fileprovider"
+        const val TRUNCATE_MODE = "wt"
         val FILE_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")
     }
 }

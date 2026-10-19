@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="share_chooser_title">Compartir menús</string>
+    <string name="share_saved">Copia guardada en el archivo elegido</string>
     <string name="share_export_failed">No se han podido exportar los datos</string>
     <string name="share_import_summary">Importados: %1$d platos nuevos, %2$d actualizados; %3$d días nuevos, %4$d actualizados</string>
 </resources>

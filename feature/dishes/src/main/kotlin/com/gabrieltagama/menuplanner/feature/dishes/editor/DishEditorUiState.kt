@@ -27,6 +27,7 @@ data class DishEditorUiState(
     val preparation: String = "",
     val showValidationErrors: Boolean = false,
     val showDeleteConfirm: Boolean = false,
+    val showDiscardConfirm: Boolean = false,
     val error: DomainError? = null
 ) {
     val isNameInvalid: Boolean get() = showValidationErrors && name.isBlank()

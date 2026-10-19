@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.feature.dishes.editor
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -79,7 +80,8 @@ import com.gabrieltagama.menuplanner.feature.dishes.R
  * stateless screen receiving the form state and one callback per user action. The form is split
  * into section cards (basics, classification, ingredients, preparation); type is chosen with
  * icon chips, heaviness with a color-coded segmented button, and rating and meal time with
- * dropdowns.
+ * dropdowns. The back arrow and the system back ask the ViewModel first, which offers to discard
+ * unsaved changes.
  */
 data class DishEditorActions(
     val onBack: () -> Unit = {},
@@ -87,6 +89,8 @@ data class DishEditorActions(
     val onDeleteRequest: () -> Unit = {},
     val onDeleteConfirm: () -> Unit = {},
     val onDeleteDismiss: () -> Unit = {},
+    val onDiscardConfirm: () -> Unit = {},
+    val onDiscardDismiss: () -> Unit = {},
     val onNameChange: (String) -> Unit = {},
     val onDescriptionChange: (String) -> Unit = {},
     val onTypeChange: (DishType) -> Unit = {},
@@ -124,15 +128,19 @@ fun DishEditorScreenRoute(
         viewModel.onErrorShown()
     }
 
+    BackHandler(onBack = viewModel::onBackRequest)
+
     DishEditorScreen(
         state = state,
         snackbarHostState = snackbarHostState,
         actions = DishEditorActions(
-            onBack = onBack,
+            onBack = viewModel::onBackRequest,
             onSave = viewModel::onSave,
             onDeleteRequest = viewModel::onDeleteRequest,
             onDeleteConfirm = viewModel::onDeleteConfirm,
             onDeleteDismiss = viewModel::onDeleteDismiss,
+            onDiscardConfirm = viewModel::onDiscardConfirm,
+            onDiscardDismiss = viewModel::onDiscardDismiss,
             onNameChange = viewModel::onNameChange,
             onDescriptionChange = viewModel::onDescriptionChange,
             onTypeChange = viewModel::onTypeChange,
@@ -192,6 +200,15 @@ fun DishEditorScreen(
             onConfirm = actions.onDeleteConfirm,
             onDismiss = actions.onDeleteDismiss,
             confirmLabel = stringResource(R.string.dish_editor_delete)
+        )
+
+    if (state.showDiscardConfirm)
+        ConfirmDialog(
+            title = stringResource(R.string.dish_editor_discard_title),
+            text = stringResource(R.string.dish_editor_discard_text),
+            onConfirm = actions.onDiscardConfirm,
+            onDismiss = actions.onDiscardDismiss,
+            confirmLabel = stringResource(R.string.dish_editor_discard)
         )
 }
 

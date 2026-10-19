@@ -16,12 +16,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * Wires the share flow into a screen: it opens the system share sheet for an exported file, the
- * document picker for an import and shows the result in the given snackbar host. Callers only
- * need isBusy, onExport and onImport.
+ * document creator to save a copy where the user chooses (Descargas, for example), the document
+ * picker for an import and shows the result in the given snackbar host. Callers only need isBusy,
+ * onExport, onSave and onImport.
  */
 class ShareController(
     val isBusy: Boolean,
     val onExport: () -> Unit,
+    val onSave: () -> Unit,
     val onImport: () -> Unit
 )
 
@@ -32,6 +34,9 @@ fun rememberShareController(snackbarHostState: SnackbarHostState, viewModel: Sha
     val chooserTitle = stringResource(R.string.share_chooser_title)
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(viewModel::onImport)
+    }
+    val saveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(JSON_MIME_TYPE)) { uri ->
+        uri?.let(viewModel::onSaveTo)
     }
 
     LaunchedEffect(viewModel) {
@@ -49,7 +54,12 @@ fun rememberShareController(snackbarHostState: SnackbarHostState, viewModel: Sha
         viewModel.onMessageShown()
     }
 
-    return ShareController(isBusy = state.isBusy, onExport = viewModel::onExport, onImport = { importLauncher.launch(IMPORT_MIME_TYPES) })
+    return ShareController(
+        isBusy = state.isBusy,
+        onExport = viewModel::onExport,
+        onSave = { saveLauncher.launch(viewModel.saveFileName()) },
+        onImport = { importLauncher.launch(IMPORT_MIME_TYPES) }
+    )
 }
 
 private fun Context.shareJson(uri: Uri, chooserTitle: String) {
