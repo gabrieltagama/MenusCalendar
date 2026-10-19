@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.common
 
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
+import java.time.LocalDate
 
 /**
  * Business errors grouped by the context that raises them: the recipe book, the meal planning, the
@@ -13,6 +14,7 @@ sealed interface DomainError {
     data class InvalidIngredient(val index: Int) : RecipeError
     data object DishNotFound : RecipeError
     data object DishInUse : RecipeError
+    data class DishPlannedIncompatibly(val firstDate: LocalDate, val days: Int) : RecipeError
     data class WrongDishType(val slot: MenuSlot, val expected: DishType) : PlanningError
     data object NotADinnerDish : PlanningError
     data object InvalidImportFile : ShareError

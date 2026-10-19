@@ -6,13 +6,17 @@ import com.gabrieltagama.menuplanner.core.data.database.dao.DishDao
 import com.gabrieltagama.menuplanner.core.data.mapper.toDomain
 import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
+import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
+import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import java.time.LocalDate
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -142,6 +146,23 @@ class DishDaoTest {
 
         assertTrue("Expected SQLiteConstraintException but was $error", error is SQLiteConstraintException)
         assertEquals(single, dishRepository.getDish(single.id))
+    }
+
+    @Test
+    fun plannedUsesListTheLunchSlotsAndDinnersOfTheDish() = runTest {
+        val starter = DatabaseTestData.dish("st", type = DishType.STARTER)
+        val main = DatabaseTestData.dish("mn", type = DishType.MAIN)
+        val single = DatabaseTestData.dish("sg", type = DishType.SINGLE)
+        dishRepository.upsertAll(listOf(starter, main, single))
+        mealPlanRepository.saveAll(listOf(DatabaseTestData.coursesDay(date, starter, main), DatabaseTestData.singleDay(date.plusDays(1), single)))
+        RoomDinnerPlanRepository(database.dinnerDayDao(), dishDao).save(DinnerDay(date.plusDays(2), single, DatabaseTestData.OLD_INSTANT))
+
+        assertEquals(listOf(PlannedUse.Lunch(date, MenuSlot.MAIN)), dishRepository.getPlannedUses(main.id))
+        assertEquals(
+            setOf(PlannedUse.Lunch(date.plusDays(1), MenuSlot.SINGLE), PlannedUse.Dinner(date.plusDays(2))),
+            dishRepository.getPlannedUses(single.id).toSet()
+        )
+        assertEquals(emptyList<PlannedUse>(), dishRepository.getPlannedUses(DishId("unplanned")))
     }
 
     private suspend fun assertPlannedDishCannotBeDeleted(dish: Dish) {

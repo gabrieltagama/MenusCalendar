@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.core.ui.text
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
@@ -10,6 +11,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.ui.R
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * Localized labels for domain enums and errors, shared by every feature.
@@ -71,12 +74,15 @@ fun MeasureUnit.label(): String = stringResource(
     }
 )
 
+private val errorDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.forLanguageTag("es-ES"))
+
 @Composable
 fun DomainError.message(): String = when (this) {
     DomainError.BlankDishName -> stringResource(R.string.error_blank_dish_name)
     is DomainError.InvalidIngredient -> stringResource(R.string.error_invalid_ingredient, index + 1)
     DomainError.DishNotFound -> stringResource(R.string.error_dish_not_found)
     DomainError.DishInUse -> stringResource(R.string.error_dish_in_use)
+    is DomainError.DishPlannedIncompatibly -> pluralStringResource(R.plurals.error_dish_planned_incompatibly, days, days, firstDate.format(errorDateFormatter))
     is DomainError.WrongDishType -> stringResource(R.string.error_wrong_dish_type, expected.label())
     DomainError.NotADinnerDish -> stringResource(R.string.error_not_a_dinner_dish)
     DomainError.InvalidImportFile -> stringResource(R.string.error_invalid_import_file)

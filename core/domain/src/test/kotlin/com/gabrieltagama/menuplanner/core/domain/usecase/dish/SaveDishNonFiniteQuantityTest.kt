@@ -25,7 +25,7 @@ class SaveDishNonFiniteQuantityTest {
     @Before
     fun setUp() {
         repository = FakeDishRepository()
-        useCase = SaveDishUseCase(TestDishes.fixedClock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository))
+        useCase = SaveDishUseCase(repository, TestDishes.fixedClock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository))
     }
 
     @Test

@@ -28,6 +28,10 @@
     <string name="error_invalid_ingredient">El ingrediente %1$d no es válido</string>
     <string name="error_dish_not_found">El plato no existe</string>
     <string name="error_dish_in_use">No se puede borrar: el plato está en el calendario</string>
+    <plurals name="error_dish_planned_incompatibly">
+        <item quantity="one">No se puede guardar: el plato está en el calendario el %2$s y con este tipo o momento ya no encaja. Quítalo de ese día o déjalos como estaban</item>
+        <item quantity="other">No se puede guardar: el plato está en el calendario en %1$d días (el primero, el %2$s) y con este tipo o momento ya no encaja. Quítalo de esos días o déjalos como estaban</item>
+    </plurals>
     <string name="error_wrong_dish_type">El plato elegido no es de tipo %1$s</string>
     <string name="error_not_a_dinner_dish">Ese plato no se puede elegir para cenar</string>
     <string name="error_invalid_import_file">El archivo no es un JSON de MenuPlanner válido</string>
