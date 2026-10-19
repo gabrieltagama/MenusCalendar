@@ -118,6 +118,26 @@ class RoomMenuSnapshotRepositoryTest {
     }
 
     @Test
+    fun dishWithAnotherIdButTheSameNameUpdatesTheLocalOneAndItsPlannedDaysFollow() = runTest {
+        val local = DatabaseTestData.dish("preloaded", name = "Lentejas", type = DishType.SINGLE)
+        dishRepository.upsert(local)
+        val edited = DatabaseTestData.dish("exported", name = "LENTEJAS", type = DishType.SINGLE, updatedAt = DatabaseTestData.NEW_INSTANT)
+        val snapshot = MenuSnapshot(
+            dishes = listOf(edited),
+            lunches = listOf(LunchEntry(date, singleId = edited.id, updatedAt = DatabaseTestData.OLD_INSTANT)),
+            dinners = listOf(DinnerEntry(date, edited.id, DatabaseTestData.OLD_INSTANT))
+        )
+
+        val summary = repository.merge(snapshot)
+
+        val expected = edited.copy(id = local.id)
+        assertEquals(ImportSummary(0, 1, 0, 2, 0, 0), summary)
+        assertEquals(listOf(expected), dishRepository.getDishes())
+        assertEquals(expected, mealPlanRepository.getDay(date)?.menu?.dishes?.single())
+        assertEquals(expected, dinnerPlanRepository.getDay(date)?.dish)
+    }
+
+    @Test
     fun lunchCanUseADishOfTheSameSnapshotOrAStoredOne() = runTest {
         dishRepository.upsert(main)
         val snapshot = MenuSnapshot(

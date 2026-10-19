@@ -9,6 +9,10 @@ La app no tiene login. En el primer arranque ofrece **Conectar con Google** o **
 - Una tarea diaria de WorkManager sube la copia solo si algo ha cambiado desde la última subida.
 - Restaurar funciona como importar un fichero compartido: se añade lo que no existe y se actualiza solo lo que es más antiguo que la copia.
 
+## Exportar e importar JSON
+
+Cada plato se reconoce primero por su id y, si el id no existe en el dispositivo, por su **nombre y tipo** (sin tener en cuenta mayúsculas, tildes, signos ni espacios). Así, al reinstalar la app e importar un fichero anterior, o al importar el de otra persona, las recetas que ya existen se **actualizan** (si la versión importada es más reciente) en lugar de duplicarse, y los días del calendario apuntan al plato local. Si el fichero trae varias recetas con el mismo nombre y tipo, se queda la más reciente.
+
 ### Configuración necesaria en Google Cloud
 
 1. Crear un proyecto en [Google Cloud Console](https://console.cloud.google.com/) y habilitar **Google Drive API**.

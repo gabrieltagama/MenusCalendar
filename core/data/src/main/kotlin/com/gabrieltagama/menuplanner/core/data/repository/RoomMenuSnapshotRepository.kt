@@ -11,6 +11,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.share.DinnerEntry
+import com.gabrieltagama.menuplanner.core.domain.model.share.DishMergePlan
 import com.gabrieltagama.menuplanner.core.domain.model.share.ImportPolicy
 import com.gabrieltagama.menuplanner.core.domain.model.share.LunchEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
@@ -23,9 +24,10 @@ import javax.inject.Inject
 
 /**
  * Room-backed snapshot of the recipe book and calendar. read is one consistent transaction; merge
- * applies ImportPolicy in one transaction: dishes first, so the planned days can use dishes that
- * arrived in the same snapshot, then the lunches and dinners that resolve against the known dishes
- * with the domain rules (LunchEntry.resolve, DinnerEntry.resolve); the rest are skipped.
+ * runs in one transaction: dishes first with a DishMergePlan (match by id, else by name and type,
+ * newest updatedAt wins), so the planned days can use dishes that arrived in the same snapshot;
+ * then the lunches and dinners, remapped to the local dish ids, that resolve against the known
+ * dishes with the domain rules (LunchEntry.resolve, DinnerEntry.resolve); the rest are skipped.
  */
 internal class RoomMenuSnapshotRepository @Inject constructor(
     private val database: MenuPlannerDatabase
@@ -37,25 +39,22 @@ internal class RoomMenuSnapshotRepository @Inject constructor(
 
     override suspend fun read(scope: SnapshotScope): MenuSnapshot = database.withTransaction {
         MenuSnapshot(
-            dishes = dishDao.getAll().map(DishWithIngredients::toDomain),
+            dishes = allDishes(),
             lunches = if (scope == SnapshotScope.EVERYTHING) mealDayDao.getAll().map { it.toEntry() } else emptyList(),
             dinners = if (scope == SnapshotScope.EVERYTHING) dinnerDayDao.getAll().map { it.toEntry() } else emptyList()
         )
     }
 
     override suspend fun merge(snapshot: MenuSnapshot): ImportSummary = database.withTransaction {
-        val dishDecisions = mergeDishes(snapshot.dishes)
-        val known = dishDao.getAll().map(DishWithIngredients::toDomain).associateBy(Dish::id)
-        val dayDecisions = mergeLunches(snapshot.lunches, known) + mergeDinners(snapshot.dinners, known)
-        ImportPolicy.summaryOf(dishDecisions, dayDecisions)
+        val plan = DishMergePlan.of(local = allDishes(), incoming = snapshot.dishes)
+        dishDao.upsertAllWithIngredients(plan.writes.map { it.toEntity() to it.toIngredientEntities() })
+        val known = allDishes().associateBy(Dish::id)
+        val dayDecisions = mergeLunches(snapshot.lunches.map { it.remapped(plan.idMap) }, known) +
+            mergeDinners(snapshot.dinners.map { it.remapped(plan.idMap) }, known)
+        ImportPolicy.summaryOf(plan.decisions, dayDecisions)
     }
 
-    private suspend fun mergeDishes(dishes: List<Dish>): List<MergeDecision> {
-        val local = dishDao.getVersions().associate { DishId(it.id) to Instant.ofEpochMilli(it.updatedAt) }
-        val decisions = dishes.map { it to ImportPolicy.decide(local[it.id], it.updatedAt) }
-        dishDao.upsertAllWithIngredients(decisions.filter { (_, decision) -> decision != MergeDecision.SKIP }.map { (dish, _) -> dish.toEntity() to dish.toIngredientEntities() })
-        return decisions.map { it.second }
-    }
+    private suspend fun allDishes(): List<Dish> = dishDao.getAll().map(DishWithIngredients::toDomain)
 
     private suspend fun mergeLunches(entries: List<LunchEntry>, known: Map<DishId, Dish>): List<MergeDecision> {
         val local = mealDayDao.getAll().associate { LocalDate.ofEpochDay(it.date) to Instant.ofEpochMilli(it.updatedAt) }

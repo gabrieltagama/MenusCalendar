@@ -13,7 +13,8 @@ import java.time.LocalDate
  * planned lunches and dinners. Planned days point to dishes by id, because a received day may use a
  * dish that arrives in the same snapshot; resolving an entry applies the same rules as planning it
  * by hand (shape of the menu, dish in the slot of its type, dinner option), so an entry that breaks
- * them resolves to null and is not imported.
+ * them resolves to null and is not imported. remapped translates those ids with the idMap of a
+ * DishMergePlan when an incoming dish was matched to a local one with another id.
  */
 data class MenuSnapshot(
     val dishes: List<Dish>,
@@ -30,6 +31,12 @@ data class LunchEntry(
     val singleId: DishId? = null,
     val updatedAt: Instant
 ) {
+    fun remapped(idMap: Map<DishId, DishId>): LunchEntry = copy(
+        starterId = starterId?.let { idMap[it] ?: it },
+        mainId = mainId?.let { idMap[it] ?: it },
+        singleId = singleId?.let { idMap[it] ?: it }
+    )
+
     fun resolve(dishesById: Map<DishId, Dish>): MealDay? =
         menuOf(dishesById)?.takeIf { it.violation == null }?.let { MealDay(date = date, menu = it, updatedAt = updatedAt) }
 
@@ -56,6 +63,8 @@ data class DinnerEntry(
     val dishId: DishId,
     val updatedAt: Instant
 ) {
+    fun remapped(idMap: Map<DishId, DishId>): DinnerEntry = copy(dishId = idMap[dishId] ?: dishId)
+
     fun resolve(dishesById: Map<DishId, Dish>): DinnerDay? =
         dishesById[dishId]?.takeIf(Dish::isDinnerOption)?.let { DinnerDay(date = date, dish = it, updatedAt = updatedAt) }
 
