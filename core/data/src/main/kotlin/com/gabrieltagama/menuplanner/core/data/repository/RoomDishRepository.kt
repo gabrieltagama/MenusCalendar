@@ -8,7 +8,10 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
+import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
+import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,6 +19,7 @@ import kotlinx.coroutines.flow.map
 /**
  * Room-backed recipe book. Saving a dish replaces its ingredient lines atomically, saving several
  * dishes is one transaction and deleting a dish checks that it is not planned in the same transaction.
+ * Planned uses are read from the lunch slots and dinners that reference the dish.
  */
 internal class RoomDishRepository @Inject constructor(
     private val dishDao: DishDao
@@ -36,6 +40,10 @@ internal class RoomDishRepository @Inject constructor(
         dishDao.upsertAllWithIngredients(dishes.map { it.toEntity() to it.toIngredientEntities() })
 
     override suspend fun deleteIfUnused(id: DishId): Boolean = dishDao.deleteIfUnused(id.value)
+
+    override suspend fun getPlannedUses(id: DishId): List<PlannedUse> =
+        dishDao.getLunchUses(id.value).map { PlannedUse.Lunch(LocalDate.ofEpochDay(it.date), MenuSlot.valueOf(it.slot)) } +
+            dishDao.getDinnerDates(id.value).map { PlannedUse.Dinner(LocalDate.ofEpochDay(it)) }
 
     private fun List<DishWithIngredients>.toDomainList(): List<Dish> = map(DishWithIngredients::toDomain)
 }

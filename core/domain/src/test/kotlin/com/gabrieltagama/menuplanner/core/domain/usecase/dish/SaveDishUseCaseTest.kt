@@ -10,7 +10,11 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
+import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
+import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -27,7 +31,7 @@ class SaveDishUseCaseTest {
     @Before
     fun setUp() {
         repository = FakeDishRepository()
-        useCase = SaveDishUseCase(TestDishes.fixedClock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository))
+        useCase = SaveDishUseCase(repository, TestDishes.fixedClock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository))
     }
 
     @Test
@@ -119,6 +123,47 @@ class SaveDishUseCaseTest {
 
         assertEquals(1, repository.current.size)
         assertEquals("New", repository.current.getValue("d1").name)
+    }
+
+    @Test
+    fun `changing the type of a dish planned in a lunch slot is refused`() = runBlocking {
+        val planned = dish(id = "d1", type = DishType.STARTER)
+        repository.upsert(planned)
+        repository.plannedUses["d1"] = listOf(
+            PlannedUse.Lunch(LocalDate.of(2026, 3, 12), MenuSlot.STARTER),
+            PlannedUse.Lunch(LocalDate.of(2026, 3, 10), MenuSlot.STARTER)
+        )
+
+        val result = save(planned.copy(type = DishType.DESSERT))
+
+        assertEquals(Outcome.Failure(DomainError.DishPlannedIncompatibly(LocalDate.of(2026, 3, 10), days = 2)), result)
+        assertEquals(DishType.STARTER, repository.current.getValue("d1").type)
+    }
+
+    @Test
+    fun `making a planned dinner a lunch only dish is refused`() = runBlocking {
+        val planned = dish(id = "d1", type = DishType.SINGLE)
+        repository.upsert(planned)
+        repository.plannedUses["d1"] = listOf(PlannedUse.Dinner(LocalDate.of(2026, 3, 10)))
+
+        val result = save(planned.copy(mealTime = MealTime.LUNCH))
+
+        assertEquals(Outcome.Failure(DomainError.DishPlannedIncompatibly(LocalDate.of(2026, 3, 10), days = 1)), result)
+    }
+
+    @Test
+    fun `changes that its planned days still accept are saved`() = runBlocking {
+        val planned = dish(id = "d1", type = DishType.SINGLE)
+        repository.upsert(planned)
+        repository.plannedUses["d1"] = listOf(
+            PlannedUse.Lunch(LocalDate.of(2026, 3, 10), MenuSlot.SINGLE),
+            PlannedUse.Dinner(LocalDate.of(2026, 3, 11))
+        )
+
+        val result = save(planned.copy(name = "Renamed", mealTime = MealTime.DINNER))
+
+        assertTrue(result is Outcome.Success)
+        assertEquals("Renamed", repository.current.getValue("d1").name)
     }
 
     private suspend fun save(dish: Dish) = useCase(dish.toDraft())

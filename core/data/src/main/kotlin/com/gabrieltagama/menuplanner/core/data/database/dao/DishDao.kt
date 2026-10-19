@@ -9,6 +9,7 @@ import com.gabrieltagama.menuplanner.core.data.database.entity.DishEntity
 import com.gabrieltagama.menuplanner.core.data.database.entity.DishVersion
 import com.gabrieltagama.menuplanner.core.data.database.entity.DishWithIngredients
 import com.gabrieltagama.menuplanner.core.data.database.entity.IngredientEntity
+import com.gabrieltagama.menuplanner.core.data.database.entity.LunchUse
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -47,6 +48,15 @@ internal interface DishDao {
             "(SELECT COUNT(*) FROM dinner_days WHERE dish_id = :id)"
     )
     suspend fun countUsages(id: String): Int
+
+    @Query(
+        "SELECT date, CASE WHEN starter_id = :id THEN 'STARTER' WHEN main_id = :id THEN 'MAIN' ELSE 'SINGLE' END AS slot " +
+            "FROM meal_days WHERE starter_id = :id OR main_id = :id OR single_id = :id"
+    )
+    suspend fun getLunchUses(id: String): List<LunchUse>
+
+    @Query("SELECT date FROM dinner_days WHERE dish_id = :id")
+    suspend fun getDinnerDates(id: String): List<Long>
 
     @Upsert
     suspend fun upsertDish(dish: DishEntity)

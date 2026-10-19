@@ -6,6 +6,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
+import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.repository.DishIdGenerator
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
 import java.time.Clock
@@ -15,7 +16,9 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Use cases of the recipe book: query, save a draft (validated with the Dish rules, given an id
- * when new and converted to standard units) and delete (blocked while the dish is planned).
+ * when new and converted to standard units) and delete (blocked while the dish is planned). Saving
+ * a planned dish with a type or meal time that its calendar days no longer accept is refused with
+ * DishPlannedIncompatibly, so the calendar never holds days that an export could not restore.
  */
 class ObserveDishesUseCase @Inject constructor(private val repository: DishRepository) {
     operator fun invoke(type: DishType? = null): Flow<List<Dish>> =
@@ -28,12 +31,14 @@ class GetDishUseCase @Inject constructor(private val repository: DishRepository)
 }
 
 class SaveDishUseCase @Inject constructor(
+    private val repository: DishRepository,
     private val clock: Clock,
     private val idGenerator: DishIdGenerator,
     private val standardizeRecipeBook: StandardizeRecipeBookUseCase
 ) {
     suspend operator fun invoke(draft: DishDraft): Outcome<Dish> {
         Dish.validate(draft.name, draft.ingredients)?.let { return Outcome.Failure(it) }
+        draft.id?.let { planConflictOf(it, draft) }?.let { return Outcome.Failure(it) }
         val dish = Dish(
             id = draft.id ?: idGenerator.newId(),
             name = draft.name.trim(),
@@ -48,6 +53,12 @@ class SaveDishUseCase @Inject constructor(
         )
         return Outcome.Success(standardizeRecipeBook.save(dish))
     }
+
+    private suspend fun planConflictOf(id: DishId, draft: DishDraft): DomainError? =
+        repository.getPlannedUses(id)
+            .filterNot { it.allows(draft.type, draft.mealTime) }
+            .takeIf { it.isNotEmpty() }
+            ?.let { conflicts -> DomainError.DishPlannedIncompatibly(firstDate = conflicts.minOf(PlannedUse::date), days = conflicts.map(PlannedUse::date).distinct().size) }
 }
 
 class DeleteDishUseCase @Inject constructor(private val repository: DishRepository) {

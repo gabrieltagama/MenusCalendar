@@ -226,7 +226,7 @@ class DishEditorViewModelTest {
     private fun createViewModel(dishId: String?): DishEditorViewModel = DishEditorViewModel(
         savedStateHandle = if (dishId == null) SavedStateHandle() else SavedStateHandle(mapOf("dishId" to dishId)),
         getDish = GetDishUseCase(repository),
-        saveDish = SaveDishUseCase(clock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository)),
+        saveDish = SaveDishUseCase(repository, clock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository)),
         deleteDish = DeleteDishUseCase(repository)
     )
 
