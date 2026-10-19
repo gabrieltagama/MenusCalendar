@@ -35,6 +35,8 @@
     <string name="settings_section_share">Compartir</string>
     <string name="settings_share_export">Exportar JSON</string>
     <string name="settings_share_export_hint">Crea un fichero con tus recetas y tu calendario para enviarlo a otra persona</string>
+    <string name="settings_share_save">Guardar copia en el móvil</string>
+    <string name="settings_share_save_hint">Guarda el fichero en Descargas u otra carpeta para recuperarlo si reinstalas la app</string>
     <string name="settings_share_import">Importar JSON</string>
     <string name="settings_share_import_hint">Añade las recetas y los días del fichero que no tengas y actualiza los más antiguos</string>
 </resources>

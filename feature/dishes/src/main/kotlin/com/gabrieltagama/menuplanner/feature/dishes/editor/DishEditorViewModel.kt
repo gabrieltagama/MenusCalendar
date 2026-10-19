@@ -24,13 +24,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 /**
  * Create/edit form of a dish. The form is saved as a DishDraft: in edit mode it carries the id of
- * the loaded dish, and for a new dish SaveDishUseCase assigns the id.
+ * the loaded dish, and for a new dish SaveDishUseCase assigns the id. Every change is copied to the
+ * SavedStateHandle (DishFormDraft), together with the form as it was opened, so after the system
+ * kills the app the editor comes back with what the user had typed instead of reloading the dish.
+ * Going back with unsaved changes asks before discarding them.
  */
 sealed interface DishEditorEvent {
     data object Close : DishEditorEvent
@@ -38,7 +45,7 @@ sealed interface DishEditorEvent {
 
 @HiltViewModel
 class DishEditorViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val getDish: GetDishUseCase,
     private val saveDish: SaveDishUseCase,
     private val deleteDish: DeleteDishUseCase
@@ -46,6 +53,7 @@ class DishEditorViewModel @Inject constructor(
 
     private val dishId: DishId? = savedStateHandle.toRoute<DishEditorRoute>().dishId?.let(::DishId)
     private var nextIngredientKey = 0L
+    private var openedForm: DishFormDraft? = null
 
     private val _uiState = MutableStateFlow(DishEditorUiState(isEditMode = dishId != null, isLoading = dishId != null))
     val uiState: StateFlow<DishEditorUiState> = _uiState.asStateFlow()
@@ -54,7 +62,15 @@ class DishEditorViewModel @Inject constructor(
     val events: Flow<DishEditorEvent> = _events.receiveAsFlow()
 
     init {
-        dishId?.let(::load)
+        val restored = savedDraft(KEY_FORM)
+        when {
+            restored != null -> restore(restored, opened = savedDraft(KEY_OPENED_FORM) ?: restored)
+            dishId != null -> load(dishId)
+            else -> rememberOpenedForm()
+        }
+        viewModelScope.launch {
+            _uiState.filterNot { it.isLoading }.map(DishFormDraft::of).distinctUntilChanged().collect { savedStateHandle[KEY_FORM] = formJson.encodeToString(DishFormDraft.serializer(), it) }
+        }
     }
 
     fun onNameChange(value: String) = _uiState.update { it.copy(name = value) }
@@ -88,6 +104,18 @@ class DishEditorViewModel @Inject constructor(
     fun onDeleteDismiss() = _uiState.update { it.copy(showDeleteConfirm = false) }
 
     fun onErrorShown() = _uiState.update { it.copy(error = null) }
+
+    fun onBackRequest() {
+        if (hasUnsavedChanges()) _uiState.update { it.copy(showDiscardConfirm = true) }
+        else close()
+    }
+
+    fun onDiscardConfirm() {
+        _uiState.update { it.copy(showDiscardConfirm = false) }
+        close()
+    }
+
+    fun onDiscardDismiss() = _uiState.update { it.copy(showDiscardConfirm = false) }
 
     fun onSave() {
         val state = _uiState.value
@@ -139,6 +167,34 @@ class DishEditorViewModel @Inject constructor(
                 preparation = dish.preparation
             )
         }
+        rememberOpenedForm()
+    }
+
+    private fun restore(draft: DishFormDraft, opened: DishFormDraft) {
+        _uiState.update { draft.applyTo(it.copy(isLoading = false), ::newKey) }
+        openedForm = opened
+        savedStateHandle[KEY_OPENED_FORM] = formJson.encodeToString(DishFormDraft.serializer(), opened)
+    }
+
+    private fun rememberOpenedForm() {
+        val opened = DishFormDraft.of(_uiState.value)
+        openedForm = opened
+        savedStateHandle[KEY_OPENED_FORM] = formJson.encodeToString(DishFormDraft.serializer(), opened)
+    }
+
+    private fun hasUnsavedChanges(): Boolean = openedForm?.let { it != DishFormDraft.of(_uiState.value) } ?: false
+
+    private fun savedDraft(key: String): DishFormDraft? =
+        savedStateHandle.get<String>(key)?.let { text ->
+            try {
+                formJson.decodeFromString(DishFormDraft.serializer(), text)
+            } catch (exception: IllegalArgumentException) {
+                null
+            }
+        }
+
+    private fun close() {
+        viewModelScope.launch { _events.send(DishEditorEvent.Close) }
     }
 
     private fun draftOf(state: DishEditorUiState): DishDraft = DishDraft(
@@ -158,4 +214,10 @@ class DishEditorViewModel @Inject constructor(
     }
 
     private fun newKey(): Long = nextIngredientKey++
+
+    private companion object {
+        const val KEY_FORM = "dish_form"
+        const val KEY_OPENED_FORM = "dish_form_opened"
+        val formJson = Json { ignoreUnknownKeys = true }
+    }
 }

@@ -69,7 +69,7 @@ internal fun MainShell(navController: NavHostController = rememberNavController(
 
 @Composable
 private fun rememberFileShare(snackbarHostState: SnackbarHostState): FileShareActions =
-    rememberShareController(snackbarHostState).let { FileShareActions(isBusy = it.isBusy, onExport = it.onExport, onImport = it.onImport) }
+    rememberShareController(snackbarHostState).let { FileShareActions(isBusy = it.isBusy, onExport = it.onExport, onSave = it.onSave, onImport = it.onImport) }
 
 @Composable
 private fun MenuPlannerNavigationBar(
