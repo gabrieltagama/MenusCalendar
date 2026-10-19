@@ -7,7 +7,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
 /**
  * Persistence port of the shared content. read takes a consistent snapshot of the recipe book and,
  * for EVERYTHING, of the calendar; merge applies a received snapshot in a single transaction with
- * ImportPolicy, resolving planned days against the dishes known after merging the incoming ones.
+ * DishMergePlan and ImportPolicy (a dish matches by id or, failing that, by DishKey), resolving
+ * planned days against the dishes known after merging the incoming ones.
  * Implemented in :core:data.
  */
 interface MenuSnapshotRepository {
