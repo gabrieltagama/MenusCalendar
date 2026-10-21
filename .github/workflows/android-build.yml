@@ -22,10 +22,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
@@ -44,6 +44,24 @@ jobs:
 
       - name: Unit tests and coverage
         run: .github/scripts/gradle.sh koverXmlReport koverHtmlReport --continue
+
+      - name: Coverage summary
+        run: |
+          python3 - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          root = ET.parse('build/reports/kover/report.xml').getroot()
+          names = {'LINE': 'Líneas', 'INSTRUCTION': 'Instrucciones', 'BRANCH': 'Ramas'}
+          parts = []
+          for counter in root.findall('counter'):
+              kind = counter.get('type')
+              if kind in names:
+                  missed, covered = int(counter.get('missed')), int(counter.get('covered'))
+                  parts.append(f"{names[kind]} {100 * covered / (missed + covered):.2f} %")
+          summary = ' · '.join(parts)
+          print(f'::notice title=Cobertura::{summary}')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write(f'### Cobertura\n\n{summary}\n')
+          PY
 
       - name: Android Lint
         run: .github/scripts/gradle.sh lintDebug --continue
@@ -85,7 +103,7 @@ jobs:
 
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: reports
           path: |
@@ -97,7 +115,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: MenuPlanner-debug-apk
           path: app/build/outputs/apk/debug/*.apk
@@ -124,7 +142,7 @@ jobs:
 
       - name: Upload release AAB
         if: env.RELEASE_KEYSTORE_BASE64 != ''
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: MenuPlanner-release-aab
           path: app/build/outputs/bundle/release/*.aab

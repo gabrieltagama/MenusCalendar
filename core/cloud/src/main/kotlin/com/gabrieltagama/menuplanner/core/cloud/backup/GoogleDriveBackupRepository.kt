@@ -5,9 +5,9 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.gabrieltagama.menuplanner.core.cloud.auth.GoogleDriveAuthorizer
+import com.gabrieltagama.menuplanner.core.cloud.auth.DriveTokenProvider
 import com.gabrieltagama.menuplanner.core.cloud.di.CloudDataStore
-import com.gabrieltagama.menuplanner.core.cloud.drive.DriveAppDataClient
+import com.gabrieltagama.menuplanner.core.cloud.drive.DriveFiles
 import com.gabrieltagama.menuplanner.core.cloud.drive.DriveUnauthorizedException
 import com.gabrieltagama.menuplanner.core.domain.common.CloudError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
@@ -32,8 +32,8 @@ import kotlinx.coroutines.flow.map
 @Singleton
 internal class GoogleDriveBackupRepository @Inject constructor(
     @param:CloudDataStore private val dataStore: DataStore<Preferences>,
-    private val authorizer: GoogleDriveAuthorizer,
-    private val drive: DriveAppDataClient
+    private val authorizer: DriveTokenProvider,
+    private val drive: DriveFiles
 ) : CloudBackupRepository {
 
     private val preferences: Flow<Preferences> = dataStore.data.catch { if (it is IOException) emit(emptyPreferences()) else throw it }
