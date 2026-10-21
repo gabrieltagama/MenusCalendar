@@ -24,14 +24,14 @@ import kotlinx.serialization.json.putJsonArray
  * HttpURLConnection so no extra HTTP library is needed. HTTP 401 surfaces as
  * DriveUnauthorizedException; any other HTTP, network or unexpected response error as IOException.
  */
-internal class DriveAppDataClient @Inject constructor() {
+internal class DriveAppDataClient @Inject constructor() : DriveFiles {
 
-    suspend fun accountEmail(token: String): String =
+    override suspend fun accountEmail(token: String): String =
         parsed(send(token, GET, "$API/about?fields=${encoded("user(emailAddress)")}")) { root ->
             root.jsonObject.getValue("user").jsonObject.getValue("emailAddress").jsonPrimitive.content
         }
 
-    suspend fun findBackups(token: String): List<DriveFile> =
+    override suspend fun findBackups(token: String): List<DriveFile> =
         parsed(send(token, GET, "$API/files?spaces=$APP_DATA_FOLDER&q=${encoded("name = '$BACKUP_NAME'")}&fields=${encoded("files(id,modifiedTime)")}")) { root ->
             root.jsonObject["files"]?.jsonArray.orEmpty()
                 .map { it.jsonObject }
@@ -39,13 +39,13 @@ internal class DriveAppDataClient @Inject constructor() {
                 .sortedByDescending(DriveFile::modifiedTime)
         }
 
-    suspend fun download(token: String, fileId: String): String = send(token, GET, "$API/files/$fileId?alt=media")
+    override suspend fun download(token: String, fileId: String): String = send(token, GET, "$API/files/$fileId?alt=media")
 
-    suspend fun create(token: String, content: String) {
+    override suspend fun create(token: String, content: String) {
         send(token, POST, "$UPLOAD_API/files?uploadType=multipart", multipartBody(content))
     }
 
-    suspend fun delete(token: String, fileId: String) {
+    override suspend fun delete(token: String, fileId: String) {
         send(token, DELETE, "$API/files/$fileId")
     }
 

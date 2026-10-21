@@ -21,7 +21,7 @@ import kotlinx.coroutines.tasks.await
  * receives short-lived access tokens. request may need the consent screen, silentToken never
  * shows UI and returns null when the user has to grant access again.
  */
-class GoogleDriveAuthorizer @Inject constructor(@param:ApplicationContext private val context: Context) {
+class GoogleDriveAuthorizer @Inject constructor(@param:ApplicationContext private val context: Context) : DriveTokenProvider {
 
     private val client: AuthorizationClient get() = Identity.getAuthorizationClient(context)
 
@@ -32,7 +32,7 @@ class GoogleDriveAuthorizer @Inject constructor(@param:ApplicationContext privat
             AuthorizationStep.Failed
         }
 
-    suspend fun silentToken(email: String): String? =
+    override suspend fun silentToken(email: String): String? =
         try {
             client.authorize(authorizationRequest(accountOf(email))).await().takeUnless { it.hasResolution() }?.accessToken
         } catch (expected: ApiException) {
@@ -46,11 +46,11 @@ class GoogleDriveAuthorizer @Inject constructor(@param:ApplicationContext privat
             null
         }
 
-    suspend fun invalidate(token: String) = bestEffort {
+    override suspend fun invalidate(token: String) = bestEffort {
         client.clearToken(ClearTokenRequest.builder().setToken(token).build()).await()
     }
 
-    suspend fun revoke(email: String) = bestEffort {
+    override suspend fun revoke(email: String) = bestEffort {
         client.revokeAccess(RevokeAccessRequest.builder().setAccount(accountOf(email)).setScopes(listOf(DriveAppDataScope)).build()).await()
     }
 
@@ -60,7 +60,7 @@ class GoogleDriveAuthorizer @Inject constructor(@param:ApplicationContext privat
         return builder.build()
     }
 
-    private suspend fun bestEffort(action: suspend () -> Unit) =
+    private suspend fun bestEffort(action: suspend () -> Unit): Unit =
         try {
             action()
         } catch (expected: ApiException) {
