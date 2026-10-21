@@ -9,6 +9,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.port.DishIdGenerator
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.port.TransactionRunner
 import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
@@ -18,7 +19,8 @@ import kotlinx.coroutines.flow.Flow
  * Use cases of the recipe book: query, save a draft (validated with the Dish rules, given an id
  * when new and converted to standard units) and delete (blocked while the dish is planned). Saving
  * a planned dish with a type or meal time that its calendar days no longer accept is refused with
- * DishPlannedIncompatibly, so the calendar never holds days that an export could not restore.
+ * DishPlannedIncompatibly, so the calendar never holds days that an export could not restore; the
+ * check and the save run in one transaction.
  */
 class ObserveDishesUseCase @Inject constructor(private val repository: DishRepository) {
     operator fun invoke(): Flow<List<Dish>> = repository.observeDishes()
@@ -33,13 +35,16 @@ class SaveDishUseCase @Inject constructor(
     private val repository: DishRepository,
     private val clock: Clock,
     private val idGenerator: DishIdGenerator,
-    private val standardizeRecipeBook: StandardizeRecipeBookUseCase
+    private val standardizeRecipeBook: StandardizeRecipeBookUseCase,
+    private val transaction: TransactionRunner
 ) {
     suspend operator fun invoke(draft: DishDraft): Outcome<Dish> {
         draft.validationError?.let { return Outcome.Failure(it) }
-        draft.id?.let { planConflictOf(it, draft) }?.let { return Outcome.Failure(it) }
-        val dish = draft.toDish(id = draft.id ?: idGenerator.newId(), updatedAt = Instant.now(clock))
-        return Outcome.Success(standardizeRecipeBook.save(dish))
+        return transaction.inTransaction {
+            val conflict = draft.id?.let { planConflictOf(it, draft) }
+            if (conflict != null) Outcome.Failure(conflict)
+            else Outcome.Success(standardizeRecipeBook.save(draft.toDish(id = draft.id ?: idGenerator.newId(), updatedAt = Instant.now(clock))))
+        }
     }
 
     private suspend fun planConflictOf(id: DishId, draft: DishDraft): DomainError? =

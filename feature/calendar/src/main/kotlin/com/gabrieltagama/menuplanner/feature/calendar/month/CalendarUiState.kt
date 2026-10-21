@@ -4,6 +4,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoableChange
 import java.time.LocalDate
 import java.time.YearMonth
 

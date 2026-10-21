@@ -6,6 +6,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
@@ -110,7 +111,7 @@ class ShareViewModelTest {
 
     private fun viewModel() = ShareViewModel(
         exportMenus = ExportMenusUseCase(snapshots, codec, TestDishes.fixedClock),
-        importMenus = ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes)),
+        importMenus = ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes), ImmediateTransactionRunner()),
         files = files
     )
 

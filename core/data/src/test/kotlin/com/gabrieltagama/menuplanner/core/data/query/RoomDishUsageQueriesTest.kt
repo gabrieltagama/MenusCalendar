@@ -1,9 +1,12 @@
-package com.gabrieltagama.menuplanner.core.data.repository
+package com.gabrieltagama.menuplanner.core.data.query
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import com.gabrieltagama.menuplanner.core.data.database.DatabaseTestData
 import com.gabrieltagama.menuplanner.core.data.database.MenuPlannerDatabase
+import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
+import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
+import com.gabrieltagama.menuplanner.core.data.repository.RoomLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import java.time.LocalDate
@@ -16,15 +19,15 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Robolectric tests of RoomDishUsageRepository: the last day up to the limit each dish was planned
+ * Robolectric tests of RoomDishUsageQueries: the last day up to the limit each dish was planned
  * as starter, main or single dish at lunch or at dinner, refreshed when a calendar changes.
  */
 @RunWith(AndroidJUnit4::class)
-class RoomDishUsageRepositoryTest {
+class RoomDishUsageQueriesTest {
     private lateinit var database: MenuPlannerDatabase
     private lateinit var lunches: RoomLunchPlanRepository
     private lateinit var dinners: RoomDinnerPlanRepository
-    private lateinit var repository: RoomDishUsageRepository
+    private lateinit var repository: RoomDishUsageQueries
 
     private val today = LocalDate.of(2026, 3, 15)
     private val starter = DatabaseTestData.dish("st", type = DishType.STARTER)
@@ -38,7 +41,7 @@ class RoomDishUsageRepositoryTest {
         val dishes = RoomDishRepository(database.dishDao())
         lunches = RoomLunchPlanRepository(database.lunchDayDao(), database.dishDao())
         dinners = RoomDinnerPlanRepository(database.dinnerDayDao(), database.dishDao())
-        repository = RoomDishUsageRepository(database.dishUsageDao())
+        repository = RoomDishUsageQueries(database.dishUsageDao())
         listOf(starter, main, single, unused).forEach { dishes.upsert(it) }
     }
 

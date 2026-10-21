@@ -8,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.BackUpUseCase
@@ -84,7 +85,7 @@ class WelcomeViewModelTest {
 
     private fun viewModel(cloud: FakeCloudBackupRepository): WelcomeViewModel {
         val backUp = BackUpUseCase(cloud, snapshots, codec, TestDishes.fixedClock)
-        val restore = RestoreBackupUseCase(cloud, ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes)))
+        val restore = RestoreBackupUseCase(cloud, ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes), ImmediateTransactionRunner()))
         return WelcomeViewModel(
             connectCloudAccount = ConnectCloudAccountUseCase(cloud, restore, backUp, scheduler),
             completeOnboarding = CompleteOnboardingUseCase(settings)

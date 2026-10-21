@@ -7,6 +7,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthLunchesUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PlanCommandService
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoableChange
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -26,11 +28,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Monthly calendar: keeps the visible month, the selected day and the active view (lunches or
- * dinners), and switches the observed lunch and dinner read models with flatMapLatest whenever the
- * month changes. "Today" is refreshed whenever the screen resumes, so the highlight stays right
- * after midnight. The selection and copy mode lives in DaySelectionController and the changes on
- * the plan of the active view (autofill, delete, paste and their undo) in PlanCommands; this class
+ * Monthly calendar: keeps the active view (lunches or dinners) and switches the observed lunch and
+ * dinner read models with flatMapLatest whenever the month changes. The visible month, the selected
+ * day and "today" (refreshed whenever the screen resumes) live in MonthNavigator, the selection and
+ * copy mode in DaySelectionController and the changes on the plan of the active view (autofill,
+ * delete, paste and their undo) in PlanCommandService; this class
  * only wires them to the screen, runs the autofill after confirmation and reports results as
  * one-shot events that carry what changed so deletions and pastes can be undone.
  */
@@ -39,29 +41,27 @@ import kotlinx.coroutines.launch
 class CalendarViewModel @Inject constructor(
     observeMonthLunches: ObserveMonthLunchesUseCase,
     observeMonthDinners: ObserveMonthDinnersUseCase,
-    private val commands: PlanCommands,
-    private val clock: Clock
+    private val commands: PlanCommandService,
+    clock: Clock
 ) : ViewModel() {
 
-    private val month = MutableStateFlow(YearMonth.now(clock))
-    private val selectedDate = MutableStateFlow(LocalDate.now(clock))
-    private val today = MutableStateFlow(LocalDate.now(clock))
+    private val navigator = MonthNavigator(clock)
     private val view = MutableStateFlow(Meal.LUNCH)
     private val autoFillStatus = MutableStateFlow(AutoFillStatus())
     private val selection = DaySelectionController()
 
-    private val monthPlan = month.flatMapLatest { visibleMonth ->
+    private val monthPlan = navigator.month.flatMapLatest { visibleMonth ->
         combine(observeMonthLunches(visibleMonth), observeMonthDinners(visibleMonth)) { lunches, dinners ->
             MonthPlan(visibleMonth, lunches.associateBy { it.date }, dinners.associateBy { it.date })
         }
     }
 
-    private val dates = combine(selectedDate, today) { selected, current -> selected to current }
+    private val dates = combine(navigator.selectedDate, navigator.today) { selected, current -> selected to current }
 
     private val modes = combine(autoFillStatus, selection.mode, ::Modes)
 
     val uiState: StateFlow<CalendarUiState> =
-        combine(month, dates, view, monthPlan, modes) { visibleMonth, (selected, current), activeView, plan, (status, mode) ->
+        combine(navigator.month, dates, view, monthPlan, modes) { visibleMonth, (selected, current), activeView, plan, (status, mode) ->
             val isCurrentPlan = plan.month == visibleMonth
             CalendarUiState(
                 month = visibleMonth,
@@ -78,28 +78,24 @@ class CalendarViewModel @Inject constructor(
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
-            CalendarUiState(month = month.value, selectedDate = selectedDate.value, today = today.value)
+            CalendarUiState(month = navigator.month.value, selectedDate = navigator.selectedDate.value, today = navigator.today.value)
         )
 
     private val _events = Channel<CalendarEvent>(Channel.BUFFERED)
     val events: Flow<CalendarEvent> = _events.receiveAsFlow()
 
-    fun onPreviousMonth() = showMonth(month.value.minusMonths(1))
+    fun onPreviousMonth() = navigator.previous()
 
-    fun onNextMonth() = showMonth(month.value.plusMonths(1))
+    fun onNextMonth() = navigator.next()
 
-    fun onToday() {
-        val current = refreshToday()
-        month.value = YearMonth.from(current)
-        selectedDate.value = current
-    }
+    fun onToday() = navigator.goToToday()
 
     fun onScreenResume() {
-        refreshToday()
+        navigator.refreshToday()
     }
 
     fun onDateSelect(date: LocalDate) {
-        selectedDate.value = date
+        navigator.select(date)
     }
 
     fun onViewChange(target: Meal) {
@@ -112,7 +108,7 @@ class CalendarViewModel @Inject constructor(
 
     fun onSelectionToggle(date: LocalDate) = selection.toggle(date)
 
-    fun onSelectAllInMonth() = selection.selectAll(month.value.daysOfMonth())
+    fun onSelectAllInMonth() = selection.selectAll(navigator.daysOfMonth)
 
     fun onSelectionDragStart(date: LocalDate) = selection.startDrag(date)
 
@@ -145,7 +141,7 @@ class CalendarViewModel @Inject constructor(
     fun onPasteAt(target: LocalDate) {
         val copied = selection.takeClipboard() ?: return
         viewModelScope.launch {
-            val paste = commands.paste(copied, target)
+            val paste = commands.paste(copied.dates, copied.view, target)
             _events.send(if (paste.count > 0) CalendarEvent.DaysPasted(paste) else CalendarEvent.NothingPlanned)
         }
     }
@@ -162,7 +158,7 @@ class CalendarViewModel @Inject constructor(
 
     fun onAutoFill() {
         if (autoFillStatus.value.isRunning) return
-        val target = month.value
+        val target = navigator.month.value
         val targetView = view.value
         runAutoFill { CalendarEvent.AutoFillCompleted(commands.autoFill(target, targetView), targetView) }
     }
@@ -177,16 +173,6 @@ class CalendarViewModel @Inject constructor(
             }
         }
     }
-
-    private fun YearMonth.daysOfMonth(): Set<LocalDate> = (1..lengthOfMonth()).map(::atDay).toSet()
-
-    private fun showMonth(target: YearMonth) {
-        val current = refreshToday()
-        month.value = target
-        selectedDate.value = if (YearMonth.from(current) == target) current else target.atDay(1)
-    }
-
-    private fun refreshToday(): LocalDate = LocalDate.now(clock).also { today.value = it }
 }
 
 private data class MonthPlan(val month: YearMonth, val lunches: Map<LocalDate, PlannedLunch>, val dinners: Map<LocalDate, PlannedDinner>)

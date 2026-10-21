@@ -1,16 +1,16 @@
 package com.gabrieltagama.menuplanner.core.domain.fake
 
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.port.DishUsageRepository
+import com.gabrieltagama.menuplanner.core.domain.query.DishUsageQueries
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 /**
- * In-memory DishUsageRepository: every recorded serving date, filtered by the requested limit.
+ * In-memory DishUsageQueries: every recorded serving date, filtered by the requested limit.
  */
-class FakeDishUsageRepository(initial: Map<DishId, List<LocalDate>> = emptyMap()) : DishUsageRepository {
+class FakeDishUsageQueries(initial: Map<DishId, List<LocalDate>> = emptyMap()) : DishUsageQueries {
     val servings = MutableStateFlow(initial)
 
     override fun observeLastServed(until: LocalDate): Flow<Map<DishId, LocalDate>> =

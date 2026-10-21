@@ -5,6 +5,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
@@ -67,5 +68,5 @@ class ShareUseCasesTest {
     }
 
     private fun importMenus(repository: FakeMenuSnapshotRepository, codec: FakeMenuSnapshotCodec) =
-        ImportMenusUseCase(repository, codec, StandardizeRecipeBookUseCase(dishes))
+        ImportMenusUseCase(repository, codec, StandardizeRecipeBookUseCase(dishes), ImmediateTransactionRunner())
 }

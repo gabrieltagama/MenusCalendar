@@ -3,7 +3,7 @@ package com.gabrieltagama.menuplanner.feature.calendar.day
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageQueries
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
@@ -177,7 +177,7 @@ class DayEditorViewModelTest {
         val viewModel = DayEditorViewModel(
             savedStateHandle = SavedStateHandle(mapOf("epochDay" to date.toEpochDay())),
             observeDishes = ObserveDishesUseCase(dishRepository),
-            observeDishUsage = ObserveDishUsageUseCase(FakeDishUsageRepository(), clock),
+            observeDishUsage = ObserveDishUsageUseCase(FakeDishUsageQueries(), clock),
             getLunchDay = GetLunchDayUseCase(lunchPlanRepository),
             saveLunchDay = SaveLunchDayUseCase(lunchPlanRepository, clock),
             clearLunchDay = ClearLunchDayUseCase(lunchPlanRepository),
