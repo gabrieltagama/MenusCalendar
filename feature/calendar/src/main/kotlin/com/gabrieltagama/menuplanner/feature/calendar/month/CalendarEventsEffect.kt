@@ -11,6 +11,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoableChange
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import kotlinx.coroutines.flow.Flow
 

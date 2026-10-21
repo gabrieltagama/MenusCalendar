@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -303,7 +304,7 @@ class DishEditorViewModelTest {
     private fun createViewModel(handle: SavedStateHandle): DishEditorViewModel = DishEditorViewModel(
         savedStateHandle = handle,
         getDish = GetDishUseCase(repository),
-        saveDish = SaveDishUseCase(repository, clock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository)),
+        saveDish = SaveDishUseCase(repository, clock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository), ImmediateTransactionRunner()),
         deleteDish = DeleteDishUseCase(repository)
     )
 

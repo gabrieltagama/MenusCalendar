@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
 import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
-import com.gabrieltagama.menuplanner.core.domain.port.DishUsageRepository
+import com.gabrieltagama.menuplanner.core.domain.query.DishUsageQueries
 import java.time.Clock
 import java.time.Duration
 import java.time.LocalDate
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.map
  * right after every midnight of the clock's zone, so a screen left open overnight counts the new day.
  */
 class ObserveDishUsageUseCase @Inject constructor(
-    private val repository: DishUsageRepository,
+    private val repository: DishUsageQueries,
     private val clock: Clock
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)

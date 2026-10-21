@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageQueries
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -125,7 +125,7 @@ class DinnerEditorViewModelTest {
         val viewModel = DinnerEditorViewModel(
             savedStateHandle = SavedStateHandle(mapOf("epochDay" to date.toEpochDay())),
             observeDishes = ObserveDishesUseCase(dishRepository),
-            observeDishUsage = ObserveDishUsageUseCase(FakeDishUsageRepository(), clock),
+            observeDishUsage = ObserveDishUsageUseCase(FakeDishUsageQueries(), clock),
             getDinnerDay = GetDinnerDayUseCase(dinnerPlanRepository),
             saveDinnerDay = SaveDinnerDayUseCase(dinnerPlanRepository, clock),
             clearDinnerDay = ClearDinnerDayUseCase(dinnerPlanRepository),

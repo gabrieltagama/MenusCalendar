@@ -2,7 +2,7 @@ package com.gabrieltagama.menuplanner.feature.dishes.list
 
 import app.cash.turbine.test
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageQueries
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -41,7 +41,7 @@ class DishListViewModelTest {
     private val flan = dish("flan", "Flan de huevo", DishType.DESSERT)
 
     private val repository = FakeDishRepository(listOf(puree, salad, chicken, flan))
-    private val usageRepository = FakeDishUsageRepository(
+    private val usageRepository = FakeDishUsageQueries(
         mapOf(
             puree.id to listOf(LocalDate.of(2026, 1, 10)),
             chicken.id to listOf(LocalDate.of(2025, 12, 1), LocalDate.of(2026, 2, 1)),
@@ -188,7 +188,7 @@ class DishListViewModelTest {
 
     @Test
     fun `empty repository reports no dishes`() = runTest {
-        val emptyViewModel = DishListViewModel(ObserveDishesUseCase(FakeDishRepository()), ObserveDishUsageUseCase(FakeDishUsageRepository(), TestDishes.fixedClock))
+        val emptyViewModel = DishListViewModel(ObserveDishesUseCase(FakeDishRepository()), ObserveDishUsageUseCase(FakeDishUsageQueries(), TestDishes.fixedClock))
 
         emptyViewModel.uiState.test {
             val state = awaitItemMatching { !it.isLoading }

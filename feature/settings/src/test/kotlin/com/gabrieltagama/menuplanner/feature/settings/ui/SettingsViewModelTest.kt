@@ -8,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
@@ -133,7 +134,7 @@ class SettingsViewModelTest {
 
     private fun viewModel(cloud: FakeCloudBackupRepository): SettingsViewModel {
         val backUp = BackUpUseCase(cloud, snapshots, codec, TestDishes.fixedClock)
-        val restore = RestoreBackupUseCase(cloud, ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes)))
+        val restore = RestoreBackupUseCase(cloud, ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes), ImmediateTransactionRunner()))
         return SettingsViewModel(
             observeThemeMode = ObserveThemeModeUseCase(settings),
             observeRepeatWindow = ObserveRepeatWindowUseCase(settings),

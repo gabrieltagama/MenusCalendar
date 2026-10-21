@@ -23,14 +23,18 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthD
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthLunchesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearLunchDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.DinnerPlanCommands
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.LunchPlanCommands
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthLunchesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteDinnerDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteLunchDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PlanCommandService
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreDinnerDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreLunchDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteDinnerDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteLunchDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoableChange
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -86,7 +90,7 @@ class CalendarViewModelTest {
         CalendarViewModel(
             ObserveMonthLunchesUseCase(queries),
             ObserveMonthDinnersUseCase(queries),
-            PlanCommands(
+            PlanCommandService(
                 LunchPlanCommands(
                     AutoFillMonthLunchesUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
                     ClearLunchDaysUseCase(repository),

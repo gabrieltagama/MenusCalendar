@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
 import app.cash.turbine.test
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageQueries
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import java.time.Clock
 import java.time.Instant
@@ -35,7 +35,7 @@ class ObserveDishUsageUseCaseTest {
 
     @Test
     fun `refreshes today after midnight`() = runTest {
-        val repository = FakeDishUsageRepository(mapOf(dishId to listOf(october9.minusDays(3), october10)))
+        val repository = FakeDishUsageQueries(mapOf(dishId to listOf(october9.minusDays(3), october10)))
 
         ObserveDishUsageUseCase(repository, clock)().test {
             val before = awaitItem()

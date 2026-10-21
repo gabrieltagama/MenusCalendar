@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
@@ -31,7 +32,7 @@ class SaveDishUseCaseTest {
     @Before
     fun setUp() {
         repository = FakeDishRepository()
-        useCase = SaveDishUseCase(repository, TestDishes.fixedClock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository))
+        useCase = SaveDishUseCase(repository, TestDishes.fixedClock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository), ImmediateTransactionRunner())
     }
 
     @Test
