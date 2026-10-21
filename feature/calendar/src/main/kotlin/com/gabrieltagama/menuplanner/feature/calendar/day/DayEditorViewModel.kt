@@ -6,6 +6,7 @@ import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishSort
 import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
@@ -96,7 +97,7 @@ class DayEditorViewModel @Inject constructor(
 
     private val options: Flow<Map<DishType, List<Dish>>> =
         observeDishes().map { dishes ->
-            dishes.filter { it.type in plannableTypes }.sortedBy { it.name.lowercase() }.groupBy(Dish::type)
+            DishSort.NAME.sorted(dishes.filter { it.type in plannableTypes }).groupBy(Dish::type)
         }.flowOn(Dispatchers.Default)
 
     val uiState: StateFlow<DayEditorUiState> =

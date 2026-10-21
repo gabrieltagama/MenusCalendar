@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
+import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
@@ -33,17 +34,18 @@ class AutoFillMonthUseCase @Inject constructor(
     suspend operator fun invoke(month: YearMonth): AutoFillResult = invoke(month.daysToFill(LocalDate.now(clock)))
 
     suspend operator fun invoke(dates: Collection<LocalDate>): AutoFillResult {
-        if (dates.isEmpty()) return AutoFillResult(0, 0, 0, 0)
+        if (dates.isEmpty()) return AutoFillResult.EMPTY
         val window = settingsRepository.repeatWindow.first()
-        val lunchDishes = dishRepository.getDishes().filter { it.mealTime.isServedAtLunch }
+        val lunchDishes = dishRepository.getDishes().filter(Dish::isLunchOption)
         val picker = MenuPicker(lunchDishes, window, random)
         val range = window.historyRange(dates.min()..dates.max())
         val history = mealPlanRepository.getRange(range).associate { it.date to it.menu }.toMutableMap()
         val dinners = dinnerPlanRepository.getRange(range).associate { it.date to it.dish }
+        val now = Instant.now(clock)
         val fill = fillEmptyDays(dates.sorted().filterNot(history::containsKey)) { date ->
             picker.pick(date, history, dinners)?.let { pick ->
                 history[date] = pick.menu
-                DayPick(MealDay(date = date, menu = pick.menu, updatedAt = Instant.now(clock)), pick.repeated, pick.breaksHeavyRule)
+                DayPick(MealDay(date = date, menu = pick.menu, updatedAt = now), pick.repeated, pick.breaksHeavyRule)
             }
         }
         mealPlanRepository.saveAll(fill.days)

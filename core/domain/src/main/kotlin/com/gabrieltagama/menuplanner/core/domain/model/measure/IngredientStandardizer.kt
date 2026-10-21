@@ -27,7 +27,6 @@ object IngredientStandardizer {
     }
 }
 
-private const val METRIC_FACTOR = 1000.0
 private const val LIQUID_TABLESPOON = 15.0
 private const val SOLID_TABLESPOON = 20.0
 private const val TEASPOON = 5.0
@@ -55,7 +54,7 @@ private fun Ingredient.toStandard(targets: Map<IngredientKey, MeasureUnit>): Ing
     val isLiquid = target == MeasureUnit.MILLILITER
     val amount = when (unit) {
         MeasureUnit.GRAM, MeasureUnit.MILLILITER -> quantity
-        MeasureUnit.KILOGRAM, MeasureUnit.LITER -> quantity * METRIC_FACTOR
+        MeasureUnit.KILOGRAM, MeasureUnit.LITER -> quantity * MeasureUnit.METRIC_FACTOR
         MeasureUnit.UNIT -> quantity * (profile?.amountPerUnit ?: IngredientCatalog.DEFAULT_AMOUNT_PER_UNIT)
         MeasureUnit.TABLESPOON -> quantity * if (isLiquid) LIQUID_TABLESPOON else SOLID_TABLESPOON
         MeasureUnit.TEASPOON -> quantity * TEASPOON

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishSort
 import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
@@ -64,7 +65,7 @@ class DinnerEditorViewModel @Inject constructor(
     private val date: LocalDate = LocalDate.ofEpochDay(savedStateHandle.toRoute<DinnerEditorRoute>().epochDay)
 
     private val options: Flow<List<Dish>> =
-        observeDishes().map { dishes -> dishes.filter(Dish::isDinnerOption).sortedBy { it.name.lowercase() } }.flowOn(Dispatchers.Default)
+        observeDishes().map { dishes -> DishSort.NAME.sorted(dishes.filter(Dish::isDinnerOption)) }.flowOn(Dispatchers.Default)
 
     val uiState: StateFlow<DinnerEditorUiState> =
         combine(form, options, observeDishUsage()) { currentForm, currentOptions, usage ->

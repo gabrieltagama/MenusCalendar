@@ -10,9 +10,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
+import com.gabrieltagama.menuplanner.core.domain.text.spanishLocale
 import com.gabrieltagama.menuplanner.core.ui.R
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * Localized labels for domain enums and errors, shared by every feature.
@@ -74,7 +74,7 @@ fun MeasureUnit.label(): String = stringResource(
     }
 )
 
-private val errorDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.forLanguageTag("es-ES"))
+private val errorDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", spanishLocale)
 
 @Composable
 fun DomainError.message(): String = when (this) {

@@ -37,16 +37,17 @@ class AutoFillMonthDinnersUseCase @Inject constructor(
     suspend operator fun invoke(month: YearMonth): AutoFillResult = invoke(month.daysToFill(LocalDate.now(clock)))
 
     suspend operator fun invoke(dates: Collection<LocalDate>): AutoFillResult {
-        if (dates.isEmpty()) return AutoFillResult(0, 0, 0, 0)
+        if (dates.isEmpty()) return AutoFillResult.EMPTY
         val window = settingsRepository.repeatWindow.first()
         val picker = DinnerPicker(dishRepository.getDishes().filter(Dish::isDinnerOption), window, random)
         val range = window.historyRange(dates.min()..dates.max())
         val lunches = mealPlanRepository.getRange(range).associate { it.date to it.menu }
         val dinners = dinnerPlanRepository.getRange(range).associate { it.date to it.dish }.toMutableMap()
+        val now = Instant.now(clock)
         val fill = fillEmptyDays(dates.sorted().filterNot(dinners::containsKey)) { date ->
             picker.pick(date, lunches, dinners)?.let { pick ->
                 dinners[date] = pick.dish
-                DayPick(DinnerDay(date = date, dish = pick.dish, updatedAt = Instant.now(clock)), pick.repeated)
+                DayPick(DinnerDay(date = date, dish = pick.dish, updatedAt = now), pick.repeated)
             }
         }
         dinnerPlanRepository.saveAll(fill.days)

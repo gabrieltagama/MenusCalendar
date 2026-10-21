@@ -7,10 +7,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
 import com.gabrieltagama.menuplanner.core.domain.query.ShoppingListQueries
-import java.text.Collator
+import com.gabrieltagama.menuplanner.core.domain.text.spanishCollator
 import java.time.LocalDate
 import java.time.YearMonth
-import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -45,20 +44,14 @@ class ObserveShoppingListUseCase @Inject constructor(private val queries: Shoppi
             .sortedWith(compareBy(spanishCollator()) { it.name })
 }
 
-private const val METRIC_FACTOR = 1000.0
-
-private val spanishLocale: Locale = Locale.forLanguageTag("es-ES")
-
 private val whitespace = Regex("\\s+")
-
-private fun spanishCollator(): Collator = Collator.getInstance(spanishLocale).apply { strength = Collator.PRIMARY }
 
 private fun List<Ingredient>.toShoppingItem(): ShoppingItem {
     val total = sumOf { it.quantity }
     val unit = first().unit
     val largerUnit = unit.largerUnit()
     return when {
-        largerUnit != null && total >= METRIC_FACTOR -> ShoppingItem(name = displayName(), quantity = total / METRIC_FACTOR, unit = largerUnit)
+        largerUnit != null && total >= MeasureUnit.METRIC_FACTOR -> ShoppingItem(name = displayName(), quantity = total / MeasureUnit.METRIC_FACTOR, unit = largerUnit)
         else -> ShoppingItem(name = displayName(), quantity = total, unit = unit)
     }
 }

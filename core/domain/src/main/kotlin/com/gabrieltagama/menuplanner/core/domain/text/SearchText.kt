@@ -1,7 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.text
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
-import java.text.Normalizer
 
 /**
  * Text normalization for case- and accent-insensitive search ("Pú" matches "puré"), and the dish
@@ -9,10 +8,7 @@ import java.text.Normalizer
  * name or in the name of any of its ingredients. SearchableDish normalizes those texts once, so a
  * list can be searched on every keystroke without normalizing every dish again.
  */
-private val combiningMarks = Regex("\\p{Mn}+")
-
-fun String.normalizedForSearch(): String =
-    Normalizer.normalize(trim(), Normalizer.Form.NFD).replace(combiningMarks, "").lowercase()
+fun String.normalizedForSearch(): String = trim().withoutAccents().lowercase()
 
 fun Dish.searchableTexts(): List<String> = listOf(name.normalizedForSearch()) + ingredients.map { it.name.normalizedForSearch() }
 

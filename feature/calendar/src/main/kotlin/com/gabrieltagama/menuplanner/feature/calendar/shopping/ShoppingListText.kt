@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
+import com.gabrieltagama.menuplanner.core.domain.text.spanishLocale
 import com.gabrieltagama.menuplanner.core.ui.text.label
 import com.gabrieltagama.menuplanner.feature.calendar.R
-import com.gabrieltagama.menuplanner.feature.calendar.common.spanishLocale
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

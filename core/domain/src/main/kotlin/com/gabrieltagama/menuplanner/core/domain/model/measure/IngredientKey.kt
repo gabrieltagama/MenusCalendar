@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.model.measure
 
-import java.text.Normalizer
-import java.util.Locale
+import com.gabrieltagama.menuplanner.core.domain.text.spanishLocale
+import com.gabrieltagama.menuplanner.core.domain.text.withoutAccents
 
 /**
  * Value object: comparison key of an ingredient name. It ignores case, accents, extra spaces and
@@ -24,13 +24,7 @@ value class IngredientKey private constructor(val value: String) {
 
 private const val MIN_INFLECTED_LENGTH = 3
 
-private val spanishLocale: Locale = Locale.forLanguageTag("es-ES")
-
 private val whitespace = Regex("\\s+")
-
-private val combiningMarks = Regex("\\p{Mn}+")
-
-private fun String.withoutAccents(): String = Normalizer.normalize(this, Normalizer.Form.NFD).replace(combiningMarks, "")
 
 private fun String.singular(): String =
     if (length > MIN_INFLECTED_LENGTH) removeSuffix("s").removeSuffix("e") else this

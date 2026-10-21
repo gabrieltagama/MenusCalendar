@@ -1,7 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.model
 
-import java.text.Collator
-import java.util.Locale
+import com.gabrieltagama.menuplanner.core.domain.text.spanishCollator
 
 /**
  * Orders in which dishes can be listed: by name (Spanish order, ignoring case and accents), by
@@ -25,5 +24,3 @@ enum class DishSort {
         return dishes.sortedWith(primary?.then(byName) ?: byName)
     }
 }
-
-private fun spanishCollator(): Collator = Collator.getInstance(Locale.forLanguageTag("es-ES")).apply { strength = Collator.PRIMARY }
