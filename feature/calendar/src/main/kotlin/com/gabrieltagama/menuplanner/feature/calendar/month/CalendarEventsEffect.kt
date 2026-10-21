@@ -23,29 +23,25 @@ import kotlinx.coroutines.flow.Flow
 internal fun CalendarEventsEffect(
     events: Flow<CalendarEvent>,
     snackbarHostState: SnackbarHostState,
-    onUndoDelete: (PlanDeletion) -> Unit,
-    onUndoPaste: (PlanPaste) -> Unit
+    onUndo: (UndoableChange) -> Unit
 ) {
     val resources = LocalResources.current
     val formatter = remember(resources) { AutoFillMessageFormatter(ResourcesAutoFillTexts(resources)) }
     val undoLabel = stringResource(R.string.calendar_undo)
-    val currentOnUndoDelete by rememberUpdatedState(onUndoDelete)
-    val currentOnUndoPaste by rememberUpdatedState(onUndoPaste)
+    val currentOnUndo by rememberUpdatedState(onUndo)
+
+    suspend fun showUndoable(change: UndoableChange, textRes: Int) {
+        val message = resources.getQuantityString(textRes, change.count, change.count)
+        val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel, duration = SnackbarDuration.Long)
+        if (result == SnackbarResult.ActionPerformed) currentOnUndo(change)
+    }
 
     LaunchedEffect(events, formatter) {
         events.collect { event ->
             when (event) {
                 is CalendarEvent.AutoFillCompleted -> snackbarHostState.showSnackbar(formatter.format(event.result, event.view))
-                is CalendarEvent.DaysDeleted -> {
-                    val message = resources.getQuantityString(event.deletion.view.deletedTextRes(), event.deletion.count, event.deletion.count)
-                    val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel, duration = SnackbarDuration.Long)
-                    if (result == SnackbarResult.ActionPerformed) currentOnUndoDelete(event.deletion)
-                }
-                is CalendarEvent.DaysPasted -> {
-                    val message = resources.getQuantityString(event.paste.view.pastedTextRes(), event.paste.count, event.paste.count)
-                    val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel, duration = SnackbarDuration.Long)
-                    if (result == SnackbarResult.ActionPerformed) currentOnUndoPaste(event.paste)
-                }
+                is CalendarEvent.DaysDeleted -> showUndoable(event.change, event.change.view.deletedTextRes())
+                is CalendarEvent.DaysPasted -> showUndoable(event.change, event.change.view.pastedTextRes())
                 is CalendarEvent.SelectionFilled -> snackbarHostState.showSnackbar(
                     if (event.result.filledDays == 0 && event.result.unfilledDays == 0) resources.getString(R.string.calendar_selection_nothing_to_fill)
                     else formatter.format(event.result, event.view)

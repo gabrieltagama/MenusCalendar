@@ -5,7 +5,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.fold
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.BackUpUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -23,8 +23,9 @@ internal class RecipesBackupWorker @AssistedInject constructor(
     private val backUp: BackUpUseCase
 ) : CoroutineWorker(context, parameters) {
 
-    override suspend fun doWork(): Result = when (val outcome = backUp(onlyIfChanged = true)) {
-        is Outcome.Success -> Result.success()
-        is Outcome.Failure -> if (outcome.error == DomainError.CloudUnavailable) Result.retry() else Result.failure()
-    }
+    override suspend fun doWork(): Result =
+        backUp(onlyIfChanged = true).fold(
+            onSuccess = { Result.success() },
+            onFailure = { error -> if (error == DomainError.CloudUnavailable) Result.retry() else Result.failure() }
+        )
 }

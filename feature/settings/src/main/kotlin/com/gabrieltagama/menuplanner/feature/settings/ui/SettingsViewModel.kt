@@ -3,7 +3,7 @@ package com.gabrieltagama.menuplanner.feature.settings.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.fold
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
@@ -17,9 +17,9 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveRepeatW
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveThemeModeUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetRepeatWindowUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetThemeModeUseCase
+import com.gabrieltagama.menuplanner.core.ui.state.BusyRunner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -73,7 +73,7 @@ class SettingsViewModel @Inject constructor(
     private val _backupState = MutableStateFlow(BackupUiState())
     val backupState: StateFlow<BackupUiState> = _backupState.asStateFlow()
 
-    private var busyJob: Job? = null
+    private val busy = BusyRunner(viewModelScope) { isBusy -> _backupState.update { it.copy(isBusy = isBusy, message = if (isBusy) null else it.message) } }
 
     fun onThemeModeSelect(mode: ThemeMode) {
         viewModelScope.launch { setThemeMode(mode) }
@@ -87,12 +87,12 @@ class SettingsViewModel @Inject constructor(
 
     fun onGoogleAuthorization(accessToken: String?) {
         if (accessToken == null) showMessage(BackupMessage.ConnectionCancelled)
-        else runBusy { connectCloudAccount(accessToken).toMessage(BackupMessage::Restored) }
+        else runBusy { connectCloudAccount(accessToken).fold(BackupMessage::Restored, BackupMessage::Failed) }
     }
 
-    fun onBackUpNow() = runBusy { backUp(onlyIfChanged = false).toMessage { BackupMessage.BackedUp } }
+    fun onBackUpNow() = runBusy { backUp(onlyIfChanged = false).fold({ BackupMessage.BackedUp }, BackupMessage::Failed) }
 
-    fun onRestore() = runBusy { restoreBackup().toMessage(BackupMessage::Restored) }
+    fun onRestore() = runBusy { restoreBackup().fold(BackupMessage::Restored, BackupMessage::Failed) }
 
     fun onDisconnect() = runBusy {
         disconnectCloudAccount()
@@ -101,24 +101,9 @@ class SettingsViewModel @Inject constructor(
 
     fun onMessageShown() = _backupState.update { it.copy(message = null) }
 
-    private fun runBusy(action: suspend () -> BackupMessage) {
-        if (busyJob?.isActive == true) return
-        busyJob = viewModelScope.launch {
-            _backupState.update { it.copy(isBusy = true, message = null) }
-            try {
-                showMessage(action())
-            } finally {
-                _backupState.update { it.copy(isBusy = false) }
-            }
-        }
-    }
+    private fun runBusy(action: suspend () -> BackupMessage) = busy.run { showMessage(action()) }
 
     private fun showMessage(message: BackupMessage) = _backupState.update { it.copy(isBusy = false, message = message) }
-
-    private fun <T> Outcome<T>.toMessage(onSuccess: (T) -> BackupMessage): BackupMessage = when (this) {
-        is Outcome.Success -> onSuccess(value)
-        is Outcome.Failure -> BackupMessage.Failed(error)
-    }
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L

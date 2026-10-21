@@ -33,11 +33,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -57,12 +55,11 @@ import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
 import com.gabrieltagama.menuplanner.core.ui.preview.PreviewDishes
-import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import com.gabrieltagama.menuplanner.feature.calendar.common.DishPickerSheet
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
-import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
+import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEffects
 import java.time.LocalDate
 
 /**
@@ -86,22 +83,9 @@ fun DinnerEditorScreenRoute(
     viewModel: DinnerEditorViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val currentOnBack by rememberUpdatedState(onBack)
     val snackbarHostState = remember { SnackbarHostState() }
-    val errorMessage = state.form.error?.message()
 
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                PlanEditorEvent.Close -> currentOnBack()
-            }
-        }
-    }
-    LaunchedEffect(errorMessage) {
-        val message = errorMessage ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(message)
-        viewModel.onErrorShown()
-    }
+    PlanEditorEffects(viewModel = viewModel, error = state.form.error, snackbarHostState = snackbarHostState, onClose = onBack)
 
     DinnerEditorScreen(
         state = state,

@@ -18,7 +18,7 @@ import androidx.room.PrimaryKey
     indices = [Index("dish_id")]
 )
 internal data class DinnerDayEntity(
-    @PrimaryKey val date: Long,
+    @PrimaryKey override val date: Long,
     @ColumnInfo(name = "dish_id") val dishId: String,
-    @ColumnInfo(name = "updated_at") val updatedAt: Long
-)
+    @ColumnInfo(name = "updated_at") override val updatedAt: Long
+) : DayPlanRow

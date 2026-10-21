@@ -152,12 +152,8 @@ class CalendarViewModel @Inject constructor(
 
     fun onPasteCancel() = selection.cancelPaste()
 
-    fun onUndoPaste(paste: PlanPaste) {
-        viewModelScope.launch { commands.undo(paste) }
-    }
-
-    fun onUndoDelete(deletion: PlanDeletion) {
-        viewModelScope.launch { commands.undo(deletion) }
+    fun onUndo(change: UndoableChange) {
+        viewModelScope.launch { commands.undo(change) }
     }
 
     fun onAutoFillRequest() = autoFillStatus.update { if (it.isRunning) it else it.copy(showConfirm = true) }
