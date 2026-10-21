@@ -18,11 +18,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 /**
- * Use cases of the optional backup of the recipe book and the calendar. Restoring imports the
- * backup like a shared file (newest updatedAt wins, standard units); an automatic backup uploads
- * only when the snapshot fingerprint changed since the last upload.
+ * Use cases of the optional backup of the recipe book; the calendar is never backed up (BACKUP_SCOPE).
+ * Restoring imports the recipes of the backup like a shared file (newest updatedAt wins, standard
+ * units) and ignores any calendar an older backup may contain; an automatic backup uploads only when
+ * the snapshot fingerprint changed since the last upload.
  * Connecting restores, uploads and schedules the daily backup; disconnecting cancels it.
  */
+
 class ObserveCloudAccountUseCase @Inject constructor(private val cloud: CloudBackupRepository) {
     operator fun invoke(): Flow<CloudAccount> = cloud.account
 }
@@ -35,7 +37,7 @@ class BackUpUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(onlyIfChanged: Boolean): Outcome<BackupResult> {
         if (cloud.account.first() is CloudAccount.Disconnected) return Outcome.Success(BackupResult.NOT_CONNECTED)
-        val snapshot = snapshots.read(SnapshotScope.EVERYTHING)
+        val snapshot = snapshots.read(BACKUP_SCOPE)
         val fingerprint = SnapshotFingerprint.of(snapshot)
         if (onlyIfChanged && fingerprint == cloud.lastUploadedFingerprint()) return Outcome.Success(BackupResult.NO_CHANGES)
         return when (val upload = cloud.upload(codec.encode(snapshot, Instant.now(clock)), fingerprint)) {
@@ -51,7 +53,7 @@ class RestoreBackupUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(): Outcome<ImportSummary> = when (val download = cloud.download()) {
         is Outcome.Failure -> download
-        is Outcome.Success -> download.value?.let { importMenus(it) } ?: Outcome.Success(ImportSummary.EMPTY)
+        is Outcome.Success -> download.value?.let { importMenus(it, BACKUP_SCOPE) } ?: Outcome.Success(ImportSummary.EMPTY)
     }
 }
 
@@ -81,3 +83,5 @@ class DisconnectCloudAccountUseCase @Inject constructor(
         cloud.disconnect()
     }
 }
+
+private val BACKUP_SCOPE = SnapshotScope.RECIPES

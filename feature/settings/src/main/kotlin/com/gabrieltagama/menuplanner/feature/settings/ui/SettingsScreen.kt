@@ -235,7 +235,7 @@ private fun BackupItem(icon: ImageVector, title: String, hint: String?, enabled:
 @Composable
 private fun BackupMessage.text(): String = when (this) {
     BackupMessage.BackedUp -> stringResource(R.string.settings_backup_done)
-    is BackupMessage.Restored -> stringResource(R.string.settings_backup_restored, summary.dishesAdded, summary.dishesUpdated, summary.daysAdded, summary.daysUpdated)
+    is BackupMessage.Restored -> stringResource(R.string.settings_backup_restored, summary.dishesAdded, summary.dishesUpdated)
     BackupMessage.Disconnected -> stringResource(R.string.settings_backup_disconnected)
     BackupMessage.ConnectionCancelled -> stringResource(R.string.settings_backup_cancelled)
     is BackupMessage.Failed -> error.message()

@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
- * Backup of recipes and calendar in the hidden app data folder of the user's own Google Drive. Only the linked
+ * Backup of the recipes in the hidden app data folder of the user's own Google Drive. Only the linked
  * email and the fingerprint of the last upload are kept, in a private DataStore; no password or
  * token is stored. Every operation asks Google for a fresh token silently, so a revoked grant
  * becomes CloudAuthorizationRequired and network problems CloudUnavailable. A new backup is

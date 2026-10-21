@@ -2,7 +2,6 @@ package com.gabrieltagama.menuplanner.core.domain.fake
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import kotlinx.coroutines.flow.Flow
@@ -23,9 +22,6 @@ class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository {
     val current: Map<String, Dish> get() = dishes.value.mapKeys { it.key.value }
 
     override fun observeDishes(): Flow<List<Dish>> = dishes.map { it.values.toList() }
-
-    override fun observeDishesByType(type: DishType): Flow<List<Dish>> =
-        dishes.map { all -> all.values.filter { it.type == type } }
 
     override suspend fun getDishes(): List<Dish> = dishes.value.values.toList()
 

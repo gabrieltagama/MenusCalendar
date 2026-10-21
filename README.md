@@ -5,9 +5,9 @@ Calendario de menus
 
 La app no tiene login. En el primer arranque ofrece **Conectar con Google** o **Continuar sin cuenta**; la elección no se vuelve a pedir y desde Ajustes se puede conectar, hacer copia, restaurar o desconectar en cualquier momento.
 
-- Se guardan las **recetas y el calendario** (comidas y cenas) en la carpeta oculta `appDataFolder` del Google Drive del propio usuario, con el permiso `drive.appdata`. No hay servidor propio: nadie más ve la cuenta ni los datos, y la app no guarda contraseñas ni tokens.
+- Se guardan solo las **recetas** (el calendario no se copia) en la carpeta oculta `appDataFolder` del Google Drive del propio usuario, con el permiso `drive.appdata`. No hay servidor propio: nadie más ve la cuenta ni los datos, y la app no guarda contraseñas ni tokens.
 - Una tarea diaria de WorkManager sube la copia solo si algo ha cambiado desde la última subida.
-- Restaurar funciona como importar un fichero compartido: se añade lo que no existe y se actualiza solo lo que es más antiguo que la copia.
+- Restaurar funciona como importar un fichero compartido, pero solo con las recetas: se añade lo que no existe y se actualiza solo lo que es más antiguo que la copia. Si una copia antigua trae calendario, se ignora.
 
 ## Exportar e importar JSON
 
@@ -41,5 +41,5 @@ Si existen estos secrets en el repositorio, la CI genera también un `app-releas
 ## Desarrollo
 
 - Módulos: `app`, `core:domain` (Kotlin puro), `core:data` (Room, DataStore, JSON), `core:cloud` y `core:cloud-ui` (Google Drive), `core:ui` y las features `onboarding`, `dishes`, `calendar`, `settings` y `share`. La configuración común de Gradle está en los convention plugins de `build-logic`.
-- Todos los tests son de JVM (los de Room, ViewModels y pantallas con Robolectric), así que la CI los ejecuta en cada pull request junto con Android Lint, la cobertura de Kover y ktlint (informativo, estilo en `.editorconfig`).
+- Todos los tests son de JVM (los de Room, ViewModels y pantallas con Robolectric), así que la CI los ejecuta en cada pull request junto con Android Lint, la cobertura de Kover y ktlint (bloquea si hay infracciones; estilo en `.editorconfig`).
 - Los esquemas de Room de cada versión están en `core/data/schemas` y los tests de migración los usan; al cambiar la base de datos hay que subir la versión, añadir la migración en `Migrations` y versionar el nuevo esquema que genera el build.

@@ -7,7 +7,6 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
@@ -26,9 +25,6 @@ internal class RoomDishRepository @Inject constructor(
 ) : DishRepository {
 
     override fun observeDishes(): Flow<List<Dish>> = dishDao.observeAll().map { it.toDomainList() }
-
-    override fun observeDishesByType(type: DishType): Flow<List<Dish>> =
-        dishDao.observeByType(type.name).map { it.toDomainList() }
 
     override suspend fun getDishes(): List<Dish> = dishDao.getAll().toDomainList()
 

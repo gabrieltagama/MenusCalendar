@@ -11,11 +11,15 @@ import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.BackupResult
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
+import com.gabrieltagama.menuplanner.core.domain.model.share.DinnerEntry
+import com.gabrieltagama.menuplanner.core.domain.model.share.LunchEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
 import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
+import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -24,13 +28,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests of the backup use cases: upload only on changes, recipes and calendar payload, restore,
- * connection flow and scheduling.
+ * Tests of the backup use cases: upload only on changes, recipes-only payload, restore without the
+ * calendar of older backups, connection flow and scheduling.
  */
 class BackupUseCasesTest {
     private val connected = CloudAccount.Connected(FakeCloudBackupRepository.EMAIL)
     private val dishes = FakeDishRepository(listOf(dish(id = "a")))
-    private val snapshots = FakeMenuSnapshotRepository(dishes)
+    private val date = LocalDate.of(2026, 3, 10)
+    private val calendar = MenuSnapshot(
+        dishes = emptyList(),
+        lunches = listOf(LunchEntry(date, singleId = DishId("a"), updatedAt = TestDishes.OLD_INSTANT)),
+        dinners = listOf(DinnerEntry(date, DishId("a"), TestDishes.OLD_INSTANT))
+    )
+    private val snapshots = FakeMenuSnapshotRepository(dishes, calendar)
     private val codec = FakeMenuSnapshotCodec()
     private val scheduler = FakeBackupScheduler()
     private val recipesText = "dishes=1;lunches=0;dinners=0"
@@ -53,12 +63,12 @@ class BackupUseCasesTest {
     }
 
     @Test
-    fun `backup uploads a snapshot of the recipes and the calendar`() = runBlocking {
+    fun `backup uploads only the recipes, never the calendar`() = runBlocking {
         val cloud = FakeCloudBackupRepository(connected)
 
         assertEquals(Outcome.Success(BackupResult.UPLOADED), backUp(cloud)(onlyIfChanged = true))
         assertEquals(listOf(recipesText), cloud.uploads)
-        assertEquals(listOf(SnapshotScope.EVERYTHING), snapshots.readScopes)
+        assertEquals(listOf(SnapshotScope.RECIPES), snapshots.readScopes)
     }
 
     @Test
@@ -101,6 +111,15 @@ class BackupUseCasesTest {
     fun `restore merges the remote backup`() = runBlocking {
         val cloud = FakeCloudBackupRepository(connected, remoteJson = "remote")
         codec.register("remote", remoteSnapshot)
+        restore(cloud)()
+
+        assertEquals(listOf(remoteSnapshot), snapshots.merged)
+    }
+
+    @Test
+    fun `restore ignores the calendar of an older backup`() = runBlocking {
+        val cloud = FakeCloudBackupRepository(connected, remoteJson = "old")
+        codec.register("old", remoteSnapshot.copy(lunches = calendar.lunches, dinners = calendar.dinners))
         restore(cloud)()
 
         assertEquals(listOf(remoteSnapshot), snapshots.merged)

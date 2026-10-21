@@ -15,7 +15,8 @@ import org.junit.Test
 
 /**
  * Tests that planned days of a snapshot resolve with the same rules as planning them by hand: one
- * menu shape, known dishes, each dish in the slot of its type, and dinners only with dinner options.
+ * menu shape, known dishes, each dish in the slot of its type, and dinners only with dinner options;
+ * and that limiting a snapshot to a scope keeps only what it covers.
  */
 class MenuSnapshotTest {
     private val date = LocalDate.of(2026, 3, 10)
@@ -68,6 +69,14 @@ class MenuSnapshotTest {
 
         assertEquals(lunch, LunchEntry.of(lunch).resolve(known))
         assertEquals(dinner, DinnerEntry.of(dinner).resolve(known))
+    }
+
+    @Test
+    fun `limiting to recipes drops the calendar and everything keeps it`() {
+        val snapshot = MenuSnapshot(listOf(single), listOf(lunch(singleId = "s")), listOf(DinnerEntry(date, DishId("s"), TestDishes.OLD_INSTANT)))
+
+        assertEquals(MenuSnapshot(listOf(single)), snapshot.limitedTo(SnapshotScope.RECIPES))
+        assertEquals(snapshot, snapshot.limitedTo(SnapshotScope.EVERYTHING))
     }
 
     private fun lunch(starterId: String? = null, mainId: String? = null, singleId: String? = null) = LunchEntry(
