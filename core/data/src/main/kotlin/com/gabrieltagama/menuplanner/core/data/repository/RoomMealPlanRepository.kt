@@ -17,9 +17,10 @@ internal class RoomMealPlanRepository @Inject constructor(
     mealDayDao: MealDayDao,
     dishDao: DishDao
 ) : RoomDayPlanRepository<MealDayEntity, MealDay>(
-    dao = mealDayDao,
-    dishDao = dishDao,
-    dishIdsOf = MealDayEntity::dishIds,
-    toDomain = MealDayEntity::toDomain,
-    toEntity = MealDay::toEntity
-), MealPlanRepository
+        dao = mealDayDao,
+        dishDao = dishDao,
+        dishIdsOf = MealDayEntity::dishIds,
+        toDomain = MealDayEntity::toDomain,
+        toEntity = MealDay::toEntity
+    ),
+    MealPlanRepository
