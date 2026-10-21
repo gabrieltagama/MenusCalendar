@@ -15,14 +15,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Robolectric tests of RoomMealPlanRepository: saving replaces a day and reading resolves its dishes.
+ * Robolectric tests of RoomLunchPlanRepository: saving replaces a day and reading resolves its dishes.
  * The month view is covered by RoomCalendarQueriesTest.
  */
 @RunWith(AndroidJUnit4::class)
-class RoomMealPlanRepositoryTest {
+class RoomLunchPlanRepositoryTest {
     private lateinit var database: MenuPlannerDatabase
     private lateinit var dishRepository: RoomDishRepository
-    private lateinit var repository: RoomMealPlanRepository
+    private lateinit var repository: RoomLunchPlanRepository
 
     private val starter = DatabaseTestData.dish("st", name = "Soup", type = DishType.STARTER)
     private val main = DatabaseTestData.dish("mn", name = "Steak", type = DishType.MAIN)
@@ -32,7 +32,7 @@ class RoomMealPlanRepositoryTest {
     fun setUp(): Unit = runBlocking {
         database = DatabaseTestData.inMemoryDatabase()
         dishRepository = RoomDishRepository(database.dishDao())
-        repository = RoomMealPlanRepository(database.mealDayDao(), database.dishDao())
+        repository = RoomLunchPlanRepository(database.lunchDayDao(), database.dishDao())
         listOf(starter, main, single).forEach { dishRepository.upsert(it) }
     }
 

@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.fake
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
 import java.time.Instant
@@ -24,7 +24,7 @@ class FakeMenuSnapshotCodec(private val failure: Outcome.Failure? = null) : Menu
     }
 
     override fun decode(text: String): Outcome<MenuSnapshot> =
-        failure ?: snapshotsByText[text]?.let { Outcome.Success(it) } ?: Outcome.Failure(DomainError.InvalidImportFile)
+        failure ?: snapshotsByText[text]?.let { Outcome.Success(it) } ?: Outcome.Failure(ShareError.InvalidImportFile)
 
     companion object {
         fun textOf(snapshot: MenuSnapshot): String = "dishes=${snapshot.dishes.size};lunches=${snapshot.lunches.size};dinners=${snapshot.dinners.size}"

@@ -1,12 +1,12 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.port.MealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.LunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import java.time.Clock
 import javax.inject.Inject
@@ -17,20 +17,20 @@ import kotlin.random.Random
  * the lunch options (Dish.isLunchOption), so the no-repeat and heavy-streak rules hold and a lunch
  * avoids the dinners around it.
  */
-class AutoFillMonthUseCase @Inject constructor(
+class AutoFillMonthLunchesUseCase @Inject constructor(
     dishRepository: DishRepository,
-    mealPlanRepository: MealPlanRepository,
+    lunchPlanRepository: LunchPlanRepository,
     dinnerPlanRepository: DinnerPlanRepository,
     settingsRepository: SettingsRepository,
     private val random: Random,
     clock: Clock
-) : AutoFillPlanUseCase<MealDay>(Meal.LUNCH, mealPlanRepository, dishRepository, mealPlanRepository, dinnerPlanRepository, settingsRepository, clock) {
+) : AutoFillPlanUseCase<LunchDay>(Meal.LUNCH, lunchPlanRepository, dishRepository, lunchPlanRepository, dinnerPlanRepository, settingsRepository, clock) {
 
-    override fun pickerFor(dishes: List<Dish>, window: RepeatWindow): DayPicker<MealDay> {
+    override fun pickerFor(dishes: List<Dish>, window: RepeatWindow): DayPicker<LunchDay> {
         val picker = MenuPicker(dishes.filter(Dish::isLunchOption), window, random)
         return DayPicker { date, history, at ->
             picker.pick(date, history)?.let { pick ->
-                val day = MealDay(date = date, menu = pick.menu, updatedAt = at)
+                val day = LunchDay(date = date, menu = pick.menu, updatedAt = at)
                 history.record(day)
                 DayPick(day, pick.repeated, pick.breaksHeavyRule)
             }

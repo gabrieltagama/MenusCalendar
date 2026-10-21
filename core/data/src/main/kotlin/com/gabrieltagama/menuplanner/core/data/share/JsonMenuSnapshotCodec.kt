@@ -5,8 +5,8 @@ import com.gabrieltagama.menuplanner.core.data.share.dto.DishDto
 import com.gabrieltagama.menuplanner.core.data.share.dto.IngredientDto
 import com.gabrieltagama.menuplanner.core.data.share.dto.MealDayDto
 import com.gabrieltagama.menuplanner.core.data.share.dto.ShareDocumentDto
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
@@ -43,12 +43,12 @@ internal class JsonMenuSnapshotCodec @Inject constructor(private val json: Json)
 
     override fun decode(text: String): Outcome<MenuSnapshot> =
         try {
-            if (schemaVersionOf(text) > ShareDocumentDto.CURRENT_SCHEMA_VERSION) Outcome.Failure(DomainError.UnsupportedImportVersion)
+            if (schemaVersionOf(text) > ShareDocumentDto.CURRENT_SCHEMA_VERSION) Outcome.Failure(ShareError.UnsupportedImportVersion)
             else Outcome.Success(json.decodeFromString(ShareDocumentDto.serializer(), text).toSnapshot())
         } catch (exception: IllegalArgumentException) {
-            Outcome.Failure(DomainError.InvalidImportFile)
+            Outcome.Failure(ShareError.InvalidImportFile)
         } catch (exception: DateTimeException) {
-            Outcome.Failure(DomainError.InvalidImportFile)
+            Outcome.Failure(ShareError.InvalidImportFile)
         }
 
     private fun schemaVersionOf(text: String): Int =

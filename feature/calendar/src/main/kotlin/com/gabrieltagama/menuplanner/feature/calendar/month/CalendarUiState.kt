@@ -19,7 +19,7 @@ data class CalendarUiState(
     val today: LocalDate,
     val view: Meal = Meal.LUNCH,
     val isLoading: Boolean = true,
-    val days: Map<LocalDate, PlannedLunch> = emptyMap(),
+    val lunches: Map<LocalDate, PlannedLunch> = emptyMap(),
     val dinners: Map<LocalDate, PlannedDinner> = emptyMap(),
     val isAutoFilling: Boolean = false,
     val showAutoFillConfirm: Boolean = false,
@@ -34,11 +34,11 @@ data class CalendarUiState(
     val isPasting: Boolean get() = mode is CalendarMode.Pasting
 
     val plannedDates: Set<LocalDate> get() = when (view) {
-        Meal.LUNCH -> days.keys
+        Meal.LUNCH -> lunches.keys
         Meal.DINNER -> dinners.keys
     }
 
-    val selectedDay: PlannedLunch? get() = days[selectedDate]
+    val selectedLunch: PlannedLunch? get() = lunches[selectedDate]
 
     val selectedDinner: PlannedDinner? get() = dinners[selectedDate]
 

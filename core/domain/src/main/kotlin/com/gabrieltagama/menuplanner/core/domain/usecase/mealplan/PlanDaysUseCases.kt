@@ -10,7 +10,7 @@ import java.time.LocalDate
 
 /**
  * Commands shared by the lunch and dinner calendars, written once for any PlannedDay; each meal
- * extends them with its own repository (MealPlanUseCases, DinnerPlanUseCases, CopyPlanUseCases).
+ * extends them with its own repository (LunchPlanUseCases, DinnerPlanUseCases, CopyPlanUseCases).
  * Clearing several days returns the removed ones so they can be restored (undo). A paste writes the
  * planned days among the copied dates from the target date on, keeping the gaps between them (the
  * first copied date lands on the target), overwrites what was planned there and returns both, so

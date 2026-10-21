@@ -5,28 +5,32 @@ import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import java.time.LocalDate
 
 /**
- * Business errors grouped by the context that raises them: the recipe book, the meal planning, the
- * shared files and the cloud backup. Every error is still a DomainError, so screens can show any of
- * them, while code that only deals with one context can use its narrower type.
+ * Business errors, each nested in the context that raises it: the recipe book (RecipeError), the
+ * meal planning (PlanningError), the shared files (ShareError) and the cloud backup (CloudError).
+ * Every error is still a DomainError, so screens can show any of them, while code that only deals
+ * with one context can use its narrower type.
  */
-sealed interface DomainError {
+sealed interface DomainError
+
+sealed interface RecipeError : DomainError {
     data object BlankDishName : RecipeError
     data class InvalidIngredient(val index: Int) : RecipeError
     data object DishNotFound : RecipeError
     data object DishInUse : RecipeError
     data class DishPlannedIncompatibly(val firstDate: LocalDate, val days: Int) : RecipeError
+}
+
+sealed interface PlanningError : DomainError {
     data class WrongDishType(val slot: MenuSlot, val expected: DishType) : PlanningError
     data object NotADinnerDish : PlanningError
+}
+
+sealed interface ShareError : DomainError {
     data object InvalidImportFile : ShareError
     data object UnsupportedImportVersion : ShareError
+}
+
+sealed interface CloudError : DomainError {
     data object CloudUnavailable : CloudError
     data object CloudAuthorizationRequired : CloudError
 }
-
-sealed interface RecipeError : DomainError
-
-sealed interface PlanningError : DomainError
-
-sealed interface ShareError : DomainError
-
-sealed interface CloudError : DomainError

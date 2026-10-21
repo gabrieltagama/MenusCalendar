@@ -5,8 +5,8 @@ import com.gabrieltagama.menuplanner.core.data.share.dto.DishDto
 import com.gabrieltagama.menuplanner.core.data.share.dto.IngredientDto
 import com.gabrieltagama.menuplanner.core.data.share.dto.MealDayDto
 import com.gabrieltagama.menuplanner.core.data.share.dto.ShareDocumentDto
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
@@ -111,8 +111,8 @@ class JsonMenuSnapshotCodecTest {
 
     @Test
     fun `newer schema version is UnsupportedImportVersion even with an unparseable body`() {
-        assertEquals(Outcome.Failure(DomainError.UnsupportedImportVersion), codec.decode("""{"schemaVersion":2,"exportedAt":"2026-05-01T00:00:00Z","dishes":[],"mealDays":[]}"""))
-        assertEquals(Outcome.Failure(DomainError.UnsupportedImportVersion), codec.decode("""{"schemaVersion":2,"somethingNew":true}"""))
+        assertEquals(Outcome.Failure(ShareError.UnsupportedImportVersion), codec.decode("""{"schemaVersion":2,"exportedAt":"2026-05-01T00:00:00Z","dishes":[],"mealDays":[]}"""))
+        assertEquals(Outcome.Failure(ShareError.UnsupportedImportVersion), codec.decode("""{"schemaVersion":2,"somethingNew":true}"""))
     }
 
     @Test
@@ -152,7 +152,7 @@ class JsonMenuSnapshotCodecTest {
         assertEquals(listOf(DishId("new")), decodeSuccess(textWith(dishDto(), newer, older)).lunches.map { it.singleId })
     }
 
-    private fun assertInvalid(text: String) = assertEquals(text, Outcome.Failure(DomainError.InvalidImportFile), codec.decode(text))
+    private fun assertInvalid(text: String) = assertEquals(text, Outcome.Failure(ShareError.InvalidImportFile), codec.decode(text))
 
     private fun decodeSuccess(text: String): MenuSnapshot = (codec.decode(text) as Outcome.Success).value
 

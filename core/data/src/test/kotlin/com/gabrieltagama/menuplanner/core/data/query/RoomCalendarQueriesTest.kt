@@ -7,10 +7,10 @@ import com.gabrieltagama.menuplanner.core.data.database.DatabaseTestData
 import com.gabrieltagama.menuplanner.core.data.database.MenuPlannerDatabase
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
-import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
+import com.gabrieltagama.menuplanner.core.data.repository.RoomLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
 import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedLunch
@@ -33,7 +33,7 @@ import org.junit.runner.RunWith
 class RoomCalendarQueriesTest {
     private lateinit var database: MenuPlannerDatabase
     private lateinit var dishRepository: RoomDishRepository
-    private lateinit var mealPlan: RoomMealPlanRepository
+    private lateinit var lunchPlan: RoomLunchPlanRepository
     private lateinit var dinnerPlan: RoomDinnerPlanRepository
     private lateinit var queries: RoomCalendarQueries
 
@@ -46,7 +46,7 @@ class RoomCalendarQueriesTest {
     fun setUp(): Unit = runBlocking {
         database = DatabaseTestData.inMemoryDatabase()
         dishRepository = RoomDishRepository(database.dishDao())
-        mealPlan = RoomMealPlanRepository(database.mealDayDao(), database.dishDao())
+        lunchPlan = RoomLunchPlanRepository(database.lunchDayDao(), database.dishDao())
         dinnerPlan = RoomDinnerPlanRepository(database.dinnerDayDao(), database.dishDao())
         queries = RoomCalendarQueries(database.planQueryDao())
         listOf(starter, main, single).forEach { dishRepository.upsert(it) }
@@ -66,10 +66,10 @@ class RoomCalendarQueriesTest {
             firstOfMarch,
             DatabaseTestData.singleDay(LocalDate.of(2026, 4, 1), single),
             midMarch
-        ).forEach { mealPlan.save(it) }
+        ).forEach { lunchPlan.save(it) }
 
         queries.observeLunches(march).test {
-            assertEquals(listOf(firstOfMarch, midMarch, lastOfMarch).map(MealDay::toPlannedLunch), awaitItem())
+            assertEquals(listOf(firstOfMarch, midMarch, lastOfMarch).map(LunchDay::toPlannedLunch), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -77,7 +77,7 @@ class RoomCalendarQueriesTest {
     @Test
     fun observeLunchesRefreshesWhenPlannedDishIsRenamed() = runTest {
         val day = DatabaseTestData.singleDay(LocalDate.of(2026, 3, 10), single)
-        mealPlan.save(day)
+        lunchPlan.save(day)
 
         queries.observeLunches(march).test {
             assertEquals(listOf(day.toPlannedLunch()), awaitItem())
@@ -99,10 +99,10 @@ class RoomCalendarQueriesTest {
         queries.observeLunches(march).test {
             assertEquals(emptyList<PlannedLunch>(), awaitItem())
 
-            mealPlan.save(day)
+            lunchPlan.save(day)
             assertEquals(listOf(day.toPlannedLunch()), awaitItemMatching(listOf(day.toPlannedLunch())))
 
-            mealPlan.clear(date)
+            lunchPlan.clear(date)
             assertEquals(emptyList<PlannedLunch>(), awaitItemMatching(emptyList()))
             cancelAndIgnoreRemainingEvents()
         }

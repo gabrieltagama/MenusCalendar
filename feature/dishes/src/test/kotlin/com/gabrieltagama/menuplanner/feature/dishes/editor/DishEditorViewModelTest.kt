@@ -2,7 +2,7 @@ package com.gabrieltagama.menuplanner.feature.dishes.editor
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
@@ -188,7 +188,7 @@ class DishEditorViewModelTest {
 
         val state = awaitLoaded(viewModel)
 
-        assertEquals(DomainError.DishNotFound, state.error)
+        assertEquals(RecipeError.DishNotFound, state.error)
     }
 
     @Test
@@ -202,7 +202,7 @@ class DishEditorViewModelTest {
         viewModel.onDeleteConfirm()
 
         val state = withTimeout(TIMEOUT_MS) { viewModel.uiState.first { it.error != null } }
-        assertEquals(DomainError.DishInUse, state.error)
+        assertEquals(RecipeError.DishInUse, state.error)
         assertFalse(state.isSaving)
         assertFalse(state.showDeleteConfirm)
         assertTrue(repository.deletedIds.isEmpty())

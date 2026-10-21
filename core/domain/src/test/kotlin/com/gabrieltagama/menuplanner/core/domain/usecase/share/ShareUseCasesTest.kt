@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.share
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotRepository
@@ -49,7 +49,7 @@ class ShareUseCasesTest {
 
     @Test
     fun `import propagates decode failures without merging`() = runBlocking {
-        val failure = Outcome.Failure(DomainError.UnsupportedImportVersion)
+        val failure = Outcome.Failure(ShareError.UnsupportedImportVersion)
         val repository = FakeMenuSnapshotRepository(dishes)
 
         assertEquals(failure, importMenus(repository, FakeMenuSnapshotCodec(failure))("bad"))

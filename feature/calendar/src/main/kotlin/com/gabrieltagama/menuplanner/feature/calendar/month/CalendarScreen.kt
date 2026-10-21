@@ -41,8 +41,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedLunch
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.preview.PreviewDishes
@@ -240,7 +240,7 @@ private fun CalendarScreenPreview() = MenuPlannerTheme {
             selectedDate = today,
             today = today,
             isLoading = false,
-            days = mapOf(today to MealDay(date = today, menu = menu, updatedAt = Instant.EPOCH).toPlannedLunch())
+            lunches = mapOf(today to LunchDay(date = today, menu = menu, updatedAt = Instant.EPOCH).toPlannedLunch())
         ),
         onPreviousMonth = {},
         onNextMonth = {},

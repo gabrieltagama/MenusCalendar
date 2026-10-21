@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
@@ -37,7 +37,7 @@ class SaveDishNonFiniteQuantityTest {
 
         val result = save(dish(ingredients = ingredients))
 
-        assertEquals(Outcome.Failure(DomainError.InvalidIngredient(1)), result)
+        assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(1)), result)
         assertTrue(repository.upserted.isEmpty())
     }
 
@@ -47,7 +47,7 @@ class SaveDishNonFiniteQuantityTest {
 
         val result = save(dish(ingredients = ingredients))
 
-        assertEquals(Outcome.Failure(DomainError.InvalidIngredient(0)), result)
+        assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(0)), result)
         assertTrue(repository.upserted.isEmpty())
     }
 
@@ -61,7 +61,7 @@ class SaveDishNonFiniteQuantityTest {
 
         val result = save(dish(ingredients = ingredients))
 
-        assertEquals(Outcome.Failure(DomainError.InvalidIngredient(2)), result)
+        assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(2)), result)
     }
 
     @Test
@@ -73,7 +73,7 @@ class SaveDishNonFiniteQuantityTest {
 
         val result = save(dish(ingredients = ingredients))
 
-        assertEquals(Outcome.Failure(DomainError.InvalidIngredient(0)), result)
+        assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(0)), result)
     }
 
     private suspend fun save(dish: Dish) = useCase(dish.toDraft())

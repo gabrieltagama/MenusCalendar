@@ -1,13 +1,13 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.common.PlanningError
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
@@ -17,25 +17,25 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Tests slot/type validation, timestamping and persistence of SaveMealDayUseCase.
+ * Tests slot/type validation, timestamping and persistence of SaveLunchDayUseCase.
  */
-class SaveMealDayUseCaseTest {
+class SaveLunchDayUseCaseTest {
     private val date = LocalDate.of(2026, 3, 10)
     private val starter = dish(type = DishType.STARTER)
     private val main = dish(type = DishType.MAIN)
     private val single = dish(type = DishType.SINGLE)
 
-    private lateinit var repository: FakeMealPlanRepository
-    private lateinit var useCase: SaveMealDayUseCase
+    private lateinit var repository: FakeLunchPlanRepository
+    private lateinit var useCase: SaveLunchDayUseCase
 
     @Before
     fun setUp() {
-        repository = FakeMealPlanRepository()
-        useCase = SaveMealDayUseCase(repository, TestDishes.fixedClock)
+        repository = FakeLunchPlanRepository()
+        useCase = SaveLunchDayUseCase(repository, TestDishes.fixedClock)
     }
 
     private fun assertRejected(menu: DailyMenu, slot: MenuSlot, expected: DishType) = runBlocking {
-        assertEquals(Outcome.Failure(DomainError.WrongDishType(slot, expected)), useCase(date, menu))
+        assertEquals(Outcome.Failure(PlanningError.WrongDishType(slot, expected)), useCase(date, menu))
         assertTrue(repository.saved.isEmpty())
     }
 
@@ -45,7 +45,7 @@ class SaveMealDayUseCaseTest {
 
         val result = useCase(date, menu)
 
-        val expected = MealDay(date, menu, TestDishes.FIXED_INSTANT)
+        val expected = LunchDay(date, menu, TestDishes.FIXED_INSTANT)
         assertEquals(Outcome.Success(expected), result)
         assertEquals(listOf(expected), repository.saved)
     }
@@ -64,7 +64,7 @@ class SaveMealDayUseCaseTest {
 
         val result = useCase(date, menu)
 
-        assertEquals(Outcome.Success(MealDay(date, menu, TestDishes.FIXED_INSTANT)), result)
+        assertEquals(Outcome.Success(LunchDay(date, menu, TestDishes.FIXED_INSTANT)), result)
         assertEquals(1, repository.saved.size)
     }
 

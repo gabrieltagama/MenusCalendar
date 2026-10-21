@@ -6,7 +6,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthPlanUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthLunchesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
-    observeMonthPlan: ObserveMonthPlanUseCase,
+    observeMonthLunches: ObserveMonthLunchesUseCase,
     observeMonthDinners: ObserveMonthDinnersUseCase,
     private val commands: PlanCommands,
     private val clock: Clock
@@ -51,8 +51,8 @@ class CalendarViewModel @Inject constructor(
     private val selection = DaySelectionController()
 
     private val monthPlan = month.flatMapLatest { visibleMonth ->
-        combine(observeMonthPlan(visibleMonth), observeMonthDinners(visibleMonth)) { days, dinners ->
-            MonthPlan(visibleMonth, days.associateBy { it.date }, dinners.associateBy { it.date })
+        combine(observeMonthLunches(visibleMonth), observeMonthDinners(visibleMonth)) { lunches, dinners ->
+            MonthPlan(visibleMonth, lunches.associateBy { it.date }, dinners.associateBy { it.date })
         }
     }
 
@@ -69,7 +69,7 @@ class CalendarViewModel @Inject constructor(
                 today = current,
                 view = activeView,
                 isLoading = !isCurrentPlan,
-                days = if (isCurrentPlan) plan.days else emptyMap(),
+                lunches = if (isCurrentPlan) plan.lunches else emptyMap(),
                 dinners = if (isCurrentPlan) plan.dinners else emptyMap(),
                 isAutoFilling = status.isRunning,
                 showAutoFillConfirm = status.showConfirm,
@@ -189,7 +189,7 @@ class CalendarViewModel @Inject constructor(
     private fun refreshToday(): LocalDate = LocalDate.now(clock).also { today.value = it }
 }
 
-private data class MonthPlan(val month: YearMonth, val days: Map<LocalDate, PlannedLunch>, val dinners: Map<LocalDate, PlannedDinner>)
+private data class MonthPlan(val month: YearMonth, val lunches: Map<LocalDate, PlannedLunch>, val dinners: Map<LocalDate, PlannedDinner>)
 
 private data class AutoFillStatus(val isRunning: Boolean = false, val showConfirm: Boolean = false)
 

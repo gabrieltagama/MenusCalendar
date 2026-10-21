@@ -33,7 +33,7 @@ import org.junit.runner.RunWith
 class RoomMenuSnapshotRepositoryTest {
     private lateinit var database: MenuPlannerDatabase
     private lateinit var dishRepository: RoomDishRepository
-    private lateinit var mealPlanRepository: RoomMealPlanRepository
+    private lateinit var lunchPlanRepository: RoomLunchPlanRepository
     private lateinit var dinnerPlanRepository: RoomDinnerPlanRepository
     private lateinit var repository: RoomMenuSnapshotRepository
 
@@ -70,8 +70,8 @@ class RoomMenuSnapshotRepositoryTest {
 
         assertEquals(ImportSummary(4, 0, 0, 3, 0, 0), summary)
         assertEquals(setOf(dessert, starter, single, main), dishRepository.getDishes().toSet())
-        assertEquals(coursesDay, mealPlanRepository.getDay(coursesDay.date))
-        assertEquals(singleDay, mealPlanRepository.getDay(singleDay.date))
+        assertEquals(coursesDay, lunchPlanRepository.getDay(coursesDay.date))
+        assertEquals(singleDay, lunchPlanRepository.getDay(singleDay.date))
         assertEquals(dinner, dinnerPlanRepository.getDay(dinner.date))
     }
 
@@ -133,7 +133,7 @@ class RoomMenuSnapshotRepositoryTest {
         val expected = edited.copy(id = local.id)
         assertEquals(ImportSummary(0, 1, 0, 2, 0, 0), summary)
         assertEquals(listOf(expected), dishRepository.getDishes())
-        assertEquals(expected, mealPlanRepository.getDay(date)?.menu?.dishes?.single())
+        assertEquals(expected, lunchPlanRepository.getDay(date)?.menu?.dishes?.single())
         assertEquals(expected, dinnerPlanRepository.getDay(date)?.dish)
     }
 
@@ -146,7 +146,7 @@ class RoomMenuSnapshotRepositoryTest {
         )
 
         assertEquals(ImportSummary(1, 0, 0, 1, 0, 0), repository.merge(snapshot))
-        assertEquals(coursesDay, mealPlanRepository.getDay(date))
+        assertEquals(coursesDay, lunchPlanRepository.getDay(date))
     }
 
     @Test
@@ -159,14 +159,14 @@ class RoomMenuSnapshotRepositoryTest {
         )
 
         assertEquals(ImportSummary(0, 0, 0, 0, 0, 3), repository.merge(MenuSnapshot(emptyList(), lunches)))
-        (0L..2L).forEach { assertNull(mealPlanRepository.getDay(date.plusDays(it))) }
+        (0L..2L).forEach { assertNull(lunchPlanRepository.getDay(date.plusDays(it))) }
     }
 
     @Test
     fun newerLunchUpdatesAndOlderLunchIsSkipped() = runTest {
         val other = DatabaseTestData.dish("other", type = DishType.SINGLE)
         dishRepository.upsertAll(listOf(single, other))
-        mealPlanRepository.saveAll(
+        lunchPlanRepository.saveAll(
             listOf(
                 DatabaseTestData.singleDay(date, single, updatedAt = DatabaseTestData.OLD_INSTANT),
                 DatabaseTestData.singleDay(date.plusDays(1), single, updatedAt = DatabaseTestData.NEW_INSTANT)
@@ -178,8 +178,8 @@ class RoomMenuSnapshotRepositoryTest {
         )
 
         assertEquals(ImportSummary(0, 0, 0, 0, 1, 1), repository.merge(MenuSnapshot(emptyList(), lunches)))
-        assertEquals(other, mealPlanRepository.getDay(date)?.menu?.dishes?.single())
-        assertEquals(single, mealPlanRepository.getDay(date.plusDays(1))?.menu?.dishes?.single())
+        assertEquals(other, lunchPlanRepository.getDay(date)?.menu?.dishes?.single())
+        assertEquals(single, lunchPlanRepository.getDay(date.plusDays(1))?.menu?.dishes?.single())
     }
 
     @Test
@@ -199,7 +199,7 @@ class RoomMenuSnapshotRepositoryTest {
 
     private suspend fun seed() {
         dishRepository.upsertAll(listOf(starter, main, single, dessert))
-        mealPlanRepository.saveAll(listOf(coursesDay, singleDay))
+        lunchPlanRepository.saveAll(listOf(coursesDay, singleDay))
         dinnerPlanRepository.save(dinner)
     }
 
@@ -211,7 +211,7 @@ class RoomMenuSnapshotRepositoryTest {
 
     private fun createRepositories() {
         dishRepository = RoomDishRepository(database.dishDao())
-        mealPlanRepository = RoomMealPlanRepository(database.mealDayDao(), database.dishDao())
+        lunchPlanRepository = RoomLunchPlanRepository(database.lunchDayDao(), database.dishDao())
         dinnerPlanRepository = RoomDinnerPlanRepository(database.dinnerDayDao(), database.dishDao())
         repository = RoomMenuSnapshotRepository(database)
     }

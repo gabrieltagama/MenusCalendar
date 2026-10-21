@@ -3,7 +3,11 @@ package com.gabrieltagama.menuplanner.core.ui.text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.gabrieltagama.menuplanner.core.domain.common.CloudError
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.PlanningError
+import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
+import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
@@ -78,15 +82,15 @@ private val errorDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(
 
 @Composable
 fun DomainError.message(): String = when (this) {
-    DomainError.BlankDishName -> stringResource(R.string.error_blank_dish_name)
-    is DomainError.InvalidIngredient -> stringResource(R.string.error_invalid_ingredient, index + 1)
-    DomainError.DishNotFound -> stringResource(R.string.error_dish_not_found)
-    DomainError.DishInUse -> stringResource(R.string.error_dish_in_use)
-    is DomainError.DishPlannedIncompatibly -> pluralStringResource(R.plurals.error_dish_planned_incompatibly, days, days, firstDate.format(errorDateFormatter))
-    is DomainError.WrongDishType -> stringResource(R.string.error_wrong_dish_type, expected.label())
-    DomainError.NotADinnerDish -> stringResource(R.string.error_not_a_dinner_dish)
-    DomainError.InvalidImportFile -> stringResource(R.string.error_invalid_import_file)
-    DomainError.UnsupportedImportVersion -> stringResource(R.string.error_unsupported_import_version)
-    DomainError.CloudUnavailable -> stringResource(R.string.error_cloud_unavailable)
-    DomainError.CloudAuthorizationRequired -> stringResource(R.string.error_cloud_authorization_required)
+    RecipeError.BlankDishName -> stringResource(R.string.error_blank_dish_name)
+    is RecipeError.InvalidIngredient -> stringResource(R.string.error_invalid_ingredient, index + 1)
+    RecipeError.DishNotFound -> stringResource(R.string.error_dish_not_found)
+    RecipeError.DishInUse -> stringResource(R.string.error_dish_in_use)
+    is RecipeError.DishPlannedIncompatibly -> pluralStringResource(R.plurals.error_dish_planned_incompatibly, days, days, firstDate.format(errorDateFormatter))
+    is PlanningError.WrongDishType -> stringResource(R.string.error_wrong_dish_type, expected.label())
+    PlanningError.NotADinnerDish -> stringResource(R.string.error_not_a_dinner_dish)
+    ShareError.InvalidImportFile -> stringResource(R.string.error_invalid_import_file)
+    ShareError.UnsupportedImportVersion -> stringResource(R.string.error_unsupported_import_version)
+    CloudError.CloudUnavailable -> stringResource(R.string.error_cloud_unavailable)
+    CloudError.CloudAuthorizationRequired -> stringResource(R.string.error_cloud_authorization_required)
 }

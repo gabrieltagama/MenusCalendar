@@ -12,7 +12,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedLunch
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import java.time.Instant
@@ -46,7 +46,7 @@ class CalendarScreenTest {
         selectedDate = today,
         today = today,
         isLoading = false,
-        days = mapOf(today to MealDay(date = today, menu = menu, updatedAt = Instant.EPOCH).toPlannedLunch())
+        lunches = mapOf(today to LunchDay(date = today, menu = menu, updatedAt = Instant.EPOCH).toPlannedLunch())
     )
 
     @Test

@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -23,7 +23,7 @@ class DeleteDishUseCaseTest {
 
         val result = DeleteDishUseCase(repository)(DishId("unknown"))
 
-        assertEquals(Outcome.Failure(DomainError.DishNotFound), result)
+        assertEquals(Outcome.Failure(RecipeError.DishNotFound), result)
         assertTrue(repository.deletedIds.isEmpty())
     }
 
@@ -34,7 +34,7 @@ class DeleteDishUseCaseTest {
 
         val result = DeleteDishUseCase(repository)(DishId("d1"))
 
-        assertEquals(Outcome.Failure(DomainError.DishInUse), result)
+        assertEquals(Outcome.Failure(RecipeError.DishInUse), result)
         assertTrue(repository.deletedIds.isEmpty())
         assertNotNull(repository.current["d1"])
     }

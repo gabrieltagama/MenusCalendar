@@ -6,7 +6,7 @@ import java.time.LocalDate
 /**
  * Persistence port shared by the lunch and dinner calendars. getRange reads the planned days
  * between two dates (both included) once; saveAll writes several days in a single transaction;
- * clearAll removes several days at once. MealPlanRepository and DinnerPlanRepository fix the type
+ * clearAll removes several days at once. LunchPlanRepository and DinnerPlanRepository fix the type
  * of day, so each one can be injected on its own. Implemented in :core:data.
  */
 interface DayPlanRepository<D : PlannedDay<D>> {

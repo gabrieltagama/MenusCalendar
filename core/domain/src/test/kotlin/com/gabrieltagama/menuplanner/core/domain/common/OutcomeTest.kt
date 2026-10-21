@@ -10,7 +10,7 @@ import org.junit.Test
  */
 class OutcomeTest {
     private val success: Outcome<Int> = Outcome.Success(2)
-    private val failure: Outcome<Int> = Outcome.Failure(DomainError.DishNotFound)
+    private val failure: Outcome<Int> = Outcome.Failure(RecipeError.DishNotFound)
 
     @Test
     fun `map transforms a success and keeps a failure`() {
@@ -20,7 +20,7 @@ class OutcomeTest {
 
     @Test
     fun `flatMap chains a success and keeps a failure`() {
-        assertEquals(Outcome.Failure(DomainError.DishInUse), success.flatMap { Outcome.Failure(DomainError.DishInUse) })
+        assertEquals(Outcome.Failure(RecipeError.DishInUse), success.flatMap { Outcome.Failure(RecipeError.DishInUse) })
         assertEquals(Outcome.Success("2"), success.flatMap { Outcome.Success(it.toString()) })
         assertEquals(failure, failure.flatMap<Int, Int> { error("must not run") })
     }

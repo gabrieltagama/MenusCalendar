@@ -6,7 +6,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
@@ -29,11 +29,11 @@ class MenuSnapshotTest {
 
     @Test
     fun `courses entry with known dishes resolves`() =
-        assertEquals(MealDay(date, DailyMenu.Courses(starter, main), TestDishes.OLD_INSTANT), lunch(starterId = "a", mainId = "b").resolve(known))
+        assertEquals(LunchDay(date, DailyMenu.Courses(starter, main), TestDishes.OLD_INSTANT), lunch(starterId = "a", mainId = "b").resolve(known))
 
     @Test
     fun `single entry with a known dish resolves`() =
-        assertEquals(MealDay(date, DailyMenu.Single(single), TestDishes.OLD_INSTANT), lunch(singleId = "s").resolve(known))
+        assertEquals(LunchDay(date, DailyMenu.Single(single), TestDishes.OLD_INSTANT), lunch(singleId = "s").resolve(known))
 
     @Test
     fun `entry with an unknown dish does not resolve`() = assertNull(lunch(starterId = "a", mainId = "missing").resolve(known))
@@ -64,7 +64,7 @@ class MenuSnapshotTest {
 
     @Test
     fun `planned days round trip through entries`() {
-        val lunch = MealDay(date, DailyMenu.Courses(starter, main), TestDishes.OLD_INSTANT)
+        val lunch = LunchDay(date, DailyMenu.Courses(starter, main), TestDishes.OLD_INSTANT)
         val dinner = DinnerDay(date, single, TestDishes.OLD_INSTANT)
 
         assertEquals(lunch, LunchEntry.of(lunch).resolve(known))

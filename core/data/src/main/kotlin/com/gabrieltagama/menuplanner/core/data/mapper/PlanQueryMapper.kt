@@ -15,7 +15,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
 import java.time.LocalDate
 
 /**
- * Maps the rows of PlanQueryDao to read models. Like MealDayMapper, a lunch with single_id is a
+ * Maps the rows of PlanQueryDao to read models. Like LunchDayMapper, a lunch with single_id is a
  * single dish, otherwise it needs both starter and main; an incomplete row maps to null.
  */
 internal fun LunchRow.toPlannedLunch(): PlannedLunch? = toSlots()?.let { PlannedLunch(date = LocalDate.ofEpochDay(date), slots = it) }

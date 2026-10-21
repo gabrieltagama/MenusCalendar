@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakePlanQueries
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeShoppingChecklistRepository
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
@@ -14,8 +14,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
@@ -63,7 +63,7 @@ class ShoppingListViewModelTest {
     private val rice = dish("rice", Ingredient("Arroz", 200.0, MeasureUnit.GRAM))
     private val omelette = dish("omelette", Ingredient("Huevo", 3.0, MeasureUnit.UNIT))
 
-    private val mealPlan = FakeMealPlanRepository(
+    private val lunchPlan = FakeLunchPlanRepository(
         listOf(singleDay(LocalDate.of(2026, 10, 5), pastRice), singleDay(LocalDate.of(2026, 10, 12), rice))
     )
     private val dinnerPlan = FakeDinnerPlanRepository(listOf(DinnerDay(LocalDate.of(2026, 10, 20), omelette, Instant.EPOCH)))
@@ -167,7 +167,7 @@ class ShoppingListViewModelTest {
         savedStateHandle = SavedStateHandle(mapOf("year" to year, "month" to month)),
         clock = clock,
         observeShoppingChecks = ObserveShoppingChecksUseCase(checklist),
-        observeShoppingList = ObserveShoppingListUseCase(FakePlanQueries(mealPlan, dinnerPlan)),
+        observeShoppingList = ObserveShoppingListUseCase(FakePlanQueries(lunchPlan, dinnerPlan)),
         clearExpiredShoppingChecks = ClearExpiredShoppingChecksUseCase(checklist, clock),
         setShoppingItemChecked = SetShoppingItemCheckedUseCase(checklist),
         clearShoppingChecks = ClearShoppingChecksUseCase(checklist)
@@ -181,7 +181,7 @@ class ShoppingListViewModelTest {
     private fun dish(id: String, ingredient: Ingredient) =
         Dish(id = DishId(id), name = id, ingredients = listOf(ingredient), type = DishType.SINGLE, heaviness = Heaviness.MEDIUM, updatedAt = Instant.EPOCH)
 
-    private fun singleDay(date: LocalDate, dish: Dish) = MealDay(date = date, menu = DailyMenu.Single(single = dish), updatedAt = Instant.EPOCH)
+    private fun singleDay(date: LocalDate, dish: Dish) = LunchDay(date = date, menu = DailyMenu.Single(single = dish), updatedAt = Instant.EPOCH)
 
     private companion object {
         const val TIMEOUT_MS = 5_000L

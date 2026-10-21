@@ -238,7 +238,7 @@ private fun DayCell(date: LocalDate, dishes: List<DishSummary>, isToday: Boolean
 }
 
 private fun CalendarUiState.plannedDishes(date: LocalDate): List<DishSummary> = when (view) {
-    Meal.LUNCH -> days[date]?.dishes.orEmpty()
+    Meal.LUNCH -> lunches[date]?.dishes.orEmpty()
     Meal.DINNER -> listOfNotNull(dinners[date]?.dish)
 }
 

@@ -2,7 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
@@ -12,7 +12,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import java.time.Clock
@@ -30,41 +30,41 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 /**
- * Property-style tests of AutoFillMonthUseCase (and MenuPicker) over many seeds: only empty days are
+ * Property-style tests of AutoFillMonthLunchesUseCase (and MenuPicker) over many seeds: only empty days are
  * filled, menu shapes are mixed, desserts are never planned, no dish repeats within 7 days (also across both month
  * boundaries), dinner-only dishes are never used, no VERY_HIGH main dish follows a heavy day, and the fallback order when dishes are scarce
  * is "repeat first, break the heavy rule last". Lunches also avoid the dinner of the same day and the
  * dinners within the RepeatWindow, whose size comes from the settings, and the current month is filled
  * from today on.
  */
-class AutoFillMonthUseCaseTest {
+class AutoFillMonthLunchesUseCaseTest {
     private val month = YearMonth.of(2026, 3)
     private val seeds = 1..50
 
-    private class Run(val result: AutoFillResult, val repository: FakeMealPlanRepository) {
+    private class Run(val result: AutoFillResult, val repository: FakeLunchPlanRepository) {
         val plan: Map<LocalDate, DailyMenu> get() = repository.current.mapValues { it.value.menu }
     }
 
     private fun autoFill(
         dishes: List<Dish>,
         seed: Int,
-        planned: List<MealDay> = emptyList(),
+        planned: List<LunchDay> = emptyList(),
         dinners: List<DinnerDay> = emptyList(),
         window: RepeatWindow = RepeatWindow.DEFAULT,
         clock: Clock = TestDishes.fixedClock
     ): Run = runBlocking {
-        val repository = FakeMealPlanRepository(planned)
+        val repository = FakeLunchPlanRepository(planned)
         Run(useCase(dishes, repository, seed, dinners, window, clock)(month), repository)
     }
 
     private fun useCase(
         dishes: List<Dish>,
-        repository: FakeMealPlanRepository,
+        repository: FakeLunchPlanRepository,
         seed: Int,
         dinners: List<DinnerDay> = emptyList(),
         window: RepeatWindow = RepeatWindow.DEFAULT,
         clock: Clock = TestDishes.fixedClock
-    ) = AutoFillMonthUseCase(
+    ) = AutoFillMonthLunchesUseCase(
         FakeDishRepository(dishes),
         repository,
         FakeDinnerPlanRepository(dinners),
@@ -119,7 +119,7 @@ class AutoFillMonthUseCaseTest {
     }
 
     private fun heavyDay(date: LocalDate) =
-        MealDay(date, DailyMenu.Single(dish(id = "planned-heavy-$date", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH)), TestDishes.OLD_INSTANT)
+        LunchDay(date, DailyMenu.Single(dish(id = "planned-heavy-$date", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH)), TestDishes.OLD_INSTANT)
 
     @Test
     fun `fills every day of an empty month and reports no fallbacks with a rich catalog`() = seeds.forEach { seed ->
@@ -132,8 +132,8 @@ class AutoFillMonthUseCaseTest {
     @Test
     fun `only empty days are filled and planned days are untouched`() = seeds.forEach { seed ->
         val planned = listOf(
-            MealDay(month.atDay(3), DailyMenu.Single(dish(id = "planned-3", type = DishType.SINGLE)), TestDishes.OLD_INSTANT),
-            MealDay(month.atDay(15), DailyMenu.Courses(dish(id = "planned-15s", type = DishType.STARTER), dish(id = "planned-15m")), TestDishes.OLD_INSTANT)
+            LunchDay(month.atDay(3), DailyMenu.Single(dish(id = "planned-3", type = DishType.SINGLE)), TestDishes.OLD_INSTANT),
+            LunchDay(month.atDay(15), DailyMenu.Courses(dish(id = "planned-15s", type = DishType.STARTER), dish(id = "planned-15m")), TestDishes.OLD_INSTANT)
         )
 
         val run = autoFill(richCatalog, seed, planned)
@@ -186,7 +186,7 @@ class AutoFillMonthUseCaseTest {
     @Test
     fun `days stay empty when no shape can be built`() = seeds.forEach { seed ->
         val dishes = richCatalog.filter { it.type == DishType.DESSERT || it.type == DishType.MAIN }
-        val planned = listOf(MealDay(month.atDay(10), DailyMenu.Single(dish(type = DishType.SINGLE)), TestDishes.OLD_INSTANT))
+        val planned = listOf(LunchDay(month.atDay(10), DailyMenu.Single(dish(type = DishType.SINGLE)), TestDishes.OLD_INSTANT))
 
         val run = autoFill(dishes, seed, planned)
 
@@ -223,7 +223,7 @@ class AutoFillMonthUseCaseTest {
         val previousMonth = month.minusMonths(1)
         val planned = (0 until 6).map { offset ->
             val date = previousMonth.atEndOfMonth().minusDays(offset.toLong())
-            MealDay(date, DailyMenu.Single(singles[offset]), TestDishes.OLD_INSTANT)
+            LunchDay(date, DailyMenu.Single(singles[offset]), TestDishes.OLD_INSTANT)
         }
 
         val run = autoFill(richCatalog, seed, planned)
@@ -238,7 +238,7 @@ class AutoFillMonthUseCaseTest {
         val singles = richCatalog.filter { it.type == DishType.SINGLE && it.heaviness != Heaviness.VERY_HIGH }
         val nextMonth = month.plusMonths(1)
         val planned = (0 until 6).map { offset ->
-            MealDay(nextMonth.atDay(1).plusDays(offset.toLong()), DailyMenu.Single(singles[offset]), TestDishes.OLD_INSTANT)
+            LunchDay(nextMonth.atDay(1).plusDays(offset.toLong()), DailyMenu.Single(singles[offset]), TestDishes.OLD_INSTANT)
         }
 
         val run = autoFill(richCatalog, seed, planned)
@@ -258,7 +258,7 @@ class AutoFillMonthUseCaseTest {
     @Test
     fun `days older than six days of the previous month do not block dishes`() = seeds.forEach { seed ->
         val only = dish(id = "only-single", type = DishType.SINGLE)
-        val planned = listOf(MealDay(month.minusMonths(1).atEndOfMonth().minusDays(6), DailyMenu.Single(only), TestDishes.OLD_INSTANT))
+        val planned = listOf(LunchDay(month.minusMonths(1).atEndOfMonth().minusDays(6), DailyMenu.Single(only), TestDishes.OLD_INSTANT))
 
         val run = autoFill(listOf(only), seed, planned)
 
@@ -268,7 +268,7 @@ class AutoFillMonthUseCaseTest {
 
     @Test
     fun `filled days do not repeat dishes of planned days later in the window`() = seeds.forEach { seed ->
-        val planned = listOf(MealDay(month.atDay(10), DailyMenu.Single(richCatalog.first { it.type == DishType.SINGLE }), TestDishes.OLD_INSTANT))
+        val planned = listOf(LunchDay(month.atDay(10), DailyMenu.Single(richCatalog.first { it.type == DishType.SINGLE }), TestDishes.OLD_INSTANT))
 
         val run = autoFill(richCatalog, seed, planned)
 
@@ -311,7 +311,7 @@ class AutoFillMonthUseCaseTest {
 
     @Test
     fun `heavy starter counts as a heavy day`() = seeds.forEach { seed ->
-        val heavyStarterDay = MealDay(
+        val heavyStarterDay = LunchDay(
             month.atDay(5),
             DailyMenu.Courses(dish(id = "hs", type = DishType.STARTER, heaviness = Heaviness.VERY_HIGH), dish(id = "lm")),
             TestDishes.OLD_INSTANT
@@ -376,7 +376,7 @@ class AutoFillMonthUseCaseTest {
         val main = dish(id = "main")
         val heavySingle = dish(id = "heavy-single", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH)
         val lastDay = month.minusMonths(1).atEndOfMonth()
-        val planned = listOf(MealDay(lastDay.minusDays(1), DailyMenu.Courses(starter, main), TestDishes.OLD_INSTANT), heavyDay(lastDay))
+        val planned = listOf(LunchDay(lastDay.minusDays(1), DailyMenu.Courses(starter, main), TestDishes.OLD_INSTANT), heavyDay(lastDay))
 
         val run = autoFill(listOf(starter, main, heavySingle), seed, planned)
 
@@ -403,8 +403,8 @@ class AutoFillMonthUseCaseTest {
 
     @Test
     fun `filling given dates fills only those that are empty`() = seeds.forEach { seed ->
-        val planned = MealDay(date = month.atDay(3), menu = DailyMenu.Single(single = dish(id = "kept", type = DishType.SINGLE)), updatedAt = Instant.EPOCH)
-        val repository = FakeMealPlanRepository(listOf(planned))
+        val planned = LunchDay(date = month.atDay(3), menu = DailyMenu.Single(single = dish(id = "kept", type = DishType.SINGLE)), updatedAt = Instant.EPOCH)
+        val repository = FakeLunchPlanRepository(listOf(planned))
         val useCase = useCase(richCatalog, repository, seed)
 
         val result = runBlocking { useCase(setOf(month.atDay(2), month.atDay(3), month.atDay(4))) }
@@ -473,7 +473,7 @@ class AutoFillMonthUseCaseTest {
     fun `given dates in the past are still filled`() {
         val today = month.atDay(20)
         val clock = Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
-        val repository = FakeMealPlanRepository()
+        val repository = FakeLunchPlanRepository()
 
         val result = runBlocking { useCase(richCatalog, repository, seed = 1, clock = clock)(setOf(month.atDay(2))) }
 

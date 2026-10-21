@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.common.fold
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ExportMenusUseCase
@@ -79,7 +80,7 @@ class ShareViewModel @Inject constructor(
     }
 
     fun onImport(uri: Uri) = runBusy {
-        val text = files.read(uri) ?: return@runBusy showMessage(ShareMessage.Failed(DomainError.InvalidImportFile))
+        val text = files.read(uri) ?: return@runBusy showMessage(ShareMessage.Failed(ShareError.InvalidImportFile))
         showMessage(importMenus(text).fold(ShareMessage::Imported, ShareMessage::Failed))
     }
 

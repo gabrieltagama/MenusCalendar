@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -23,6 +23,6 @@ class GetDishUseCaseTest {
 
     @Test
     fun `missing dish returns DishNotFound`() = runBlocking {
-        assertEquals(Outcome.Failure(DomainError.DishNotFound), useCase(DishId("missing")))
+        assertEquals(Outcome.Failure(RecipeError.DishNotFound), useCase(DishId("missing")))
     }
 }

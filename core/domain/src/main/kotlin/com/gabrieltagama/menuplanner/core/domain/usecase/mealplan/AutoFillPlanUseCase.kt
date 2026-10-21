@@ -8,7 +8,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.port.DayPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.port.MealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.LunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import java.time.Clock
 import java.time.Instant
@@ -27,7 +27,7 @@ abstract class AutoFillPlanUseCase<D : PlannedDay<D>> internal constructor(
     private val meal: Meal,
     private val repository: DayPlanRepository<D>,
     private val dishRepository: DishRepository,
-    private val mealPlanRepository: MealPlanRepository,
+    private val lunchPlanRepository: LunchPlanRepository,
     private val dinnerPlanRepository: DinnerPlanRepository,
     private val settingsRepository: SettingsRepository,
     private val clock: Clock
@@ -42,7 +42,7 @@ abstract class AutoFillPlanUseCase<D : PlannedDay<D>> internal constructor(
         val picker = pickerFor(dishRepository.getDishes(), window)
         val range = window.historyRange(dates.min()..dates.max())
         val history = PlanHistory(
-            lunches = mealPlanRepository.getRange(range).associate { it.date to it.menu },
+            lunches = lunchPlanRepository.getRange(range).associate { it.date to it.menu },
             dinners = dinnerPlanRepository.getRange(range).associate { it.date to it.dish }
         )
         val now = Instant.now(clock)

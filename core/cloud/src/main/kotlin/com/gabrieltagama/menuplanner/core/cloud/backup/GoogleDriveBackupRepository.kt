@@ -9,7 +9,7 @@ import com.gabrieltagama.menuplanner.core.cloud.auth.GoogleDriveAuthorizer
 import com.gabrieltagama.menuplanner.core.cloud.di.CloudDataStore
 import com.gabrieltagama.menuplanner.core.cloud.drive.DriveAppDataClient
 import com.gabrieltagama.menuplanner.core.cloud.drive.DriveUnauthorizedException
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.CloudError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.port.CloudBackupRepository
@@ -75,8 +75,8 @@ internal class GoogleDriveBackupRepository @Inject constructor(
     private suspend fun connectedEmail(): String? = (account.first() as? CloudAccount.Connected)?.email
 
     private suspend fun <T> withDrive(block: suspend (String) -> T): Outcome<T> {
-        val email = connectedEmail() ?: return Outcome.Failure(DomainError.CloudAuthorizationRequired)
-        val token = authorizer.silentToken(email) ?: return Outcome.Failure(DomainError.CloudAuthorizationRequired)
+        val email = connectedEmail() ?: return Outcome.Failure(CloudError.CloudAuthorizationRequired)
+        val token = authorizer.silentToken(email) ?: return Outcome.Failure(CloudError.CloudAuthorizationRequired)
         return remote(token, block)
     }
 
@@ -85,9 +85,9 @@ internal class GoogleDriveBackupRepository @Inject constructor(
             Outcome.Success(block(token))
         } catch (exception: DriveUnauthorizedException) {
             authorizer.invalidate(token)
-            Outcome.Failure(DomainError.CloudAuthorizationRequired)
+            Outcome.Failure(CloudError.CloudAuthorizationRequired)
         } catch (exception: IOException) {
-            Outcome.Failure(DomainError.CloudUnavailable)
+            Outcome.Failure(CloudError.CloudUnavailable)
         }
 
     private companion object {

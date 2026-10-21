@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.model
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.PlanningError
 import java.time.Instant
 import java.time.LocalDate
 
@@ -18,6 +18,6 @@ data class DinnerDay(
 
     companion object {
         fun plan(date: LocalDate, dish: Dish, updatedAt: Instant): Outcome<DinnerDay> =
-            if (dish.isDinnerOption) Outcome.Success(DinnerDay(date = date, dish = dish, updatedAt = updatedAt)) else Outcome.Failure(DomainError.NotADinnerDish)
+            if (dish.isDinnerOption) Outcome.Success(DinnerDay(date = date, dish = dish, updatedAt = updatedAt)) else Outcome.Failure(PlanningError.NotADinnerDish)
     }
 }
