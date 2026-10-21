@@ -66,6 +66,23 @@ jobs:
           echo "::warning title=ktlint - infracciones por regla::${summary:-sin detalle}"
           exit 1
 
+      - name: Static analysis (detekt)
+        env:
+          DETEKT_VERSION: 1.23.8
+        run: |
+          encode() { sed -e 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g'; }
+          mkdir -p build/reports/detekt
+          curl -sSfL -o "$RUNNER_TEMP/detekt.jar" "https://github.com/detekt/detekt/releases/download/v${DETEKT_VERSION}/detekt-cli-${DETEKT_VERSION}-all.jar"
+          if java -jar "$RUNNER_TEMP/detekt.jar" --build-upon-default-config --config config/detekt/detekt.yml \
+              --input app,core,feature,build-logic --excludes '**/build/**' \
+              --report txt:build/reports/detekt/detekt.txt --report html:build/reports/detekt/detekt.html; then
+            echo "::notice title=detekt::Sin hallazgos"
+            exit 0
+          fi
+          summary=$(sed -E 's#/home/runner/work/[^/]+/[^/]+/##' build/reports/detekt/detekt.txt | head -30 | encode)
+          echo "::warning title=detekt - hallazgos::${summary:-sin detalle}"
+          exit 1
+
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v5
@@ -75,6 +92,7 @@ jobs:
             **/build/reports/tests/
             **/build/reports/lint-results-*.html
             **/build/reports/ktlint/
+            build/reports/detekt/
             build/reports/kover/
           if-no-files-found: ignore
 

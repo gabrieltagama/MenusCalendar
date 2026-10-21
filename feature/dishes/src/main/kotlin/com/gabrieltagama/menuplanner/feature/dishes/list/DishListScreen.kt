@@ -49,9 +49,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
-import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
-import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.EmptyState
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
@@ -67,16 +65,6 @@ import com.gabrieltagama.menuplanner.feature.dishes.R
  * heaviness, rating, meal time; the menu stays open while ticking options) and a list of dish cards with type avatar, ingredient count and
  * heaviness chip. The FAB collapses while scrolling. Bottom insets are left to the app shell, which draws the NavigationBar below.
  */
-data class DishListActions(
-    val onQueryChange: (String) -> Unit,
-    val onTypesChange: (Set<DishType>) -> Unit,
-    val onHeavinessChange: (Set<Heaviness>) -> Unit,
-    val onRatingsChange: (Set<Rating>) -> Unit,
-    val onMealTimesChange: (Set<MealTime>) -> Unit,
-    val onOpenDish: (String?) -> Unit,
-    val onSortChange: (DishSort) -> Unit = {}
-)
-
 @Composable
 fun DishListScreenRoute(
     onOpenDish: (String?) -> Unit,

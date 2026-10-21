@@ -40,7 +40,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringArrayResource
@@ -104,8 +107,8 @@ private fun Modifier.monthSwipe(enabled: Boolean, onPreviousMonth: () -> Unit, o
 
 private fun AnimatedContentTransitionScope<YearMonth>.monthTransition(): ContentTransform {
     val direction = if (targetState > initialState) 1 else -1
-    return (slideInHorizontally { width -> direction * width / 3 } + fadeIn())
-        .togetherWith(slideOutHorizontally { width -> -direction * width / 3 } + fadeOut())
+    return (slideInHorizontally { width -> direction * width / MONTH_SLIDE_DIVISOR } + fadeIn())
+        .togetherWith(slideOutHorizontally { width -> -direction * width / MONTH_SLIDE_DIVISOR } + fadeOut())
 }
 
 @Composable
@@ -172,23 +175,28 @@ private fun Modifier.daySelectionGestures(month: YearMonth, isSelecting: Boolean
             currentActions.onDragStart(month.dateAt(down.position, size, gap))
             var lastDate = month.dateAt(start.position, size, gap)
             currentActions.onDragMove(lastDate)
-            while (true) {
-                val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == start.id } ?: break
+            var change = nextChangeOf(start.id)
+            while (change != null) {
                 change.consume()
                 if (!change.pressed) break
                 val date = month.dateAt(change.position, size, gap)
-                if (date == lastDate) continue
-                lastDate = date
-                currentActions.onDragMove(date)
+                if (date != lastDate) {
+                    lastDate = date
+                    currentActions.onDragMove(date)
+                }
+                change = nextChangeOf(start.id)
             }
             currentActions.onDragEnd()
         }
     }
 }
 
+private suspend fun AwaitPointerEventScope.nextChangeOf(id: PointerId): PointerInputChange? =
+    awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == id }
+
 private fun YearMonth.dateAt(position: Offset, size: IntSize, gap: Float): LocalDate {
     val weeks = weeks()
-    val column = (position.x / (size.width + gap) * 7).toInt().coerceIn(0, 6)
+    val column = (position.x / (size.width + gap) * DAYS_PER_WEEK).toInt().coerceIn(0, DAYS_PER_WEEK - 1)
     val row = (position.y / (size.height + gap) * weeks.size).toInt().coerceIn(0, weeks.lastIndex)
     return weeks[row][column] ?: if (row == 0) atDay(1) else atEndOfMonth()
 }
@@ -232,7 +240,7 @@ private fun DayCell(date: LocalDate, dishes: List<DishSummary>, isToday: Boolean
             Icon(Icons.Filled.CheckCircle, contentDescription = stringResource(R.string.calendar_selection_marked), tint = colors.onTertiary, modifier = Modifier.size(14.dp))
         else
             Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.height(6.dp)) {
-                dishes.take(MaxDotsPerDay).forEach { HeavinessDot(heaviness = it.heaviness, size = 6.dp) }
+                dishes.take(MAX_DOTS_PER_DAY).forEach { HeavinessDot(heaviness = it.heaviness, size = 6.dp) }
             }
     }
 }
@@ -245,9 +253,11 @@ private fun CalendarUiState.plannedDishes(date: LocalDate): List<DishSummary> = 
 private fun YearMonth.weeks(): List<List<LocalDate?>> {
     val leadingBlanks = atDay(1).dayOfWeek.value - 1
     val cells = List(leadingBlanks) { null } + (1..lengthOfMonth()).map(::atDay)
-    return cells.chunked(7) { week -> week + List(7 - week.size) { null } }
+    return cells.chunked(DAYS_PER_WEEK) { week -> week + List(DAYS_PER_WEEK - week.size) { null } }
 }
 
-private const val MaxDotsPerDay = 3
+private const val MAX_DOTS_PER_DAY = 3
+private const val DAYS_PER_WEEK = 7
+private const val MONTH_SLIDE_DIVISOR = 3
 private val CellHeight = 56.dp
 private val GridGap = 4.dp

@@ -44,7 +44,7 @@ class StandardizeRecipeBookUseCaseTest {
     fun `saving a weighed product converts the dishes that only counted it`() = runBlocking {
         val tortilla = dish(id = "tortilla", ingredients = listOf(Ingredient("Huevos", 4.0, MeasureUnit.UNIT)))
         val repository = FakeDishRepository(listOf(tortilla))
-        val saveDish = SaveDishUseCase(repository, TestDishes.fixedClock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository), ImmediateTransactionRunner())
+        val saveDish = SaveDishUseCase(repository, repository, TestDishes.fixedClock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository), ImmediateTransactionRunner())
 
         val saved = saveDish(dish(id = "flan", ingredients = listOf(Ingredient("Huevo", 0.12, MeasureUnit.KILOGRAM))).toDraft()) as Outcome.Success
 

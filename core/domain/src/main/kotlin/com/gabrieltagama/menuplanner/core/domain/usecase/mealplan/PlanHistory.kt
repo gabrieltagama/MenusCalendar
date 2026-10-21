@@ -8,6 +8,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.PlanningPolicy
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
+import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.LunchPlanRepository
 import java.time.LocalDate
 
 /**
@@ -47,4 +49,18 @@ internal class PlanHistory(lunches: Map<LocalDate, DailyMenu>, dinners: Map<Loca
 
     fun isNextToHeavyDay(date: LocalDate): Boolean =
         PlanningPolicy.isHeavyDay(lunches[date.minusDays(1)]) || PlanningPolicy.isHeavyDay(lunches[date.plusDays(1)])
+}
+
+/**
+ * Reads the lunches and dinners of a range of dates into a PlanHistory, so the autofill depends on
+ * one reader instead of both calendar repositories.
+ */
+internal class PlanHistoryReader(
+    private val lunchPlanRepository: LunchPlanRepository,
+    private val dinnerPlanRepository: DinnerPlanRepository
+) {
+    suspend fun read(dates: ClosedRange<LocalDate>): PlanHistory = PlanHistory(
+        lunches = lunchPlanRepository.getRange(dates).associate { it.date to it.menu },
+        dinners = dinnerPlanRepository.getRange(dates).associate { it.date to it.dish }
+    )
 }

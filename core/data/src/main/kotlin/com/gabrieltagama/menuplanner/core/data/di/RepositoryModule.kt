@@ -11,6 +11,7 @@ import com.gabrieltagama.menuplanner.core.data.repository.RoomMenuSnapshotReposi
 import com.gabrieltagama.menuplanner.core.data.settings.DataStoreSettingsRepository
 import com.gabrieltagama.menuplanner.core.data.share.JsonMenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.data.shopping.DataStoreShoppingChecklistRepository
+import com.gabrieltagama.menuplanner.core.domain.port.AppStateRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DishIdGenerator
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
@@ -18,10 +19,12 @@ import com.gabrieltagama.menuplanner.core.domain.port.InitialDishesRepository
 import com.gabrieltagama.menuplanner.core.domain.port.LunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
-import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.port.ShoppingChecklistRepository
 import com.gabrieltagama.menuplanner.core.domain.port.TransactionRunner
+import com.gabrieltagama.menuplanner.core.domain.port.UserPreferencesRepository
+import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
 import com.gabrieltagama.menuplanner.core.domain.query.DishUsageQueries
+import com.gabrieltagama.menuplanner.core.domain.query.PlannedUseQueries
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -38,6 +41,12 @@ internal abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindDishRepository(implementation: RoomDishRepository): DishRepository
+
+    @Binds
+    abstract fun bindDishCatalogQueries(implementation: RoomDishRepository): DishCatalogQueries
+
+    @Binds
+    abstract fun bindPlannedUseQueries(implementation: RoomDishRepository): PlannedUseQueries
 
     @Binds
     @Singleton
@@ -62,8 +71,10 @@ internal abstract class RepositoryModule {
     abstract fun bindTransactionRunner(implementation: RoomTransactionRunner): TransactionRunner
 
     @Binds
-    @Singleton
-    abstract fun bindSettingsRepository(implementation: DataStoreSettingsRepository): SettingsRepository
+    abstract fun bindUserPreferencesRepository(implementation: DataStoreSettingsRepository): UserPreferencesRepository
+
+    @Binds
+    abstract fun bindAppStateRepository(implementation: DataStoreSettingsRepository): AppStateRepository
 
     @Binds
     @Singleton

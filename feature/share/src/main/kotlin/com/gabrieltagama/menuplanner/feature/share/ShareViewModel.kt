@@ -61,7 +61,7 @@ class ShareViewModel @Inject constructor(
     fun onExport() = runBusy {
         val uri = try {
             files.write(exportMenus())
-        } catch (exception: IOException) {
+        } catch (expected: IOException) {
             null
         }
         if (uri == null) showMessage(ShareMessage.ExportFailed)
@@ -73,7 +73,7 @@ class ShareViewModel @Inject constructor(
     fun onSaveTo(uri: Uri) = runBusy {
         val saved = try {
             files.save(uri, exportMenus())
-        } catch (exception: IOException) {
+        } catch (expected: IOException) {
             false
         }
         showMessage(if (saved) ShareMessage.Saved else ShareMessage.ExportFailed)

@@ -168,7 +168,7 @@ fun CalendarScreen(
             if (selection != null) SelectionActionBar(hasMarkedDays = selection.count > 0 && !state.isAutoFilling, actions = selectionActions)
         },
         floatingActionButton = {
-            if (!state.isSelecting && !state.isPasting && !state.isLoading && !state.isAutoFilling)
+            if (state.canAutoFill)
                 AutoFillFab(scrollState = scrollState, onClick = autoFillActions.onRequest)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

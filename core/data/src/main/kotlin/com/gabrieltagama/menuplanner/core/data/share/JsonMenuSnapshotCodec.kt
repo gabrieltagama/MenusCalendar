@@ -45,9 +45,9 @@ internal class JsonMenuSnapshotCodec @Inject constructor(private val json: Json)
         try {
             if (schemaVersionOf(text) > ShareDocumentDto.CURRENT_SCHEMA_VERSION) Outcome.Failure(ShareError.UnsupportedImportVersion)
             else Outcome.Success(json.decodeFromString(ShareDocumentDto.serializer(), text).toSnapshot())
-        } catch (exception: IllegalArgumentException) {
+        } catch (expected: IllegalArgumentException) {
             Outcome.Failure(ShareError.InvalidImportFile)
-        } catch (exception: DateTimeException) {
+        } catch (expected: DateTimeException) {
             Outcome.Failure(ShareError.InvalidImportFile)
         }
 

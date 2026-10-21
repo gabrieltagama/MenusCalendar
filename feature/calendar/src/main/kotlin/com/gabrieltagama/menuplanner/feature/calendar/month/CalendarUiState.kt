@@ -45,6 +45,8 @@ data class CalendarUiState(
 
     val isShowingCurrentMonth: Boolean get() = month == YearMonth.from(today)
 
+    val canAutoFill: Boolean get() = mode == CalendarMode.Browsing && !isLoading && !isAutoFilling
+
     fun isMarked(date: LocalDate): Boolean = selection?.dates?.contains(date) == true
 
     fun isPlanned(date: LocalDate): Boolean = date in plannedDates
