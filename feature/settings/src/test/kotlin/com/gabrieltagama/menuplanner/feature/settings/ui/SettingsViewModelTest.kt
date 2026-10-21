@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.feature.settings.ui
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.CloudError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeBackupScheduler
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeCloudBackupRepository
@@ -99,13 +99,13 @@ class SettingsViewModelTest {
 
     @Test
     fun failedOperationIsReportedAndReleasesTheBusyFlag() {
-        val failure = Outcome.Failure(DomainError.CloudUnavailable)
+        val failure = Outcome.Failure(CloudError.CloudUnavailable)
         val cloud = FakeCloudBackupRepository(CloudAccount.Connected(FakeCloudBackupRepository.EMAIL), failure = failure)
         val viewModel = viewModel(cloud)
 
         viewModel.onRestore()
 
-        assertEquals(BackupUiState(message = BackupMessage.Failed(DomainError.CloudUnavailable)), viewModel.backupState.value)
+        assertEquals(BackupUiState(message = BackupMessage.Failed(CloudError.CloudUnavailable)), viewModel.backupState.value)
     }
 
     @Test

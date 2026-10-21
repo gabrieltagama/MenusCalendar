@@ -4,8 +4,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.PlanningPolicy
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import java.time.LocalDate
@@ -30,7 +30,7 @@ internal class PlanHistory(lunches: Map<LocalDate, DailyMenu>, dinners: Map<Loca
         Meal.DINNER -> date in dinners
     }
 
-    fun record(day: MealDay) {
+    fun record(day: LunchDay) {
         lunches[day.date] = day.menu
     }
 

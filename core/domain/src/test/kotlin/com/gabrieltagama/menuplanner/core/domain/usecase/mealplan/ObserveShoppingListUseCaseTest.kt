@@ -1,15 +1,15 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakePlanQueries
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import java.time.Instant
@@ -59,14 +59,14 @@ class ObserveShoppingListUseCaseTest {
         )
     )
 
-    private fun day(date: LocalDate, menu: DailyMenu) = MealDay(date = date, menu = menu, updatedAt = Instant.EPOCH)
+    private fun day(date: LocalDate, menu: DailyMenu) = LunchDay(date = date, menu = menu, updatedAt = Instant.EPOCH)
 
     private fun build(
-        vararg days: MealDay,
+        vararg days: LunchDay,
         dinners: List<DinnerDay> = emptyList(),
         meals: Set<Meal> = Meal.entries.toSet()
     ) = runBlocking {
-        ObserveShoppingListUseCase(FakePlanQueries(FakeMealPlanRepository(days.toList()), FakeDinnerPlanRepository(dinners)))(october, meals).first()
+        ObserveShoppingListUseCase(FakePlanQueries(FakeLunchPlanRepository(days.toList()), FakeDinnerPlanRepository(dinners)))(october, meals).first()
     }
 
     @Test
@@ -204,7 +204,7 @@ class ObserveShoppingListUseCaseTest {
         )
 
         val items = runBlocking {
-            ObserveShoppingListUseCase(FakePlanQueries(FakeMealPlanRepository(lunches), FakeDinnerPlanRepository(dinners)))(
+            ObserveShoppingListUseCase(FakePlanQueries(FakeLunchPlanRepository(lunches), FakeDinnerPlanRepository(dinners)))(
                 LocalDate.of(2026, 10, 15)..LocalDate.of(2026, 11, 2)
             ).first()
         }
@@ -220,14 +220,14 @@ class ObserveShoppingListUseCaseTest {
 
     @Test
     fun `emits the list again when a day is planned`() {
-        val mealPlan = FakeMealPlanRepository()
-        val useCase = ObserveShoppingListUseCase(FakePlanQueries(mealPlan, FakeDinnerPlanRepository()))
+        val lunchPlan = FakeLunchPlanRepository()
+        val useCase = ObserveShoppingListUseCase(FakePlanQueries(lunchPlan, FakeDinnerPlanRepository()))
 
         val planned = day(LocalDate.of(2026, 10, 5), DailyMenu.Single(single = single))
 
         val items = runBlocking {
             val updated = async(start = CoroutineStart.UNDISPATCHED) { useCase(october).first { it.isNotEmpty() } }
-            mealPlan.save(planned)
+            lunchPlan.save(planned)
             updated.await()
         }
 

@@ -62,7 +62,7 @@ internal fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, DishSummar
 
 @Composable
 internal fun CalendarUiState.summaryLines(): List<Pair<String, DishSummary>> = when (view) {
-    Meal.LUNCH -> selectedDay?.summaryLines().orEmpty()
+    Meal.LUNCH -> selectedLunch?.summaryLines().orEmpty()
     Meal.DINNER -> listOfNotNull(selectedDinner?.let { stringResource(R.string.calendar_slot_dinner) to it.dish })
 }
 

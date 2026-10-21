@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.feature.onboarding.ui
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.CloudError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeBackupScheduler
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeCloudBackupRepository
@@ -73,12 +73,12 @@ class WelcomeViewModelTest {
 
     @Test
     fun failedLinkIsReportedAndTheOnboardingStaysPending() = runBlocking {
-        val viewModel = viewModel(FakeCloudBackupRepository(failure = Outcome.Failure(DomainError.CloudUnavailable)))
+        val viewModel = viewModel(FakeCloudBackupRepository(failure = Outcome.Failure(CloudError.CloudUnavailable)))
 
         viewModel.onConnectStarted()
         viewModel.onGoogleAuthorization("token")
 
-        assertEquals(WelcomeUiState(message = WelcomeMessage.Failed(DomainError.CloudUnavailable)), viewModel.uiState.value)
+        assertEquals(WelcomeUiState(message = WelcomeMessage.Failed(CloudError.CloudUnavailable)), viewModel.uiState.value)
         assertFalse(settings.isOnboardingCompleted.first())
     }
 

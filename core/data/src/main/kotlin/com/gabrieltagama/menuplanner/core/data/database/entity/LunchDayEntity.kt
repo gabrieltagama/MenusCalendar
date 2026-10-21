@@ -20,7 +20,7 @@ import androidx.room.PrimaryKey
     ],
     indices = [Index("starter_id"), Index("main_id"), Index("single_id")]
 )
-internal data class MealDayEntity(
+internal data class LunchDayEntity(
     @PrimaryKey override val date: Long,
     @ColumnInfo(name = "starter_id") val starterId: String?,
     @ColumnInfo(name = "main_id") val mainId: String?,
@@ -28,5 +28,5 @@ internal data class MealDayEntity(
     @ColumnInfo(name = "updated_at") override val updatedAt: Long
 ) : DayPlanRow
 
-internal val MealDayEntity.dishIds: List<String>
+internal val LunchDayEntity.dishIds: List<String>
     get() = listOfNotNull(starterId, mainId, singleId)

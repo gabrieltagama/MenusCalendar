@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.model.plan
 
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import java.time.LocalDate
 
@@ -15,5 +15,5 @@ data class PlannedLunch(
     val dishes: List<DishSummary> get() = slots.map { it.second }
 }
 
-fun MealDay.toPlannedLunch(): PlannedLunch =
+fun LunchDay.toPlannedLunch(): PlannedLunch =
     PlannedLunch(date = date, slots = menu.slots.map { (slot, dish) -> slot to dish.toSummary() })

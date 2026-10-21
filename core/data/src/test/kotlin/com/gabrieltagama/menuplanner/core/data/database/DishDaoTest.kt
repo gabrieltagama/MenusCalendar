@@ -8,7 +8,7 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
-import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
+import com.gabrieltagama.menuplanner.core.data.repository.RoomLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -38,7 +38,7 @@ class DishDaoTest {
     private lateinit var database: MenuPlannerDatabase
     private lateinit var dishDao: DishDao
     private lateinit var dishRepository: RoomDishRepository
-    private lateinit var mealPlanRepository: RoomMealPlanRepository
+    private lateinit var lunchPlanRepository: RoomLunchPlanRepository
 
     private val date = LocalDate.of(2026, 3, 10)
 
@@ -47,7 +47,7 @@ class DishDaoTest {
         database = DatabaseTestData.inMemoryDatabase()
         dishDao = database.dishDao()
         dishRepository = RoomDishRepository(dishDao)
-        mealPlanRepository = RoomMealPlanRepository(database.mealDayDao(), dishDao)
+        lunchPlanRepository = RoomLunchPlanRepository(database.lunchDayDao(), dishDao)
     }
 
     @After
@@ -106,14 +106,14 @@ class DishDaoTest {
     }
 
     @Test
-    fun editingPlannedDishKeepsTheMealDay() = runTest {
+    fun editingPlannedDishKeepsTheLunchDay() = runTest {
         val single = DatabaseTestData.dish("s", type = DishType.SINGLE, ingredients = listOf(Ingredient("Egg", 2.0, MeasureUnit.UNIT)))
         dishRepository.upsert(single)
-        mealPlanRepository.save(DatabaseTestData.singleDay(date, single))
+        lunchPlanRepository.save(DatabaseTestData.singleDay(date, single))
 
         dishRepository.upsert(single.copy(name = "Renamed", updatedAt = DatabaseTestData.NEW_INSTANT))
 
-        assertEquals("Renamed", (mealPlanRepository.getDay(date)!!.menu.dishes.single()).name)
+        assertEquals("Renamed", (lunchPlanRepository.getDay(date)!!.menu.dishes.single()).name)
     }
 
     @Test
@@ -131,7 +131,7 @@ class DishDaoTest {
         val starter = DatabaseTestData.dish("st", type = DishType.STARTER)
         val main = DatabaseTestData.dish("mn", type = DishType.MAIN)
         listOf(starter, main).forEach { dishRepository.upsert(it) }
-        mealPlanRepository.save(DatabaseTestData.coursesDay(date, starter, main))
+        lunchPlanRepository.save(DatabaseTestData.coursesDay(date, starter, main))
 
         listOf(starter, main).forEach { assertPlannedDishCannotBeDeleted(it) }
     }
@@ -140,7 +140,7 @@ class DishDaoTest {
     fun plannedDishCannotBeDeletedBypassingTheCheck() = runTest {
         val single = DatabaseTestData.dish("s", type = DishType.SINGLE)
         dishRepository.upsert(single)
-        mealPlanRepository.save(DatabaseTestData.singleDay(date, single))
+        lunchPlanRepository.save(DatabaseTestData.singleDay(date, single))
 
         val error = runCatching { dishDao.deleteById(single.id.value) }.exceptionOrNull()
 
@@ -154,7 +154,7 @@ class DishDaoTest {
         val main = DatabaseTestData.dish("mn", type = DishType.MAIN)
         val single = DatabaseTestData.dish("sg", type = DishType.SINGLE)
         dishRepository.upsertAll(listOf(starter, main, single))
-        mealPlanRepository.saveAll(listOf(DatabaseTestData.coursesDay(date, starter, main), DatabaseTestData.singleDay(date.plusDays(1), single)))
+        lunchPlanRepository.saveAll(listOf(DatabaseTestData.coursesDay(date, starter, main), DatabaseTestData.singleDay(date.plusDays(1), single)))
         RoomDinnerPlanRepository(database.dinnerDayDao(), dishDao).save(DinnerDay(date.plusDays(2), single, DatabaseTestData.OLD_INSTANT))
 
         assertEquals(listOf(PlannedUse.Lunch(date, MenuSlot.MAIN)), dishRepository.getPlannedUses(main.id))

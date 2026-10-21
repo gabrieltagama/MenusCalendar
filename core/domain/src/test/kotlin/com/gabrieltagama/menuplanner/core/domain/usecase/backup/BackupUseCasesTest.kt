@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.backup
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.CloudError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeBackupScheduler
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeCloudBackupRepository
@@ -139,7 +139,7 @@ class BackupUseCasesTest {
 
     @Test
     fun `failed connection does not schedule anything`() = runBlocking {
-        val failure = Outcome.Failure(DomainError.CloudUnavailable)
+        val failure = Outcome.Failure(CloudError.CloudUnavailable)
         val cloud = FakeCloudBackupRepository(failure = failure)
 
         assertEquals(failure, connect(cloud)("token"))

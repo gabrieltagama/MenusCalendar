@@ -2,7 +2,7 @@ package com.gabrieltagama.menuplanner.feature.share
 
 import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotRepository
@@ -105,7 +105,7 @@ class ShareViewModelTest {
 
         viewModel.onImport(files.importUri)
 
-        assertEquals(ShareMessage.Failed(DomainError.InvalidImportFile), viewModel.uiState.value.message)
+        assertEquals(ShareMessage.Failed(ShareError.InvalidImportFile), viewModel.uiState.value.message)
     }
 
     private fun viewModel() = ShareViewModel(

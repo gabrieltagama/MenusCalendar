@@ -4,22 +4,22 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.MenuShape
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDayUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetMealDayUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearLunchDayUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetLunchDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PickRandomDishUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveMealDayUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveLunchDayUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
 import java.time.Clock
 import java.time.Instant
@@ -112,7 +112,7 @@ class DayEditorViewModelTest {
     }
 
     @Test
-    fun saveCallsRepositoryWithActiveModeOnlyAndCloses() = withViewModel { viewModel, mealPlanRepository ->
+    fun saveCallsRepositoryWithActiveModeOnlyAndCloses() = withViewModel { viewModel, lunchPlanRepository ->
         awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
         viewModel.onDishSelect(MenuSlot.STARTER, starter)
         viewModel.onDishSelect(MenuSlot.SINGLE, single)
@@ -122,7 +122,7 @@ class DayEditorViewModelTest {
         viewModel.onSave()
 
         assertEquals(PlanEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
-        val saved = mealPlanRepository.saved.single()
+        val saved = lunchPlanRepository.saved.single()
         assertEquals(date, saved.date)
         assertEquals(DailyMenu.Single(single = single), saved.menu)
         assertEquals(fixedInstant, saved.updatedAt)
@@ -130,7 +130,7 @@ class DayEditorViewModelTest {
 
     @Test
     fun existingSingleDayIsLoadedInSingleMode() {
-        val existing = MealDay(date = date, menu = DailyMenu.Single(single = single), updatedAt = Instant.EPOCH)
+        val existing = LunchDay(date = date, menu = DailyMenu.Single(single = single), updatedAt = Instant.EPOCH)
         withViewModel(initialDays = listOf(existing)) { viewModel, _ ->
             val state = awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
 
@@ -143,8 +143,8 @@ class DayEditorViewModelTest {
 
     @Test
     fun clearDayCallsRepositoryAndCloses() {
-        val existing = MealDay(date = date, menu = DailyMenu.Courses(starter = starter, main = main), updatedAt = Instant.EPOCH)
-        withViewModel(initialDays = listOf(existing)) { viewModel, mealPlanRepository ->
+        val existing = LunchDay(date = date, menu = DailyMenu.Courses(starter = starter, main = main), updatedAt = Instant.EPOCH)
+        withViewModel(initialDays = listOf(existing)) { viewModel, lunchPlanRepository ->
             awaitState(viewModel) { it.form.hasSavedDay }
             viewModel.onClearRequest()
             assertTrue(awaitState(viewModel) { it.form.showClearConfirm }.form.showClearConfirm)
@@ -152,13 +152,13 @@ class DayEditorViewModelTest {
             viewModel.onClearConfirm()
 
             assertEquals(PlanEditorEvent.Close, withTimeout(TIMEOUT_MS) { viewModel.events.first() })
-            assertEquals(listOf(date), mealPlanRepository.cleared)
-            assertTrue(mealPlanRepository.current.isEmpty())
+            assertEquals(listOf(date), lunchPlanRepository.cleared)
+            assertTrue(lunchPlanRepository.current.isEmpty())
         }
     }
 
     @Test
-    fun clearDismissHidesConfirmation() = withViewModel { viewModel, mealPlanRepository ->
+    fun clearDismissHidesConfirmation() = withViewModel { viewModel, lunchPlanRepository ->
         awaitState(viewModel) { !it.form.isLoading }
         viewModel.onClearRequest()
         awaitState(viewModel) { it.form.showClearConfirm }
@@ -166,26 +166,26 @@ class DayEditorViewModelTest {
         viewModel.onClearDismiss()
 
         assertFalse(awaitState(viewModel) { !it.form.showClearConfirm }.form.showClearConfirm)
-        assertTrue(mealPlanRepository.cleared.isEmpty())
+        assertTrue(lunchPlanRepository.cleared.isEmpty())
     }
 
     private fun withViewModel(
-        initialDays: List<MealDay> = emptyList(),
-        block: suspend CoroutineScope.(DayEditorViewModel, FakeMealPlanRepository) -> Unit
+        initialDays: List<LunchDay> = emptyList(),
+        block: suspend CoroutineScope.(DayEditorViewModel, FakeLunchPlanRepository) -> Unit
     ) = runBlocking {
-        val mealPlanRepository = FakeMealPlanRepository(initialDays)
+        val lunchPlanRepository = FakeLunchPlanRepository(initialDays)
         val viewModel = DayEditorViewModel(
             savedStateHandle = SavedStateHandle(mapOf("epochDay" to date.toEpochDay())),
             observeDishes = ObserveDishesUseCase(dishRepository),
             observeDishUsage = ObserveDishUsageUseCase(FakeDishUsageRepository(), clock),
-            getMealDay = GetMealDayUseCase(mealPlanRepository),
-            saveMealDay = SaveMealDayUseCase(mealPlanRepository, clock),
-            clearMealDay = ClearMealDayUseCase(mealPlanRepository),
+            getLunchDay = GetLunchDayUseCase(lunchPlanRepository),
+            saveLunchDay = SaveLunchDayUseCase(lunchPlanRepository, clock),
+            clearLunchDay = ClearLunchDayUseCase(lunchPlanRepository),
             pickRandomDish = PickRandomDishUseCase(Random(7))
         )
         val collector: Job = launch { viewModel.uiState.collect {} }
         try {
-            block(viewModel, mealPlanRepository)
+            block(viewModel, lunchPlanRepository)
         } finally {
             collector.cancel()
         }

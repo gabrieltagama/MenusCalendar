@@ -1,10 +1,10 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.PlanningError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
@@ -12,7 +12,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import java.time.Instant
 import java.time.LocalDate
@@ -47,14 +47,14 @@ class DinnerPlanUseCasesTest {
 
     @Test
     fun `rejects desserts and lunch only dishes`() {
-        assertEquals(Outcome.Failure(DomainError.NotADinnerDish), save(dish(type = DishType.DESSERT, mealTime = MealTime.DINNER)))
-        assertEquals(Outcome.Failure(DomainError.NotADinnerDish), save(dish(type = DishType.MAIN, mealTime = MealTime.LUNCH)))
+        assertEquals(Outcome.Failure(PlanningError.NotADinnerDish), save(dish(type = DishType.DESSERT, mealTime = MealTime.DINNER)))
+        assertEquals(Outcome.Failure(PlanningError.NotADinnerDish), save(dish(type = DishType.MAIN, mealTime = MealTime.LUNCH)))
     }
 
-    private class Run(val dinners: FakeDinnerPlanRepository, val lunches: FakeMealPlanRepository, val filled: Int)
+    private class Run(val dinners: FakeDinnerPlanRepository, val lunches: FakeLunchPlanRepository, val filled: Int)
 
-    private fun autoFill(dishes: List<Dish>, seed: Int, lunches: List<MealDay> = emptyList(), dinners: List<DinnerDay> = emptyList()): Run = runBlocking {
-        val lunchRepository = FakeMealPlanRepository(lunches)
+    private fun autoFill(dishes: List<Dish>, seed: Int, lunches: List<LunchDay> = emptyList(), dinners: List<DinnerDay> = emptyList()): Run = runBlocking {
+        val lunchRepository = FakeLunchPlanRepository(lunches)
         val dinnerRepository = FakeDinnerPlanRepository(dinners)
         val useCase = AutoFillMonthDinnersUseCase(FakeDishRepository(dishes), lunchRepository, dinnerRepository, FakeSettingsRepository(), Random(seed), TestDishes.fixedClock)
         Run(dinnerRepository, lunchRepository, useCase(month).filledDays)
@@ -82,7 +82,7 @@ class DinnerPlanUseCasesTest {
     fun `never repeats the lunch of the day nor a dish served within 6 days`() {
         val lunchDish = dish(id = "any-1", type = DishType.MAIN, mealTime = MealTime.ANY)
         val starter = dish(id = "starter", type = DishType.STARTER, mealTime = MealTime.LUNCH)
-        val lunches = (1..month.lengthOfMonth()).map { MealDay(date = month.atDay(it), menu = DailyMenu.Courses(starter = starter, main = lunchDish), updatedAt = Instant.EPOCH) }
+        val lunches = (1..month.lengthOfMonth()).map { LunchDay(date = month.atDay(it), menu = DailyMenu.Courses(starter = starter, main = lunchDish), updatedAt = Instant.EPOCH) }
         (1..30).forEach { seed ->
             val run = autoFill(dinnerCatalog, seed, lunches = lunches)
             val plan = run.dinners.current

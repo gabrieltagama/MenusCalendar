@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gabrieltagama.menuplanner.core.cloud.ui.rememberGoogleDriveConnect
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.CloudError
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.onboarding.R
@@ -144,7 +144,7 @@ private fun WelcomeScreenPreview() = MenuPlannerTheme {
 @Composable
 private fun WelcomeScreenErrorPreview() = MenuPlannerTheme {
     WelcomeScreen(
-        state = WelcomeUiState(message = WelcomeMessage.Failed(DomainError.CloudUnavailable)),
+        state = WelcomeUiState(message = WelcomeMessage.Failed(CloudError.CloudUnavailable)),
         onConnectGoogle = {},
         onContinueLocal = {}
     )

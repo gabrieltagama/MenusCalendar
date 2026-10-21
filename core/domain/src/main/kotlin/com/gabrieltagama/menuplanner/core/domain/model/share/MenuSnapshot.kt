@@ -5,7 +5,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedDay
 import java.time.Instant
 import java.time.LocalDate
@@ -43,15 +43,15 @@ data class LunchEntry(
     val mainId: DishId? = null,
     val singleId: DishId? = null,
     override val updatedAt: Instant
-) : PlanEntry<MealDay> {
+) : PlanEntry<LunchDay> {
     fun remapped(idMap: Map<DishId, DishId>): LunchEntry = copy(
         starterId = starterId?.let { idMap[it] ?: it },
         mainId = mainId?.let { idMap[it] ?: it },
         singleId = singleId?.let { idMap[it] ?: it }
     )
 
-    override fun resolve(dishesById: Map<DishId, Dish>): MealDay? =
-        menuOf(dishesById)?.let { MealDay.plan(date, it, updatedAt).getOrNull() }
+    override fun resolve(dishesById: Map<DishId, Dish>): LunchDay? =
+        menuOf(dishesById)?.let { LunchDay.plan(date, it, updatedAt).getOrNull() }
 
     private fun menuOf(dishesById: Map<DishId, Dish>): DailyMenu? = when {
         singleId != null && starterId == null && mainId == null -> dishesById[singleId]?.let(DailyMenu::Single)
@@ -64,7 +64,7 @@ data class LunchEntry(
     }
 
     companion object {
-        fun of(day: MealDay): LunchEntry = when (val menu = day.menu) {
+        fun of(day: LunchDay): LunchEntry = when (val menu = day.menu) {
             is DailyMenu.Courses -> LunchEntry(day.date, starterId = menu.starter.id, mainId = menu.main.id, updatedAt = day.updatedAt)
             is DailyMenu.Single -> LunchEntry(day.date, singleId = menu.single.id, updatedAt = day.updatedAt)
         }

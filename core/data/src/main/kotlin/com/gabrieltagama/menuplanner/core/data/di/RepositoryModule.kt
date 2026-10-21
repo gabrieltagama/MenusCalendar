@@ -1,10 +1,11 @@
 package com.gabrieltagama.menuplanner.core.data.di
 
+import com.gabrieltagama.menuplanner.core.data.id.UuidDishIdGenerator
 import com.gabrieltagama.menuplanner.core.data.initial.AssetInitialDishesRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishUsageRepository
-import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
+import com.gabrieltagama.menuplanner.core.data.repository.RoomLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomMenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.data.settings.DataStoreSettingsRepository
 import com.gabrieltagama.menuplanner.core.data.share.JsonMenuSnapshotCodec
@@ -14,12 +15,11 @@ import com.gabrieltagama.menuplanner.core.domain.port.DishIdGenerator
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DishUsageRepository
 import com.gabrieltagama.menuplanner.core.domain.port.InitialDishesRepository
-import com.gabrieltagama.menuplanner.core.domain.port.MealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.LunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.port.ShoppingChecklistRepository
-import com.gabrieltagama.menuplanner.core.domain.port.UuidDishIdGenerator
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -39,7 +39,7 @@ internal abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindMealPlanRepository(implementation: RoomMealPlanRepository): MealPlanRepository
+    abstract fun bindLunchPlanRepository(implementation: RoomLunchPlanRepository): LunchPlanRepository
 
     @Binds
     @Singleton

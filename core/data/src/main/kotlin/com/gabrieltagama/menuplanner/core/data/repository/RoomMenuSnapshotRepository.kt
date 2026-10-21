@@ -13,7 +13,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedDay
 import com.gabrieltagama.menuplanner.core.domain.model.share.DishMergePlan
 import com.gabrieltagama.menuplanner.core.domain.model.share.ImportPolicy
@@ -39,13 +39,13 @@ internal class RoomMenuSnapshotRepository @Inject constructor(
 ) : MenuSnapshotRepository {
 
     private val dishDao get() = database.dishDao()
-    private val mealDayDao get() = database.mealDayDao()
+    private val lunchDayDao get() = database.lunchDayDao()
     private val dinnerDayDao get() = database.dinnerDayDao()
 
     override suspend fun read(scope: SnapshotScope): MenuSnapshot = database.withTransaction {
         MenuSnapshot(
             dishes = allDishes(),
-            lunches = if (scope == SnapshotScope.EVERYTHING) mealDayDao.getAll().map { it.toEntry() } else emptyList(),
+            lunches = if (scope == SnapshotScope.EVERYTHING) lunchDayDao.getAll().map { it.toEntry() } else emptyList(),
             dinners = if (scope == SnapshotScope.EVERYTHING) dinnerDayDao.getAll().map { it.toEntry() } else emptyList()
         )
     }
@@ -54,7 +54,7 @@ internal class RoomMenuSnapshotRepository @Inject constructor(
         val plan = DishMergePlan.of(local = allDishes(), incoming = snapshot.dishes)
         dishDao.upsertAllWithIngredients(plan.writes.map { it.toEntity() to it.toIngredientEntities() })
         val known = allDishes().associateBy(Dish::id)
-        val dayDecisions = mergeDays(snapshot.lunches.map { it.remapped(plan.idMap) }, known, mealDayDao, MealDay::toEntity) +
+        val dayDecisions = mergeDays(snapshot.lunches.map { it.remapped(plan.idMap) }, known, lunchDayDao, LunchDay::toEntity) +
             mergeDays(snapshot.dinners.map { it.remapped(plan.idMap) }, known, dinnerDayDao, DinnerDay::toEntity)
         ImportPolicy.summaryOf(plan.decisions, dayDecisions)
     }

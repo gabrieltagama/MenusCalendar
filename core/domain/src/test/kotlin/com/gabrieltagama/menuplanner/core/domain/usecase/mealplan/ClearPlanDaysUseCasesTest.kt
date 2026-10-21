@@ -1,12 +1,12 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import java.time.Instant
 import java.time.LocalDate
@@ -24,34 +24,34 @@ class ClearPlanDaysUseCasesTest {
     private val second = LocalDate.of(2026, 3, 5)
     private val untouched = LocalDate.of(2026, 3, 3)
     private val single = DailyMenu.Single(single = dish(type = DishType.SINGLE))
-    private val lunches = listOf(first, second, untouched).map { MealDay(date = it, menu = single, updatedAt = Instant.EPOCH) }
+    private val lunches = listOf(first, second, untouched).map { LunchDay(date = it, menu = single, updatedAt = Instant.EPOCH) }
     private val dinners = listOf(first, second, untouched).map { DinnerDay(date = it, dish = dish(type = DishType.MAIN, mealTime = MealTime.DINNER), updatedAt = Instant.EPOCH) }
 
     @Test
     fun `clears only the selected lunches and returns them`() = runBlocking {
-        val repository = FakeMealPlanRepository(lunches)
+        val repository = FakeLunchPlanRepository(lunches)
 
-        val removed = ClearMealDaysUseCase(repository)(setOf(first, second, LocalDate.of(2026, 3, 20)))
+        val removed = ClearLunchDaysUseCase(repository)(setOf(first, second, LocalDate.of(2026, 3, 20)))
 
-        assertEquals(listOf(first, second), removed.map(MealDay::date))
+        assertEquals(listOf(first, second), removed.map(LunchDay::date))
         assertEquals(setOf(untouched), repository.current.keys)
     }
 
     @Test
     fun `restoring cleared lunches brings them back`() = runBlocking {
-        val repository = FakeMealPlanRepository(lunches)
-        val removed = ClearMealDaysUseCase(repository)(setOf(first, second))
+        val repository = FakeLunchPlanRepository(lunches)
+        val removed = ClearLunchDaysUseCase(repository)(setOf(first, second))
 
-        RestoreMealDaysUseCase(repository)(removed)
+        RestoreLunchDaysUseCase(repository)(removed)
 
-        assertEquals(lunches.associateBy(MealDay::date), repository.current)
+        assertEquals(lunches.associateBy(LunchDay::date), repository.current)
     }
 
     @Test
     fun `clearing nothing touches nothing`() = runBlocking {
-        val repository = FakeMealPlanRepository(lunches)
+        val repository = FakeLunchPlanRepository(lunches)
 
-        assertTrue(ClearMealDaysUseCase(repository)(emptySet()).isEmpty())
+        assertTrue(ClearLunchDaysUseCase(repository)(emptySet()).isEmpty())
         assertTrue(repository.cleared.isEmpty())
     }
 

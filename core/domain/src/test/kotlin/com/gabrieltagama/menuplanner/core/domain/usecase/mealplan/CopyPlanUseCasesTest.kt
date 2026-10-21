@@ -1,13 +1,13 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import java.time.Instant
 import java.time.LocalDate
@@ -27,16 +27,16 @@ class CopyPlanUseCasesTest {
     private val nextMonday = monday.plusDays(7)
     private val lentils = DailyMenu.Single(single = dish(name = "Lentejas", type = DishType.SINGLE))
     private val paella = DailyMenu.Single(single = dish(name = "Paella", type = DishType.SINGLE))
-    private fun lunch(date: LocalDate, menu: DailyMenu) = MealDay(date = date, menu = menu, updatedAt = Instant.EPOCH)
+    private fun lunch(date: LocalDate, menu: DailyMenu) = LunchDay(date = date, menu = menu, updatedAt = Instant.EPOCH)
 
     @Test
     fun `pastes lunches keeping the gaps and overwriting the target`() = runBlocking {
         val existing = lunch(nextMonday.plusDays(2), lentils)
-        val repository = FakeMealPlanRepository(listOf(lunch(monday, lentils), lunch(wednesday, paella), existing))
+        val repository = FakeLunchPlanRepository(listOf(lunch(monday, lentils), lunch(wednesday, paella), existing))
 
-        val paste = PasteMealDaysUseCase(repository, TestDishes.fixedClock)((0L..2L).map(monday::plusDays).toSet(), nextMonday)
+        val paste = PasteLunchDaysUseCase(repository, TestDishes.fixedClock)((0L..2L).map(monday::plusDays).toSet(), nextMonday)
 
-        assertEquals(listOf(nextMonday, nextMonday.plusDays(2)), paste.pasted.map(MealDay::date))
+        assertEquals(listOf(nextMonday, nextMonday.plusDays(2)), paste.pasted.map(LunchDay::date))
         assertEquals(listOf(existing), paste.replaced)
         assertEquals(lentils, repository.current[nextMonday]?.menu)
         assertEquals(paella, repository.current[nextMonday.plusDays(2)]?.menu)
@@ -46,10 +46,10 @@ class CopyPlanUseCasesTest {
     @Test
     fun `undoing a lunch paste restores the target`() = runBlocking {
         val existing = lunch(nextMonday.plusDays(2), lentils)
-        val repository = FakeMealPlanRepository(listOf(lunch(monday, lentils), lunch(wednesday, paella), existing))
-        val paste = PasteMealDaysUseCase(repository, TestDishes.fixedClock)(setOf(monday, wednesday), nextMonday)
+        val repository = FakeLunchPlanRepository(listOf(lunch(monday, lentils), lunch(wednesday, paella), existing))
+        val paste = PasteLunchDaysUseCase(repository, TestDishes.fixedClock)(setOf(monday, wednesday), nextMonday)
 
-        UndoPasteMealDaysUseCase(repository)(paste)
+        UndoPasteLunchDaysUseCase(repository)(paste)
 
         assertEquals(setOf(monday, wednesday, existing.date), repository.current.keys)
         assertEquals(existing, repository.current[existing.date])
@@ -57,9 +57,9 @@ class CopyPlanUseCasesTest {
 
     @Test
     fun `pasting days without plan writes nothing`() = runBlocking {
-        val repository = FakeMealPlanRepository()
+        val repository = FakeLunchPlanRepository()
 
-        val paste = PasteMealDaysUseCase(repository, TestDishes.fixedClock)(setOf(monday), nextMonday)
+        val paste = PasteLunchDaysUseCase(repository, TestDishes.fixedClock)(setOf(monday), nextMonday)
 
         assertEquals(0, paste.count)
         assertTrue(repository.saved.isEmpty())

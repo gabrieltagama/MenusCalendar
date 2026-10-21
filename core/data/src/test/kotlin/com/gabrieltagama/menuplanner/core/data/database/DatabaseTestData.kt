@@ -9,7 +9,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import java.time.Instant
 import java.time.LocalDate
@@ -46,8 +46,8 @@ internal object DatabaseTestData {
     )
 
     fun singleDay(date: LocalDate, single: Dish, updatedAt: Instant = OLD_INSTANT) =
-        MealDay(date = date, menu = DailyMenu.Single(single = single), updatedAt = updatedAt)
+        LunchDay(date = date, menu = DailyMenu.Single(single = single), updatedAt = updatedAt)
 
     fun coursesDay(date: LocalDate, starter: Dish, main: Dish, updatedAt: Instant = OLD_INSTANT) =
-        MealDay(date = date, menu = DailyMenu.Courses(starter = starter, main = main), updatedAt = updatedAt)
+        LunchDay(date = date, menu = DailyMenu.Courses(starter = starter, main = main), updatedAt = updatedAt)
 }

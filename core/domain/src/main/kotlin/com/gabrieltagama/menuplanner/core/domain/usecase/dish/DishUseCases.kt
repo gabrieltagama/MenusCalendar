@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -25,7 +26,7 @@ class ObserveDishesUseCase @Inject constructor(private val repository: DishRepos
 
 class GetDishUseCase @Inject constructor(private val repository: DishRepository) {
     suspend operator fun invoke(id: DishId): Outcome<Dish> =
-        repository.getDish(id)?.let { Outcome.Success(it) } ?: Outcome.Failure(DomainError.DishNotFound)
+        repository.getDish(id)?.let { Outcome.Success(it) } ?: Outcome.Failure(RecipeError.DishNotFound)
 }
 
 class SaveDishUseCase @Inject constructor(
@@ -45,12 +46,12 @@ class SaveDishUseCase @Inject constructor(
         repository.getPlannedUses(id)
             .filterNot { it.allows(draft.type, draft.mealTime) }
             .takeIf { it.isNotEmpty() }
-            ?.let { conflicts -> DomainError.DishPlannedIncompatibly(firstDate = conflicts.minOf(PlannedUse::date), days = conflicts.map(PlannedUse::date).distinct().size) }
+            ?.let { conflicts -> RecipeError.DishPlannedIncompatibly(firstDate = conflicts.minOf(PlannedUse::date), days = conflicts.map(PlannedUse::date).distinct().size) }
 }
 
 class DeleteDishUseCase @Inject constructor(private val repository: DishRepository) {
     suspend operator fun invoke(id: DishId): Outcome<Unit> {
-        if (repository.getDish(id) == null) return Outcome.Failure(DomainError.DishNotFound)
-        return if (repository.deleteIfUnused(id)) Outcome.Success(Unit) else Outcome.Failure(DomainError.DishInUse)
+        if (repository.getDish(id) == null) return Outcome.Failure(RecipeError.DishNotFound)
+        return if (repository.deleteIfUnused(id)) Outcome.Success(Unit) else Outcome.Failure(RecipeError.DishInUse)
     }
 }

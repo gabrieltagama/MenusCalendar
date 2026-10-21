@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class RoomDishUsageRepositoryTest {
     private lateinit var database: MenuPlannerDatabase
-    private lateinit var lunches: RoomMealPlanRepository
+    private lateinit var lunches: RoomLunchPlanRepository
     private lateinit var dinners: RoomDinnerPlanRepository
     private lateinit var repository: RoomDishUsageRepository
 
@@ -36,7 +36,7 @@ class RoomDishUsageRepositoryTest {
     fun setUp(): Unit = runBlocking {
         database = DatabaseTestData.inMemoryDatabase()
         val dishes = RoomDishRepository(database.dishDao())
-        lunches = RoomMealPlanRepository(database.mealDayDao(), database.dishDao())
+        lunches = RoomLunchPlanRepository(database.lunchDayDao(), database.dishDao())
         dinners = RoomDinnerPlanRepository(database.dinnerDayDao(), database.dishDao())
         repository = RoomDishUsageRepository(database.dishUsageDao())
         listOf(starter, main, single, unused).forEach { dishes.upsert(it) }

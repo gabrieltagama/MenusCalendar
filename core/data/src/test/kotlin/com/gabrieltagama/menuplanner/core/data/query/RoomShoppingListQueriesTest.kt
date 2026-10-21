@@ -6,7 +6,7 @@ import com.gabrieltagama.menuplanner.core.data.database.DatabaseTestData
 import com.gabrieltagama.menuplanner.core.data.database.MenuPlannerDatabase
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
-import com.gabrieltagama.menuplanner.core.data.repository.RoomMealPlanRepository
+import com.gabrieltagama.menuplanner.core.data.repository.RoomLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
@@ -31,7 +31,7 @@ import org.junit.runner.RunWith
 class RoomShoppingListQueriesTest {
     private lateinit var database: MenuPlannerDatabase
     private lateinit var dishRepository: RoomDishRepository
-    private lateinit var mealPlan: RoomMealPlanRepository
+    private lateinit var lunchPlan: RoomLunchPlanRepository
     private lateinit var dinnerPlan: RoomDinnerPlanRepository
     private lateinit var queries: RoomShoppingListQueries
 
@@ -50,7 +50,7 @@ class RoomShoppingListQueriesTest {
     fun setUp(): Unit = runBlocking {
         database = DatabaseTestData.inMemoryDatabase()
         dishRepository = RoomDishRepository(database.dishDao())
-        mealPlan = RoomMealPlanRepository(database.mealDayDao(), database.dishDao())
+        lunchPlan = RoomLunchPlanRepository(database.lunchDayDao(), database.dishDao())
         dinnerPlan = RoomDinnerPlanRepository(database.dinnerDayDao(), database.dishDao())
         queries = RoomShoppingListQueries(database.planQueryDao())
         listOf(starter, main, single).forEach { dishRepository.upsert(it) }
@@ -61,7 +61,7 @@ class RoomShoppingListQueriesTest {
 
     @Test
     fun lunchLinesFollowDateSlotAndPositionOncePerPlannedDish() = runTest {
-        mealPlan.saveAll(
+        lunchPlan.saveAll(
             listOf(
                 DatabaseTestData.singleDay(LocalDate.of(2026, 3, 9), single),
                 DatabaseTestData.coursesDay(LocalDate.of(2026, 3, 2), starter, main),
@@ -83,7 +83,7 @@ class RoomShoppingListQueriesTest {
                 DinnerDay(date = LocalDate.of(2026, 2, 28), dish = single, updatedAt = DatabaseTestData.OLD_INSTANT)
             )
         )
-        mealPlan.save(DatabaseTestData.singleDay(LocalDate.of(2026, 3, 3), single))
+        lunchPlan.save(DatabaseTestData.singleDay(LocalDate.of(2026, 3, 3), single))
 
         val lines = queries.observeIngredientLines(march, Meal.DINNER).first()
 
@@ -92,7 +92,7 @@ class RoomShoppingListQueriesTest {
 
     @Test
     fun linesRefreshWhenPlannedDishChangesItsIngredients() = runTest {
-        mealPlan.save(DatabaseTestData.singleDay(LocalDate.of(2026, 3, 9), single))
+        lunchPlan.save(DatabaseTestData.singleDay(LocalDate.of(2026, 3, 9), single))
         val moreRice = rice.copy(quantity = 600.0)
 
         queries.observeIngredientLines(march, Meal.LUNCH).test {

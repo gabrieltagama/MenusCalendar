@@ -9,15 +9,15 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishSort
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.MenuShape
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDayUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetMealDayUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearLunchDayUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetLunchDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PickRandomDishUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveMealDayUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveLunchDayUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorViewModel
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.DayEditorRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -82,9 +82,9 @@ class DayEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     observeDishes: ObserveDishesUseCase,
     observeDishUsage: ObserveDishUsageUseCase,
-    private val getMealDay: GetMealDayUseCase,
-    private val saveMealDay: SaveMealDayUseCase,
-    private val clearMealDay: ClearMealDayUseCase,
+    private val getLunchDay: GetLunchDayUseCase,
+    private val saveLunchDay: SaveLunchDayUseCase,
+    private val clearLunchDay: ClearLunchDayUseCase,
     private val pickRandomDish: PickRandomDishUseCase
 ) : PlanEditorViewModel<DayEditorForm>(DayEditorForm()) {
 
@@ -103,7 +103,7 @@ class DayEditorViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DayEditorUiState(date = date))
 
     init {
-        viewModelScope.launch { fillForm(getMealDay(date)) }
+        viewModelScope.launch { fillForm(getLunchDay(date)) }
     }
 
     fun onModeChange(mode: MenuShape) = form.update { it.copy(mode = mode) }
@@ -121,7 +121,7 @@ class DayEditorViewModel @Inject constructor(
         val state = uiState.value
         if (!state.canSave) return
         val menu = state.toMenu() ?: return
-        save { saveMealDay(date, menu) }
+        save { saveLunchDay(date, menu) }
     }
 
     override fun DayEditorForm.withClearConfirm(visible: Boolean) = copy(showClearConfirm = visible)
@@ -130,9 +130,9 @@ class DayEditorViewModel @Inject constructor(
 
     override fun DayEditorForm.withError(error: DomainError?) = copy(error = error)
 
-    override suspend fun clearDay() = clearMealDay(date)
+    override suspend fun clearDay() = clearLunchDay(date)
 
-    private fun fillForm(day: MealDay?) = form.update { current ->
+    private fun fillForm(day: LunchDay?) = form.update { current ->
         val menu = day?.menu ?: return@update current.copy(isLoading = false)
         current.copy(isLoading = false, hasSavedDay = true, mode = menu.shape, selections = menu.slots.toMap())
     }

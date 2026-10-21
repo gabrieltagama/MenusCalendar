@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
-import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
@@ -38,7 +38,7 @@ class SaveDishUseCaseTest {
     fun `blank name fails with BlankDishName and is not persisted`() = runBlocking {
         val result = save(dish(name = "   "))
 
-        assertEquals(Outcome.Failure(DomainError.BlankDishName), result)
+        assertEquals(Outcome.Failure(RecipeError.BlankDishName), result)
         assertTrue(repository.upserted.isEmpty())
     }
 
@@ -51,7 +51,7 @@ class SaveDishUseCaseTest {
 
         val result = save(dish(ingredients = ingredients))
 
-        assertEquals(Outcome.Failure(DomainError.InvalidIngredient(1)), result)
+        assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(1)), result)
         assertTrue(repository.upserted.isEmpty())
     }
 
@@ -61,7 +61,7 @@ class SaveDishUseCaseTest {
 
         val result = save(dish(ingredients = ingredients))
 
-        assertEquals(Outcome.Failure(DomainError.InvalidIngredient(0)), result)
+        assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(0)), result)
     }
 
     @Test
@@ -136,7 +136,7 @@ class SaveDishUseCaseTest {
 
         val result = save(planned.copy(type = DishType.DESSERT))
 
-        assertEquals(Outcome.Failure(DomainError.DishPlannedIncompatibly(LocalDate.of(2026, 3, 10), days = 2)), result)
+        assertEquals(Outcome.Failure(RecipeError.DishPlannedIncompatibly(LocalDate.of(2026, 3, 10), days = 2)), result)
         assertEquals(DishType.STARTER, repository.current.getValue("d1").type)
     }
 
@@ -148,7 +148,7 @@ class SaveDishUseCaseTest {
 
         val result = save(planned.copy(mealTime = MealTime.LUNCH))
 
-        assertEquals(Outcome.Failure(DomainError.DishPlannedIncompatibly(LocalDate.of(2026, 3, 10), days = 1)), result)
+        assertEquals(Outcome.Failure(RecipeError.DishPlannedIncompatibly(LocalDate.of(2026, 3, 10), days = 1)), result)
     }
 
     @Test

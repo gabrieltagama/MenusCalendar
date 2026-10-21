@@ -3,7 +3,7 @@ package com.gabrieltagama.menuplanner.feature.calendar.month
 import app.cash.turbine.test
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakePlanQueries
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
@@ -13,24 +13,24 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
-import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedLunch
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.testing.awaitItemMatching
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthDinnersUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthLunchesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearLunchDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthPlanUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthLunchesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteDinnerDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteMealDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteLunchDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreDinnerDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreMealDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreLunchDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteDinnerDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteMealDaysUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteLunchDaysUseCase
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -47,9 +47,9 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * CalendarViewModel over the real ObserveMonthPlanUseCase (read through FakePlanQueries) with a controllable clock (2026-10-09 UTC):
+ * CalendarViewModel over the real ObserveMonthLunchesUseCase (read through FakePlanQueries) with a controllable clock (2026-10-09 UTC):
  * month navigation, selected day summary, the "today" shortcut and the month autofill over the
- * real AutoFillMonthUseCase with in-memory repositories and a seeded Random; the lunches/dinners
+ * real AutoFillMonthLunchesUseCase with in-memory repositories and a seeded Random; the lunches/dinners
  * view switch, the dinner autofill and the refresh of "today" when the screen resumes; the selection
  * mode (tap, drag, select all, view change) and its actions on the active view: bulk deletion with
  * undo, autofill of the marked empty days and copy/paste with undo.
@@ -71,28 +71,28 @@ class CalendarViewModelTest {
 
     private val starter = Dish(id = DishId("gazpacho"), name = "Gazpacho", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW, updatedAt = Instant.EPOCH)
     private val main = Dish(id = DishId("chicken"), name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM, updatedAt = Instant.EPOCH)
-    private val todayPlan = MealDay(date = today, menu = DailyMenu.Courses(starter = starter, main = main), updatedAt = Instant.EPOCH)
-    private val novemberPlan = MealDay(date = LocalDate.of(2026, 11, 3), menu = DailyMenu.Single(single = main.copy(type = DishType.SINGLE)), updatedAt = Instant.EPOCH)
+    private val todayPlan = LunchDay(date = today, menu = DailyMenu.Courses(starter = starter, main = main), updatedAt = Instant.EPOCH)
+    private val novemberPlan = LunchDay(date = LocalDate.of(2026, 11, 3), menu = DailyMenu.Single(single = main.copy(type = DishType.SINGLE)), updatedAt = Instant.EPOCH)
 
     private val todayDinner = DinnerDay(date = today, dish = main, updatedAt = Instant.EPOCH)
     private val nextPlan = todayPlan.copy(date = today.plusDays(2))
 
-    private val repository = FakeMealPlanRepository(listOf(todayPlan, novemberPlan))
+    private val repository = FakeLunchPlanRepository(listOf(todayPlan, novemberPlan))
     private val dinnerRepository = FakeDinnerPlanRepository(listOf(todayDinner))
     private var dishRepository = FakeDishRepository(listOf(starter, main))
     private val settingsRepository = FakeSettingsRepository()
     private val queries = FakePlanQueries(repository, dinnerRepository)
     private val viewModel by lazy {
         CalendarViewModel(
-            ObserveMonthPlanUseCase(queries),
+            ObserveMonthLunchesUseCase(queries),
             ObserveMonthDinnersUseCase(queries),
             PlanCommands(
                 LunchPlanCommands(
-                    AutoFillMonthUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
-                    ClearMealDaysUseCase(repository),
-                    RestoreMealDaysUseCase(repository),
-                    PasteMealDaysUseCase(repository, clock),
-                    UndoPasteMealDaysUseCase(repository)
+                    AutoFillMonthLunchesUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
+                    ClearLunchDaysUseCase(repository),
+                    RestoreLunchDaysUseCase(repository),
+                    PasteLunchDaysUseCase(repository, clock),
+                    UndoPasteLunchDaysUseCase(repository)
                 ),
                 DinnerPlanCommands(
                     AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
@@ -114,7 +114,7 @@ class CalendarViewModelTest {
             assertEquals(YearMonth.of(2026, 10), state.month)
             assertEquals(today, state.today)
             assertEquals(today, state.selectedDate)
-            assertEquals(mapOf(today to todayPlan.toPlannedLunch()), state.days)
+            assertEquals(mapOf(today to todayPlan.toPlannedLunch()), state.lunches)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -136,7 +136,7 @@ class CalendarViewModelTest {
         viewModel.uiState.test {
             val state = awaitItemMatching { !it.isLoading }
 
-            assertEquals(todayPlan.toPlannedLunch(), state.selectedDay)
+            assertEquals(todayPlan.toPlannedLunch(), state.selectedLunch)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -150,7 +150,7 @@ class CalendarViewModelTest {
             viewModel.onDateSelect(emptyDate)
 
             val state = awaitItemMatching { it.selectedDate == emptyDate }
-            assertNull(state.selectedDay)
+            assertNull(state.selectedLunch)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -165,8 +165,8 @@ class CalendarViewModelTest {
             val state = awaitItemMatching {
                 it.month == YearMonth.of(2026, 11) && !it.isLoading && it.selectedDate == LocalDate.of(2026, 11, 1)
             }
-            assertEquals(setOf(novemberPlan.date), state.days.keys)
-            assertNull(state.selectedDay)
+            assertEquals(setOf(novemberPlan.date), state.lunches.keys)
+            assertNull(state.selectedLunch)
             assertEquals(today, state.today)
             cancelAndIgnoreRemainingEvents()
         }
@@ -182,7 +182,7 @@ class CalendarViewModelTest {
             val state = awaitItemMatching {
                 it.month == YearMonth.of(2026, 9) && !it.isLoading && it.selectedDate == LocalDate.of(2026, 9, 1)
             }
-            assertTrue(state.days.isEmpty())
+            assertTrue(state.lunches.isEmpty())
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -196,7 +196,7 @@ class CalendarViewModelTest {
             viewModel.onPreviousMonth()
 
             val state = awaitItemMatching { it.month == YearMonth.of(2026, 10) && !it.isLoading && it.selectedDate == today }
-            assertEquals(todayPlan.toPlannedLunch(), state.selectedDay)
+            assertEquals(todayPlan.toPlannedLunch(), state.selectedLunch)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -212,7 +212,7 @@ class CalendarViewModelTest {
             viewModel.onToday()
 
             val state = awaitItemMatching { it.month == YearMonth.of(2026, 10) && !it.isLoading && it.selectedDate == today }
-            assertEquals(todayPlan.toPlannedLunch(), state.selectedDay)
+            assertEquals(todayPlan.toPlannedLunch(), state.selectedLunch)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -224,8 +224,8 @@ class CalendarViewModelTest {
 
             repository.clear(today)
 
-            val state = awaitItemMatching { it.days.isEmpty() && !it.isLoading }
-            assertNull(state.selectedDay)
+            val state = awaitItemMatching { it.lunches.isEmpty() && !it.isLoading }
+            assertNull(state.selectedLunch)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -260,9 +260,9 @@ class CalendarViewModelTest {
                 assertEquals(0, event.result.unfilledDays)
             }
 
-            val state = awaitItemMatching { it.days.size == 23 && !it.isAutoFilling }
+            val state = awaitItemMatching { it.lunches.size == 23 && !it.isAutoFilling }
             assertFalse(state.showAutoFillConfirm)
-            assertEquals(todayPlan.toPlannedLunch(), state.selectedDay)
+            assertEquals(todayPlan.toPlannedLunch(), state.selectedLunch)
             assertTrue(repository.saved.all { YearMonth.from(it.date) == YearMonth.of(2026, 10) && !it.date.isBefore(today) })
             cancelAndIgnoreRemainingEvents()
         }
@@ -417,13 +417,13 @@ class CalendarViewModelTest {
             assertEquals(Meal.LUNCH, deletion.view)
             assertEquals(2, deletion.count)
 
-            val cleared = awaitItemMatching { it.days.isEmpty() && !it.isLoading }
+            val cleared = awaitItemMatching { it.lunches.isEmpty() && !it.isLoading }
             assertFalse(cleared.isSelecting)
             assertEquals(setOf(today), dinnerRepository.current.keys)
 
             viewModel.onUndo(deletion)
 
-            awaitItemMatching { it.days.keys == setOf(today, nextPlan.date) }
+            awaitItemMatching { it.lunches.keys == setOf(today, nextPlan.date) }
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -484,9 +484,9 @@ class CalendarViewModelTest {
                 assertEquals(2, event.result.filledDays)
             }
 
-            val state = awaitItemMatching { it.days.size == 3 && !it.isAutoFilling }
+            val state = awaitItemMatching { it.lunches.size == 3 && !it.isAutoFilling }
             assertFalse(state.isSelecting)
-            assertEquals(todayPlan.toPlannedLunch(), state.days[today])
+            assertEquals(todayPlan.toPlannedLunch(), state.lunches[today])
             assertEquals(setOf(today.plusDays(1), today.plusDays(2)), repository.saved.map { it.date }.toSet())
             cancelAndIgnoreRemainingEvents()
         }
@@ -516,14 +516,14 @@ class CalendarViewModelTest {
             }
             assertEquals(2, paste.count)
 
-            val pasted = awaitItemMatching { it.days.size == 4 && !it.isPasting }
-            assertEquals(todayPlan.toPlannedLunch().slots, pasted.days[target]?.slots)
-            assertEquals(nextPlan.toPlannedLunch().slots, pasted.days[target.plusDays(2)]?.slots)
-            assertNull(pasted.days[target.plusDays(1)])
+            val pasted = awaitItemMatching { it.lunches.size == 4 && !it.isPasting }
+            assertEquals(todayPlan.toPlannedLunch().slots, pasted.lunches[target]?.slots)
+            assertEquals(nextPlan.toPlannedLunch().slots, pasted.lunches[target.plusDays(2)]?.slots)
+            assertNull(pasted.lunches[target.plusDays(1)])
 
             viewModel.onUndo(paste)
 
-            awaitItemMatching { it.days.keys == setOf(today, nextPlan.date) }
+            awaitItemMatching { it.lunches.keys == setOf(today, nextPlan.date) }
             cancelAndIgnoreRemainingEvents()
         }
     }

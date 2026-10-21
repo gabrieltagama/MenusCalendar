@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.model
 
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import java.time.Instant
 
 /**
@@ -45,9 +46,9 @@ data class Dish(
         fun isDinnerOption(type: DishType, mealTime: MealTime): Boolean = mealTime.isServedAtDinner && type != DishType.DESSERT
 
         fun validate(name: String, ingredients: List<Ingredient>): DomainError? {
-            if (name.isBlank()) return DomainError.BlankDishName
+            if (name.isBlank()) return RecipeError.BlankDishName
             val invalidIndex = ingredients.indexOfFirst { !it.isValid }
-            return if (invalidIndex >= 0) DomainError.InvalidIngredient(invalidIndex) else null
+            return if (invalidIndex >= 0) RecipeError.InvalidIngredient(invalidIndex) else null
         }
     }
 }

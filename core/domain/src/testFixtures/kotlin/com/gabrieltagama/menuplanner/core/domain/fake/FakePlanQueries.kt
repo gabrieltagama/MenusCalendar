@@ -18,18 +18,18 @@ import kotlinx.coroutines.flow.map
  * by the queries, as with Room. Lines keep the order of the real query: date, menu slot, position.
  */
 class FakePlanQueries(
-    private val mealPlan: FakeMealPlanRepository = FakeMealPlanRepository(),
+    private val lunchPlan: FakeLunchPlanRepository = FakeLunchPlanRepository(),
     private val dinnerPlan: FakeDinnerPlanRepository = FakeDinnerPlanRepository()
 ) : CalendarQueries, ShoppingListQueries {
 
     override fun observeLunches(month: YearMonth): Flow<List<PlannedLunch>> =
-        mealPlan.state.map { days -> days.values.filter { YearMonth.from(it.date) == month }.sortedBy { it.date }.map { it.toPlannedLunch() } }
+        lunchPlan.state.map { days -> days.values.filter { YearMonth.from(it.date) == month }.sortedBy { it.date }.map { it.toPlannedLunch() } }
 
     override fun observeDinners(month: YearMonth): Flow<List<PlannedDinner>> =
         dinnerPlan.state.map { days -> days.values.filter { YearMonth.from(it.date) == month }.sortedBy { it.date }.map { it.toPlannedDinner() } }
 
     override fun observeIngredientLines(dates: ClosedRange<LocalDate>, meal: Meal): Flow<List<Ingredient>> = when (meal) {
-        Meal.LUNCH -> mealPlan.state.map { days -> days.values.filter { it.date in dates }.sortedBy { it.date }.flatMap { it.menu.dishes }.flatMap { it.ingredients } }
+        Meal.LUNCH -> lunchPlan.state.map { days -> days.values.filter { it.date in dates }.sortedBy { it.date }.flatMap { it.menu.dishes }.flatMap { it.ingredients } }
         Meal.DINNER -> dinnerPlan.state.map { days -> days.values.filter { it.date in dates }.sortedBy { it.date }.flatMap { it.dish.ingredients } }
     }
 }
