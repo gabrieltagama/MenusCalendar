@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.feature.calendar.shopping
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
@@ -28,9 +29,12 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -43,7 +47,8 @@ import org.junit.runner.RunWith
  * the current and of another month, filtering by meals and dates (a range never ends before it
  * starts and one meal always stays selected), ticks kept per filter, bought products last and
  * left out of what is shared, and expired ticks cleared on opening. Robolectric because the route
- * is read with toRoute.
+ * is read with toRoute. Every view model scope is cancelled and joined after each test, so no
+ * coroutine running on Dispatchers.Default resumes on Main while the rule resets it.
  */
 @RunWith(AndroidJUnit4::class)
 class ShoppingListViewModelTest {
@@ -62,6 +67,13 @@ class ShoppingListViewModelTest {
         listOf(singleDay(LocalDate.of(2026, 10, 5), pastRice), singleDay(LocalDate.of(2026, 10, 12), rice))
     )
     private val dinnerPlan = FakeDinnerPlanRepository(listOf(DinnerDay(LocalDate.of(2026, 10, 20), omelette, Instant.EPOCH)))
+
+    private val viewModels = mutableListOf<ShoppingListViewModel>()
+
+    @After
+    fun cancelViewModels() = runBlocking {
+        viewModels.forEach { it.viewModelScope.coroutineContext.job.cancelAndJoin() }
+    }
 
     @Test
     fun currentMonthStartsTodayAndListsLunchesAndDinnersOfTheRange() = runBlocking {
@@ -159,7 +171,7 @@ class ShoppingListViewModelTest {
         clearExpiredShoppingChecks = ClearExpiredShoppingChecksUseCase(checklist, clock),
         setShoppingItemChecked = SetShoppingItemCheckedUseCase(checklist),
         clearShoppingChecks = ClearShoppingChecksUseCase(checklist)
-    )
+    ).also(viewModels::add)
 
     private suspend fun awaitState(
         viewModel: ShoppingListViewModel,
