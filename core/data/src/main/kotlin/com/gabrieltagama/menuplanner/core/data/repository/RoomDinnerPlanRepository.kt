@@ -16,9 +16,10 @@ internal class RoomDinnerPlanRepository @Inject constructor(
     dinnerDayDao: DinnerDayDao,
     dishDao: DishDao
 ) : RoomDayPlanRepository<DinnerDayEntity, DinnerDay>(
-    dao = dinnerDayDao,
-    dishDao = dishDao,
-    dishIdsOf = { listOf(it.dishId) },
-    toDomain = DinnerDayEntity::toDomain,
-    toEntity = DinnerDay::toEntity
-), DinnerPlanRepository
+        dao = dinnerDayDao,
+        dishDao = dishDao,
+        dishIdsOf = { listOf(it.dishId) },
+        toDomain = DinnerDayEntity::toDomain,
+        toEntity = DinnerDay::toEntity
+    ),
+    DinnerPlanRepository
