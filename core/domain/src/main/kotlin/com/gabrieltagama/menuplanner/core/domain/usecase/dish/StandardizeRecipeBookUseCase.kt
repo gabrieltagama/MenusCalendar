@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import javax.inject.Inject
@@ -16,20 +17,20 @@ class StandardizeRecipeBookUseCase @Inject constructor(private val repository: D
 
     suspend operator fun invoke() {
         val stored = repository.getDishes()
-        val changed = changedDishes(stored, IngredientStandardizer.standardize(stored))
+        val changed = changedDishes(stored, standardizedById(stored))
         if (changed.isNotEmpty()) repository.upsertAll(changed)
     }
 
     suspend fun save(edited: Dish): Dish {
         val stored = repository.getDishes().filterNot { it.id == edited.id }
-        val standard = IngredientStandardizer.standardize(stored + edited)
-        val saved = standard.last()
+        val standard = standardizedById(stored + edited)
+        val saved = standard.getValue(edited.id)
         repository.upsertAll(changedDishes(stored, standard) + saved)
         return saved
     }
 
-    private fun changedDishes(stored: List<Dish>, standard: List<Dish>): List<Dish> =
-        standard.zip(stored)
-            .filter { (converted, original) -> converted != original }
-            .map { (converted, _) -> converted }
+    private fun standardizedById(dishes: List<Dish>): Map<DishId, Dish> = IngredientStandardizer.standardize(dishes).associateBy(Dish::id)
+
+    private fun changedDishes(stored: List<Dish>, standard: Map<DishId, Dish>): List<Dish> =
+        stored.mapNotNull { original -> standard.getValue(original.id).takeIf { it != original } }
 }

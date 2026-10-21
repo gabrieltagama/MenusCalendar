@@ -6,8 +6,8 @@ import java.time.Instant
 
 /**
  * Aggregate root for a dish of the recipe book; updatedAt decides which version wins when a shared
- * JSON is imported. Its invariants live here: a dish needs a name and valid ingredient lines
- * (validationError), and it can be planned at lunch or as a dinner when it is served at that meal and
+ * JSON is imported. Its invariants live here: a dish needs a valid name (DishName) and valid ingredient
+ * lines (validationError), and it can be planned at lunch or as a dinner when it is served at that meal and
  * is not a dessert (isLunchOption, isDinnerOption). The same rules apply when saving, importing and restoring,
  * with one exception: a lunch chosen by hand may take a dish meant for dinner (the editor only warns), so
  * only the autofill applies isLunchOption strictly.
@@ -46,7 +46,7 @@ data class Dish(
         fun isDinnerOption(type: DishType, mealTime: MealTime): Boolean = mealTime.isServedAtDinner && type != DishType.DESSERT
 
         fun validate(name: String, ingredients: List<Ingredient>): DomainError? {
-            if (name.isBlank()) return RecipeError.BlankDishName
+            if (!DishName.isValid(name)) return RecipeError.BlankDishName
             val invalidIndex = ingredients.indexOfFirst { !it.isValid }
             return if (invalidIndex >= 0) RecipeError.InvalidIngredient(invalidIndex) else null
         }
