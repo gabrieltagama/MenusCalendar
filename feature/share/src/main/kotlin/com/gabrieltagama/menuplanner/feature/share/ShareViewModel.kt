@@ -4,15 +4,16 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.common.fold
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ExportMenusUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import com.gabrieltagama.menuplanner.core.ui.state.BusyRunner
+import com.gabrieltagama.menuplanner.core.ui.state.catchingStorageFailure
 import com.gabrieltagama.menuplanner.feature.share.files.ShareFiles
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +26,8 @@ import kotlinx.coroutines.flow.update
 /**
  * Exports the recipe book and calendar to a file to share or to save in a document the user picks,
  * and imports a file picked by the user, through the ShareFiles port. One operation runs at a time; results surface as a nullable
- * [ShareMessage] in [ShareUiState] and the file to share as a one-shot [ShareEvent].
+ * [ShareMessage] in [ShareUiState] (a file that cannot be written, a business error or a storage
+ * failure) and the file to share as a one-shot [ShareEvent].
  */
 data class ShareUiState(
     val isBusy: Boolean = false,
@@ -59,32 +61,33 @@ class ShareViewModel @Inject constructor(
     private val busy = BusyRunner(viewModelScope) { isBusy -> _uiState.update { it.copy(isBusy = isBusy) } }
 
     fun onExport() = runBusy {
-        val uri = try {
-            files.write(exportMenus())
-        } catch (expected: IOException) {
-            null
-        }
-        if (uri == null) showMessage(ShareMessage.ExportFailed)
-        else _events.send(ShareEvent.ShareFile(uri))
+        exportText().fold(
+            onSuccess = { text ->
+                val uri = files.write(text)
+                if (uri == null) showMessage(ShareMessage.ExportFailed)
+                else _events.send(ShareEvent.ShareFile(uri))
+            },
+            onFailure = { error -> showMessage(ShareMessage.Failed(error)) }
+        )
     }
 
     fun saveFileName(): String = files.exportFileName()
 
     fun onSaveTo(uri: Uri) = runBusy {
-        val saved = try {
-            files.save(uri, exportMenus())
-        } catch (expected: IOException) {
-            false
-        }
-        showMessage(if (saved) ShareMessage.Saved else ShareMessage.ExportFailed)
+        exportText().fold(
+            onSuccess = { text -> showMessage(if (files.save(uri, text)) ShareMessage.Saved else ShareMessage.ExportFailed) },
+            onFailure = { error -> showMessage(ShareMessage.Failed(error)) }
+        )
     }
 
     fun onImport(uri: Uri) = runBusy {
         val text = files.read(uri) ?: return@runBusy showMessage(ShareMessage.Failed(ShareError.InvalidImportFile))
-        showMessage(importMenus(text).fold(ShareMessage::Imported, ShareMessage::Failed))
+        showMessage(catchingStorageFailure { importMenus(text) }.fold(ShareMessage::Imported, ShareMessage::Failed))
     }
 
     fun onMessageShown() = _uiState.update { it.copy(message = null) }
+
+    private suspend fun exportText(): Outcome<String> = catchingStorageFailure { Outcome.Success(exportMenus()) }
 
     private fun runBusy(block: suspend () -> Unit) = busy.run(block)
 

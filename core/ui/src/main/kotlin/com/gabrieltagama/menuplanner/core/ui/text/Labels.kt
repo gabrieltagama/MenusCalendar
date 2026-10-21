@@ -8,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.PlanningError
 import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import com.gabrieltagama.menuplanner.core.domain.common.ShareError
+import com.gabrieltagama.menuplanner.core.domain.common.StorageError
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
@@ -93,4 +94,5 @@ fun DomainError.message(): String = when (this) {
     ShareError.UnsupportedImportVersion -> stringResource(R.string.error_unsupported_import_version)
     CloudError.CloudUnavailable -> stringResource(R.string.error_cloud_unavailable)
     CloudError.CloudAuthorizationRequired -> stringResource(R.string.error_cloud_authorization_required)
+    StorageError.StorageUnavailable -> stringResource(R.string.error_storage_unavailable)
 }

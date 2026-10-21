@@ -9,7 +9,10 @@ import java.time.LocalDate
  * The lunch planned for one calendar day. A day has exactly one menu, which is either
  * starter + main or a single dish. Desserts are kept in the recipe book but never planned. The
  * menu knows its invariant: every dish must sit in the slot of its type (violation), and plan is
- * the factory that checks it for a menu chosen by hand or received in an import.
+ * the factory that checks it for a menu chosen by hand or received in an import. DailyMenu.of
+ * builds the menu of a shape from the dishes of its slots, and fromSlots accepts only the exact
+ * slots of one shape, so data mixing a single dish with a starter or a main never becomes a menu:
+ * every layer (database rows, read models, imports, autofill and editor) builds menus through them.
  */
 data class LunchDay(
     override val date: LocalDate,
@@ -48,5 +51,17 @@ sealed interface DailyMenu {
         override val shape: MenuShape get() = MenuShape.SINGLE
 
         override val slots: List<Pair<MenuSlot, Dish>> get() = listOf(MenuSlot.SINGLE to single)
+    }
+
+    companion object {
+        fun of(shape: MenuShape, dishes: Map<MenuSlot, Dish>): DailyMenu? {
+            if (!shape.slots.all(dishes::containsKey)) return null
+            return when (shape) {
+                MenuShape.COURSES -> Courses(starter = dishes.getValue(MenuSlot.STARTER), main = dishes.getValue(MenuSlot.MAIN))
+                MenuShape.SINGLE -> Single(single = dishes.getValue(MenuSlot.SINGLE))
+            }
+        }
+
+        fun fromSlots(dishes: Map<MenuSlot, Dish>): DailyMenu? = MenuShape.of(dishes.keys)?.let { of(it, dishes) }
     }
 }

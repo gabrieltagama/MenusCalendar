@@ -6,6 +6,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakePlanQueries
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
@@ -104,7 +105,8 @@ class CalendarViewModelTest {
                     RestoreDinnerDaysUseCase(dinnerRepository),
                     PasteDinnerDaysUseCase(dinnerRepository, clock),
                     UndoPasteDinnerDaysUseCase(dinnerRepository)
-                )
+                ),
+                ImmediateTransactionRunner()
             ),
             clock
         )

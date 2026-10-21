@@ -5,13 +5,14 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import java.time.Instant
 import java.time.LocalDate
 
 /**
  * Row of the `meal_days` table, keyed by epoch day. Either single_id or starter_id + main_id
- * is set; every dish reference is RESTRICT so a planned dish cannot be deleted. dishIds is an
- * extension (not a member) so Room does not treat it as a column.
+ * is set; every dish reference is RESTRICT so a planned dish cannot be deleted. slotIds and dishIds
+ * are extensions (not members) so Room does not treat them as columns.
  */
 @Entity(
     tableName = "meal_days",
@@ -30,5 +31,8 @@ internal data class LunchDayEntity(
     @ColumnInfo(name = "updated_at") override val updatedAt: Instant
 ) : DayPlanRow
 
+internal val LunchDayEntity.slotIds: Map<MenuSlot, String>
+    get() = listOfNotNull(starterId?.let { MenuSlot.STARTER to it }, mainId?.let { MenuSlot.MAIN to it }, singleId?.let { MenuSlot.SINGLE to it }).toMap()
+
 internal val LunchDayEntity.dishIds: List<String>
-    get() = listOfNotNull(starterId, mainId, singleId)
+    get() = slotIds.values.toList()

@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.Flow
  * Read-only queries (CQRS query side) over both calendars. Each one joins the plan with the dishes
  * or ingredients it needs in a single statement, so Room observes every table involved and the flows
  * refresh when the plan or a planned dish changes, without loading whole dishes. A lunch row keeps
- * the same rules as the domain mapper: single_id wins, otherwise starter and main are both needed.
+ * the same rule as the domain (MenuShape.of): either only single_id, or only starter_id and main_id;
+ * a row mixing both shapes adds no ingredients.
  */
 @Dao
 internal interface PlanQueryDao {
@@ -49,7 +50,7 @@ internal interface PlanQueryDao {
         """
         SELECT i.name, i.quantity, i.unit FROM (
             SELECT date, single_id AS dish_id, 2 AS slot FROM meal_days
-                WHERE single_id IS NOT NULL AND date BETWEEN :from AND :to
+                WHERE single_id IS NOT NULL AND starter_id IS NULL AND main_id IS NULL AND date BETWEEN :from AND :to
             UNION ALL SELECT date, starter_id, 0 FROM meal_days
                 WHERE single_id IS NULL AND starter_id IS NOT NULL AND main_id IS NOT NULL AND date BETWEEN :from AND :to
             UNION ALL SELECT date, main_id, 1 FROM meal_days

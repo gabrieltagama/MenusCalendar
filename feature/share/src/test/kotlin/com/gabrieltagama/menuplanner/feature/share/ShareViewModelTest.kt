@@ -16,7 +16,6 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeB
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ExportMenusUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import com.gabrieltagama.menuplanner.feature.share.files.ShareFiles
-import java.io.IOException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -125,8 +124,8 @@ class ShareViewModelTest {
         val contents = mutableMapOf<Uri, String>()
         var failWrites = false
 
-        override suspend fun write(content: String): Uri {
-            if (failWrites) throw IOException("disk full")
+        override suspend fun write(content: String): Uri? {
+            if (failWrites) return null
             written += content
             return exportUri
         }
