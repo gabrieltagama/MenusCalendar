@@ -3,7 +3,7 @@ package com.gabrieltagama.menuplanner.core.domain.fake
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotCodec
+import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
 import java.time.Instant
 
 /**

@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.model.share
 
+import com.gabrieltagama.menuplanner.core.domain.common.getOrNull
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
@@ -47,7 +48,7 @@ data class LunchEntry(
     )
 
     override fun resolve(dishesById: Map<DishId, Dish>): MealDay? =
-        menuOf(dishesById)?.takeIf { it.violation == null }?.let { MealDay(date = date, menu = it, updatedAt = updatedAt) }
+        menuOf(dishesById)?.let { MealDay.plan(date, it, updatedAt).getOrNull() }
 
     private fun menuOf(dishesById: Map<DishId, Dish>): DailyMenu? = when {
         singleId != null && starterId == null && mainId == null -> dishesById[singleId]?.let(DailyMenu::Single)
@@ -75,7 +76,7 @@ data class DinnerEntry(
     fun remapped(idMap: Map<DishId, DishId>): DinnerEntry = copy(dishId = idMap[dishId] ?: dishId)
 
     override fun resolve(dishesById: Map<DishId, Dish>): DinnerDay? =
-        dishesById[dishId]?.takeIf(Dish::isDinnerOption)?.let { DinnerDay(date = date, dish = it, updatedAt = updatedAt) }
+        dishesById[dishId]?.let { DinnerDay.plan(date, it, updatedAt).getOrNull() }
 
     companion object {
         fun of(day: DinnerDay): DinnerEntry = DinnerEntry(day.date, day.dish.id, day.updatedAt)

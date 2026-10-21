@@ -3,7 +3,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 import com.gabrieltagama.menuplanner.core.domain.model.PastedDays
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedDay
 import com.gabrieltagama.menuplanner.core.domain.model.shifted
-import com.gabrieltagama.menuplanner.core.domain.repository.DayPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DayPlanRepository
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate

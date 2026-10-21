@@ -4,10 +4,10 @@ import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
-import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject

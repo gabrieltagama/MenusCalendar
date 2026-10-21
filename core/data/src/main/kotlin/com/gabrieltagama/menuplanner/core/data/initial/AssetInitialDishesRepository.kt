@@ -8,9 +8,9 @@ import androidx.datastore.preferences.core.edit
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishDao
 import com.gabrieltagama.menuplanner.core.data.di.SettingsDataStore
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
-import com.gabrieltagama.menuplanner.core.domain.repository.InitialDishesRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotCodec
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotRepository
+import com.gabrieltagama.menuplanner.core.domain.port.InitialDishesRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
+import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton

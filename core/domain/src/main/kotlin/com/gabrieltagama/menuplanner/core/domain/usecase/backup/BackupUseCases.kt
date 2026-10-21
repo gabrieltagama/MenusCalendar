@@ -6,10 +6,10 @@ import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotFingerprint
 import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
-import com.gabrieltagama.menuplanner.core.domain.repository.BackupScheduler
-import com.gabrieltagama.menuplanner.core.domain.repository.CloudBackupRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotCodec
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotRepository
+import com.gabrieltagama.menuplanner.core.domain.port.BackupScheduler
+import com.gabrieltagama.menuplanner.core.domain.port.CloudBackupRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
+import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import java.time.Clock
 import java.time.Instant

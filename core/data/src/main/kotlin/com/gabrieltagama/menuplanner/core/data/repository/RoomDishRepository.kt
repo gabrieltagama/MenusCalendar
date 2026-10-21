@@ -10,7 +10,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
-import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow

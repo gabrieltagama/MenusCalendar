@@ -3,13 +3,10 @@ package com.gabrieltagama.menuplanner.core.data.repository
 import com.gabrieltagama.menuplanner.core.data.database.dao.DinnerDayDao
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishDao
 import com.gabrieltagama.menuplanner.core.data.database.entity.DinnerDayEntity
-import com.gabrieltagama.menuplanner.core.data.database.entity.DishWithIngredients
 import com.gabrieltagama.menuplanner.core.data.mapper.toDomain
 import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
-import com.gabrieltagama.menuplanner.core.domain.model.Dish
-import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -38,11 +35,7 @@ internal class RoomDinnerPlanRepository @Inject constructor(
     override suspend fun clearAll(dates: Collection<LocalDate>) = dinnerDayDao.deleteByDates(dates.map(LocalDate::toEpochDay))
 
     private suspend fun resolve(days: List<DinnerDayEntity>): List<DinnerDay> {
-        val dishesById = loadDishes(days.map { it.dishId }.distinct())
+        val dishesById = dishDao.dishesById(days.map { it.dishId }.distinct())
         return days.mapNotNull { it.toDomain(dishesById) }
     }
-
-    private suspend fun loadDishes(ids: List<String>): Map<DishId, Dish> =
-        if (ids.isEmpty()) emptyMap()
-        else dishDao.getByIds(ids).map(DishWithIngredients::toDomain).associateBy(Dish::id)
 }

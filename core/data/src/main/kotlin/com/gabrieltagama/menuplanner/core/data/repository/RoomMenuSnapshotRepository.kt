@@ -19,7 +19,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
 import com.gabrieltagama.menuplanner.core.domain.model.share.MergeDecision
 import com.gabrieltagama.menuplanner.core.domain.model.share.PlanEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
 import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject

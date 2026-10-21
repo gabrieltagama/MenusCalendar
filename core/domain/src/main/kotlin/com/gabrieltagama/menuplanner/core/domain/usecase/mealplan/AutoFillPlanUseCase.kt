@@ -5,11 +5,11 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedDay
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
-import com.gabrieltagama.menuplanner.core.domain.repository.DayPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DayPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate

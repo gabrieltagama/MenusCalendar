@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.fake
 
-import com.gabrieltagama.menuplanner.core.domain.repository.BackupScheduler
+import com.gabrieltagama.menuplanner.core.domain.port.BackupScheduler
 
 /**
  * BackupScheduler that only records whether the daily backup is scheduled.

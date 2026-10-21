@@ -1,13 +1,15 @@
 package com.gabrieltagama.menuplanner.core.domain.model
 
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import java.time.Instant
 import java.time.LocalDate
 
 /**
  * The lunch planned for one calendar day. A day has exactly one menu, which is either
  * starter + main or a single dish. Desserts are kept in the recipe book but never planned. The
- * menu knows its invariant: every dish must sit in the slot of its type (violation).
+ * menu knows its invariant: every dish must sit in the slot of its type (violation), and plan is
+ * the factory that checks it for a menu chosen by hand or received in an import.
  */
 data class MealDay(
     override val date: LocalDate,
@@ -15,6 +17,11 @@ data class MealDay(
     override val updatedAt: Instant
 ) : PlannedDay<MealDay> {
     override fun movedTo(date: LocalDate, updatedAt: Instant): MealDay = copy(date = date, updatedAt = updatedAt)
+
+    companion object {
+        fun plan(date: LocalDate, menu: DailyMenu, updatedAt: Instant): Outcome<MealDay> =
+            menu.violation?.let { Outcome.Failure(it) } ?: Outcome.Success(MealDay(date = date, menu = menu, updatedAt = updatedAt))
+    }
 }
 
 sealed interface DailyMenu {

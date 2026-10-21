@@ -7,7 +7,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
-import com.gabrieltagama.menuplanner.core.domain.repository.DishIdGenerator
+import com.gabrieltagama.menuplanner.core.domain.port.DishIdGenerator
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset

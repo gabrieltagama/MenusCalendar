@@ -2,7 +2,7 @@ package com.gabrieltagama.menuplanner.core.data.repository
 
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishUsageDao
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.repository.DishUsageRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishUsageRepository
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow

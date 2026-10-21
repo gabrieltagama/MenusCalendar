@@ -7,8 +7,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
-import com.gabrieltagama.menuplanner.core.domain.repository.DishIdGenerator
-import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishIdGenerator
+import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
@@ -37,20 +37,9 @@ class SaveDishUseCase @Inject constructor(
     private val standardizeRecipeBook: StandardizeRecipeBookUseCase
 ) {
     suspend operator fun invoke(draft: DishDraft): Outcome<Dish> {
-        Dish.validate(draft.name, draft.ingredients)?.let { return Outcome.Failure(it) }
+        draft.validationError?.let { return Outcome.Failure(it) }
         draft.id?.let { planConflictOf(it, draft) }?.let { return Outcome.Failure(it) }
-        val dish = Dish(
-            id = draft.id ?: idGenerator.newId(),
-            name = draft.name.trim(),
-            description = draft.description.trim(),
-            ingredients = draft.ingredients.map { it.copy(name = it.name.trim()) },
-            preparation = draft.preparation.trim(),
-            type = draft.type,
-            heaviness = draft.heaviness,
-            rating = draft.rating,
-            mealTime = draft.mealTime,
-            updatedAt = Instant.now(clock)
-        )
+        val dish = draft.toDish(id = draft.id ?: idGenerator.newId(), updatedAt = Instant.now(clock))
         return Outcome.Success(standardizeRecipeBook.save(dish))
     }
 

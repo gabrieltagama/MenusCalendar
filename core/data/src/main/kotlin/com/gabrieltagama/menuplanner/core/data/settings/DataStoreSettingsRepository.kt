@@ -10,7 +10,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.gabrieltagama.menuplanner.core.data.di.SettingsDataStore
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
-import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton

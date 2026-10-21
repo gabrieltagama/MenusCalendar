@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.core.domain.repository
+package com.gabrieltagama.menuplanner.core.domain.port
 
 /**
  * Port that loads the starter recipe book bundled with the app. loadIfFirstLaunch runs it only

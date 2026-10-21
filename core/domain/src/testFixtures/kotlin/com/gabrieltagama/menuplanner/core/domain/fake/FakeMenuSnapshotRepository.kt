@@ -3,8 +3,8 @@ package com.gabrieltagama.menuplanner.core.domain.fake
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
 import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
-import com.gabrieltagama.menuplanner.core.domain.repository.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
 
 /**
  * In-memory MenuSnapshotRepository: read returns the dishes of the given repository (and the

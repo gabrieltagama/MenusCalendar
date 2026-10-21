@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.core.domain.repository
+package com.gabrieltagama.menuplanner.core.domain.port
 
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot

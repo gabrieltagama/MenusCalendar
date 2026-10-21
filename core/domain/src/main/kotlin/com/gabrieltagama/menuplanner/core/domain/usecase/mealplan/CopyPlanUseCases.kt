@@ -2,8 +2,8 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
-import com.gabrieltagama.menuplanner.core.domain.repository.DinnerPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.repository.MealPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MealPlanRepository
 import java.time.Clock
 import javax.inject.Inject
 

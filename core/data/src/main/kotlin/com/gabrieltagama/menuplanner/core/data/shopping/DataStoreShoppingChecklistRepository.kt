@@ -8,7 +8,7 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.gabrieltagama.menuplanner.core.data.di.SettingsDataStore
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
-import com.gabrieltagama.menuplanner.core.domain.repository.ShoppingChecklistRepository
+import com.gabrieltagama.menuplanner.core.domain.port.ShoppingChecklistRepository
 import java.io.IOException
 import java.time.LocalDate
 import java.time.format.DateTimeParseException

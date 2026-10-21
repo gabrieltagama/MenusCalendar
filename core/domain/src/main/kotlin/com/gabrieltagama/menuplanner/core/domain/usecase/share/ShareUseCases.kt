@@ -3,8 +3,8 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.share
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotCodec
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotRepository
+import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
+import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
 import java.time.Clock
 import java.time.Instant

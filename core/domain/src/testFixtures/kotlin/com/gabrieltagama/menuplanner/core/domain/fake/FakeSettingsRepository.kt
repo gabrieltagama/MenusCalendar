@@ -2,7 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.fake
 
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
-import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 

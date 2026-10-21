@@ -18,7 +18,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.model.share.DinnerEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.LunchEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
-import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotCodec
+import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
 import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate

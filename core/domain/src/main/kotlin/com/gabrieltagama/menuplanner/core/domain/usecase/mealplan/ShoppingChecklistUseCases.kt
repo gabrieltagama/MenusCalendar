@@ -3,7 +3,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
-import com.gabrieltagama.menuplanner.core.domain.repository.ShoppingChecklistRepository
+import com.gabrieltagama.menuplanner.core.domain.port.ShoppingChecklistRepository
 import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject

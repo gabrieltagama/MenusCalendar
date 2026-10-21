@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.fake
 
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.repository.DishUsageRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishUsageRepository
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

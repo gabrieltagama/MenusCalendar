@@ -2,7 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.fake
 
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
-import com.gabrieltagama.menuplanner.core.domain.repository.ShoppingChecklistRepository
+import com.gabrieltagama.menuplanner.core.domain.port.ShoppingChecklistRepository
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

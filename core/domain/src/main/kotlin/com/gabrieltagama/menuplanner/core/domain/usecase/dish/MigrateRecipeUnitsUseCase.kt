@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
-import com.gabrieltagama.menuplanner.core.domain.repository.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
 import javax.inject.Inject
 
 /**

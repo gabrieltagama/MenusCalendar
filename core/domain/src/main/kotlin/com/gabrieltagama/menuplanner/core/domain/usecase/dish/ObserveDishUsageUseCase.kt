@@ -1,7 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
 import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
-import com.gabrieltagama.menuplanner.core.domain.repository.DishUsageRepository
+import com.gabrieltagama.menuplanner.core.domain.port.DishUsageRepository
 import java.time.Clock
 import java.time.Duration
 import java.time.LocalDate
