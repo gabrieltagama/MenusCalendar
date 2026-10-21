@@ -68,7 +68,7 @@ import java.time.LocalDate
  * Day menu editor: stateful route bound to [DayEditorViewModel] (events, snackbar) and a
  * stateless screen with the mode selector and one card per slot of the active mode. Tapping a
  * card opens a searchable bottom sheet of the dishes of that type; the dice button picks a
- * random one.
+ * random one. A dish meant for dinner can be chosen by hand; its card only shows a warning.
  */
 data class DayEditorActions(
     val onBack: () -> Unit = {},
@@ -250,6 +250,12 @@ private fun SlotCard(slot: MenuSlot, selected: Dish?, hasOptions: Boolean, onPic
                         overflow = TextOverflow.Ellipsis
                     )
                     selected?.let { HeavinessChip(heaviness = it.heaviness, modifier = Modifier.padding(top = 4.dp)) }
+                    if (selected?.isLunchOption == false)
+                        Text(
+                            text = stringResource(R.string.day_editor_dinner_dish_warning),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
                 }
                 IconButton(onClick = onRandom, enabled = hasOptions) {
                     Icon(Icons.Filled.Casino, contentDescription = stringResource(R.string.day_editor_random))

@@ -5,7 +5,6 @@ import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.port.DishIdGenerator
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
@@ -21,8 +20,7 @@ import kotlinx.coroutines.flow.Flow
  * DishPlannedIncompatibly, so the calendar never holds days that an export could not restore.
  */
 class ObserveDishesUseCase @Inject constructor(private val repository: DishRepository) {
-    operator fun invoke(type: DishType? = null): Flow<List<Dish>> =
-        type?.let(repository::observeDishesByType) ?: repository.observeDishes()
+    operator fun invoke(): Flow<List<Dish>> = repository.observeDishes()
 }
 
 class GetDishUseCase @Inject constructor(private val repository: DishRepository) {

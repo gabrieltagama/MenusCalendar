@@ -25,10 +25,6 @@ internal interface DishDao {
     fun observeAll(): Flow<List<DishWithIngredients>>
 
     @Transaction
-    @Query("SELECT * FROM dishes WHERE type = :type ORDER BY name COLLATE NOCASE")
-    fun observeByType(type: String): Flow<List<DishWithIngredients>>
-
-    @Transaction
     @Query("SELECT * FROM dishes WHERE id = :id")
     suspend fun getById(id: String): DishWithIngredients?
 

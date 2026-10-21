@@ -75,6 +75,7 @@
     <string name="day_editor_change">Cambiar plato</string>
     <string name="day_editor_search_hint">Buscar plato</string>
     <string name="day_editor_no_matches">Ningún plato coincide con la búsqueda</string>
+    <string name="day_editor_dinner_dish_warning">Plato marcado para cenar</string>
     <string name="day_editor_no_dishes_hint">No hay platos de este tipo. Créalos en la pestaña Platos.</string>
 
     <string name="dinner_editor_title">Cena · %1$s</string>

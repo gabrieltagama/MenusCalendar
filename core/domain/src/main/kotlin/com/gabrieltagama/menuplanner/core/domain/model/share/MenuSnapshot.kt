@@ -17,13 +17,16 @@ import java.time.LocalDate
  * by hand (shape of the menu, dish in the slot of its type, dinner option), so an entry that breaks
  * them resolves to null and is not imported. remapped translates those ids with the idMap of a
  * DishMergePlan when an incoming dish was matched to a local one with another id. PlanEntry is what
- * lunch and dinner entries share, so an import merges both the same way.
+ * lunch and dinner entries share, so an import merges both the same way. limitedTo keeps only what a
+ * scope covers, so a file with more content (an old backup with calendar) imports just that part.
  */
 data class MenuSnapshot(
     val dishes: List<Dish>,
     val lunches: List<LunchEntry> = emptyList(),
     val dinners: List<DinnerEntry> = emptyList()
-)
+) {
+    fun limitedTo(scope: SnapshotScope): MenuSnapshot = if (scope == SnapshotScope.EVERYTHING) this else MenuSnapshot(dishes)
+}
 
 enum class SnapshotScope { RECIPES, EVERYTHING }
 

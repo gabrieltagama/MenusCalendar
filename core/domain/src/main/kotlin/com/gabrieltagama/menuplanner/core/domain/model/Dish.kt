@@ -7,7 +7,9 @@ import java.time.Instant
  * Aggregate root for a dish of the recipe book; updatedAt decides which version wins when a shared
  * JSON is imported. Its invariants live here: a dish needs a name and valid ingredient lines
  * (validationError), and it can be planned at lunch or as a dinner when it is served at that meal and
- * is not a dessert (isLunchOption, isDinnerOption). The same rules apply when saving, importing and restoring.
+ * is not a dessert (isLunchOption, isDinnerOption). The same rules apply when saving, importing and restoring,
+ * with one exception: a lunch chosen by hand may take a dish meant for dinner (the editor only warns), so
+ * only the autofill applies isLunchOption strictly.
  */
 data class Dish(
     val id: DishId,

@@ -48,8 +48,7 @@ jobs:
       - name: Android Lint
         run: .github/scripts/gradle.sh lintDebug --continue
 
-      - name: Kotlin style (ktlint, informative)
-        continue-on-error: true
+      - name: Kotlin style (ktlint)
         run: |
           encode() { sed -e 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g'; }
           if ./gradlew ktlintCheck --continue --console=plain > "$RUNNER_TEMP/ktlint.log" 2>&1; then

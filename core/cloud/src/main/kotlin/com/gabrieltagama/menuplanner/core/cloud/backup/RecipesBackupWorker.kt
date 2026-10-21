@@ -11,7 +11,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
 /**
- * Daily background job of the backup (recipes and calendar): it uploads only when something changed
+ * Daily background job of the recipe backup (the calendar is not backed up): it uploads only when something changed
  * since the last upload. Network problems are retried by WorkManager; a missing authorization is
  * not, the user has to link the account again from Ajustes. The class keeps its original name
  * because WorkManager stores it in the already scheduled work.

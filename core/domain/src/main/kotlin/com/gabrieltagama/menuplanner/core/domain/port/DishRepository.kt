@@ -2,7 +2,6 @@ package com.gabrieltagama.menuplanner.core.domain.port
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import kotlinx.coroutines.flow.Flow
 
@@ -14,7 +13,6 @@ import kotlinx.coroutines.flow.Flow
  */
 interface DishRepository {
     fun observeDishes(): Flow<List<Dish>>
-    fun observeDishesByType(type: DishType): Flow<List<Dish>>
     suspend fun getDishes(): List<Dish>
     suspend fun getDish(id: DishId): Dish?
     suspend fun upsert(dish: Dish)

@@ -5,7 +5,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Port of the personal cloud backup of the recipe book and the calendar. Data lives only in the user's own
+ * Port of the personal cloud backup of the recipe book (never the calendar). Data lives only in the user's own
  * storage, there is no server of the app, so nobody else can see the account or the data.
  * connect receives an access token already granted by the user. Implemented in :core:cloud.
  */
