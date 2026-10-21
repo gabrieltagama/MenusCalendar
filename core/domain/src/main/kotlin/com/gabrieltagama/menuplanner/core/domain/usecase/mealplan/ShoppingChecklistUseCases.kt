@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
+import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.repository.ShoppingChecklistRepository
 import java.time.Clock
 import java.time.LocalDate
@@ -15,7 +16,7 @@ import kotlinx.coroutines.flow.Flow
  * is over (ClearExpiredShoppingChecksUseCase).
  */
 class ObserveShoppingChecksUseCase @Inject constructor(private val repository: ShoppingChecklistRepository) {
-    operator fun invoke(filter: ShoppingFilter): Flow<Set<String>> = repository.checked(filter)
+    operator fun invoke(filter: ShoppingFilter): Flow<Set<IngredientKey>> = repository.checked(filter)
 }
 
 class SetShoppingItemCheckedUseCase @Inject constructor(private val repository: ShoppingChecklistRepository) {

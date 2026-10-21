@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.data.di.DataStoreModule
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
+import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,36 +39,36 @@ class DataStoreShoppingChecklistRepositoryTest {
     fun ticksAreKeptPerFilter() = runBlocking {
         val repository = repository()
 
-        repository.setChecked(week, "cebolla", true)
-        repository.setChecked(week.copy(meals = setOf(Meal.LUNCH)), "arroz", true)
+        repository.setChecked(week, IngredientKey.of("cebolla"), true)
+        repository.setChecked(week.copy(meals = setOf(Meal.LUNCH)), IngredientKey.of("arroz"), true)
 
-        assertEquals(setOf("cebolla"), repository.checked(week.copy(meals = setOf(Meal.DINNER, Meal.LUNCH))).first())
-        assertEquals(setOf("arroz"), repository.checked(week.copy(meals = setOf(Meal.LUNCH))).first())
+        assertEquals(setOf(IngredientKey.of("cebolla")), repository.checked(week.copy(meals = setOf(Meal.DINNER, Meal.LUNCH))).first())
+        assertEquals(setOf(IngredientKey.of("arroz")), repository.checked(week.copy(meals = setOf(Meal.LUNCH))).first())
         assertTrue(repository.checked(nextWeek).first().isEmpty())
     }
 
     @Test
     fun clearAffectsOnlyOneFilter() = runBlocking {
         val repository = repository()
-        repository.setChecked(week, "cebolla", true)
-        repository.setChecked(nextWeek, "arroz", true)
+        repository.setChecked(week, IngredientKey.of("cebolla"), true)
+        repository.setChecked(nextWeek, IngredientKey.of("arroz"), true)
 
         repository.clear(week)
 
         assertTrue(repository.checked(week).first().isEmpty())
-        assertEquals(setOf("arroz"), repository.checked(nextWeek).first())
+        assertEquals(setOf(IngredientKey.of("arroz")), repository.checked(nextWeek).first())
     }
 
     @Test
     fun expiredFiltersAreDropped() = runBlocking {
         val repository = repository()
-        repository.setChecked(week, "cebolla", true)
-        repository.setChecked(nextWeek, "arroz", true)
+        repository.setChecked(week, IngredientKey.of("cebolla"), true)
+        repository.setChecked(nextWeek, IngredientKey.of("arroz"), true)
 
         repository.clearEndedBefore(LocalDate.of(2026, 10, 19))
 
         assertTrue(repository.checked(week).first().isEmpty())
-        assertEquals(setOf("arroz"), repository.checked(nextWeek).first())
+        assertEquals(setOf(IngredientKey.of("arroz")), repository.checked(nextWeek).first())
     }
 
     private fun repository() = DataStoreShoppingChecklistRepository(DataStoreModule.settingsDataStore(context, scope))

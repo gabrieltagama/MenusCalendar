@@ -20,6 +20,8 @@ data class MealDay(
 sealed interface DailyMenu {
     val slots: List<Pair<MenuSlot, Dish>>
 
+    val shape: MenuShape
+
     val dishes: List<Dish> get() = slots.map { it.second }
 
     val violation: DomainError.WrongDishType?
@@ -30,10 +32,14 @@ sealed interface DailyMenu {
         val starter: Dish,
         val main: Dish
     ) : DailyMenu {
+        override val shape: MenuShape get() = MenuShape.COURSES
+
         override val slots: List<Pair<MenuSlot, Dish>> get() = listOf(MenuSlot.STARTER to starter, MenuSlot.MAIN to main)
     }
 
     data class Single(val single: Dish) : DailyMenu {
+        override val shape: MenuShape get() = MenuShape.SINGLE
+
         override val slots: List<Pair<MenuSlot, Dish>> get() = listOf(MenuSlot.SINGLE to single)
     }
 }

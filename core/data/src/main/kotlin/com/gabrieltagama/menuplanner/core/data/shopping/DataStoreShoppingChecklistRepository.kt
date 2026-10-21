@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.gabrieltagama.menuplanner.core.data.di.SettingsDataStore
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
+import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.repository.ShoppingChecklistRepository
 import java.io.IOException
 import java.time.LocalDate
@@ -34,13 +35,13 @@ internal class DataStoreShoppingChecklistRepository @Inject constructor(
             .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
             .map { it[CHECKED].orEmpty() }
 
-    override fun checked(filter: ShoppingFilter): Flow<Set<String>> {
+    override fun checked(filter: ShoppingFilter): Flow<Set<IngredientKey>> {
         val prefix = filter.prefix()
-        return entries.map { stored -> stored.filter { it.startsWith(prefix) }.map { it.removePrefix(prefix) }.toSet() }.distinctUntilChanged()
+        return entries.map { stored -> stored.filter { it.startsWith(prefix) }.map { IngredientKey.fromValue(it.removePrefix(prefix)) }.toSet() }.distinctUntilChanged()
     }
 
-    override suspend fun setChecked(filter: ShoppingFilter, key: String, isChecked: Boolean) {
-        val entry = filter.prefix() + key
+    override suspend fun setChecked(filter: ShoppingFilter, key: IngredientKey, isChecked: Boolean) {
+        val entry = filter.prefix() + key.value
         dataStore.edit { stored ->
             val current = stored[CHECKED].orEmpty()
             stored[CHECKED] = if (isChecked) current + entry else current - entry

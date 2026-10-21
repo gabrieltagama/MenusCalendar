@@ -12,5 +12,5 @@ data class ShoppingItem(
     val quantity: Double,
     val unit: MeasureUnit
 ) {
-    val key: String get() = IngredientKey.of(name).value
+    val key: IngredientKey get() = IngredientKey.of(name)
 }

@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.MenuShape
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
@@ -72,7 +73,7 @@ import java.time.LocalDate
 data class DayEditorActions(
     val onBack: () -> Unit = {},
     val onSave: () -> Unit = {},
-    val onModeChange: (MenuMode) -> Unit = {},
+    val onModeChange: (MenuShape) -> Unit = {},
     val onDishSelect: (MenuSlot, Dish?) -> Unit = { _, _ -> },
     val onRandomDish: (MenuSlot) -> Unit = {},
     val onClearRequest: () -> Unit = {},
@@ -206,13 +207,13 @@ private fun DayEditorContent(
 }
 
 @Composable
-private fun ModeSelector(selected: MenuMode, onSelect: (MenuMode) -> Unit) =
+private fun ModeSelector(selected: MenuShape, onSelect: (MenuShape) -> Unit) =
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
-        MenuMode.entries.forEachIndexed { index, mode ->
+        MenuShape.entries.forEachIndexed { index, mode ->
             SegmentedButton(
                 selected = mode == selected,
                 onClick = { onSelect(mode) },
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = MenuMode.entries.size),
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = MenuShape.entries.size),
                 label = { Text(mode.label()) }
             )
         }
@@ -269,10 +270,10 @@ private fun SlotCard(slot: MenuSlot, selected: Dish?, hasOptions: Boolean, onPic
 }
 
 @Composable
-private fun MenuMode.label(): String = stringResource(
+private fun MenuShape.label(): String = stringResource(
     when (this) {
-        MenuMode.COURSES -> R.string.day_editor_mode_courses
-        MenuMode.SINGLE -> R.string.day_editor_mode_single
+        MenuShape.COURSES -> R.string.day_editor_mode_courses
+        MenuShape.SINGLE -> R.string.day_editor_mode_single
     }
 )
 

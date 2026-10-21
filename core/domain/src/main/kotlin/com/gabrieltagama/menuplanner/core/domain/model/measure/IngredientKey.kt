@@ -6,7 +6,8 @@ import com.gabrieltagama.menuplanner.core.domain.text.withoutAccents
 /**
  * Value object: comparison key of an ingredient name. It ignores case, accents, extra spaces and
  * Spanish plurals ("Calabacines", "calabacín" and "CALABACIN" share a key), so the same product
- * written in different ways is grouped as one ingredient.
+ * written in different ways is grouped as one ingredient. fromValue rebuilds a key already
+ * computed and stored, without normalizing it again.
  */
 @JvmInline
 value class IngredientKey private constructor(val value: String) {
@@ -19,6 +20,8 @@ value class IngredientKey private constructor(val value: String) {
                 .filter { it.isNotEmpty() }
                 .joinToString(" ") { it.singular() }
         )
+
+        fun fromValue(value: String): IngredientKey = IngredientKey(value)
     }
 }
 

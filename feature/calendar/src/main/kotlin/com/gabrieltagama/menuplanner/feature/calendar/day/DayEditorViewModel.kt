@@ -7,14 +7,16 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishSort
-import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
+import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.MenuShape
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetMealDayUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PickRandomDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveMealDayUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorViewModel
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.DayEditorRoute
@@ -39,10 +41,8 @@ import kotlinx.coroutines.launch
  * type, together with when each dish was last served. A slot can also be filled with a random
  * dish of its type, different from the current one when possible.
  */
-enum class MenuMode { COURSES, SINGLE }
-
 data class DayEditorForm(
-    val mode: MenuMode = MenuMode.COURSES,
+    val mode: MenuShape = MenuShape.COURSES,
     val selections: Map<MenuSlot, Dish> = emptyMap(),
     val hasSavedDay: Boolean = false,
     val isLoading: Boolean = true,
@@ -58,11 +58,7 @@ data class DayEditorUiState(
     val isOptionsLoading: Boolean = true,
     val usage: DishUsage = DishUsage.NONE
 ) {
-    val visibleSlots: List<MenuSlot>
-        get() = when (form.mode) {
-            MenuMode.COURSES -> listOf(MenuSlot.STARTER, MenuSlot.MAIN)
-            MenuMode.SINGLE -> listOf(MenuSlot.SINGLE)
-        }
+    val visibleSlots: List<MenuSlot> get() = form.mode.slots
 
     val canSave: Boolean get() = !form.isLoading && !form.isSaving && toMenu() != null
 
@@ -73,10 +69,10 @@ data class DayEditorUiState(
     fun toMenu(): DailyMenu? {
         val selections = form.selections
         return when (form.mode) {
-            MenuMode.COURSES -> selections[MenuSlot.STARTER]?.let { starter ->
+            MenuShape.COURSES -> selections[MenuSlot.STARTER]?.let { starter ->
                 selections[MenuSlot.MAIN]?.let { main -> DailyMenu.Courses(starter = starter, main = main) }
             }
-            MenuMode.SINGLE -> selections[MenuSlot.SINGLE]?.let { DailyMenu.Single(single = it) }
+            MenuShape.SINGLE -> selections[MenuSlot.SINGLE]?.let { DailyMenu.Single(single = it) }
         }
     }
 }
@@ -88,7 +84,8 @@ class DayEditorViewModel @Inject constructor(
     observeDishUsage: ObserveDishUsageUseCase,
     private val getMealDay: GetMealDayUseCase,
     private val saveMealDay: SaveMealDayUseCase,
-    private val clearMealDay: ClearMealDayUseCase
+    private val clearMealDay: ClearMealDayUseCase,
+    private val pickRandomDish: PickRandomDishUseCase
 ) : PlanEditorViewModel<DayEditorForm>(DayEditorForm()) {
 
     private val date: LocalDate = LocalDate.ofEpochDay(savedStateHandle.toRoute<DayEditorRoute>().epochDay)
@@ -109,7 +106,7 @@ class DayEditorViewModel @Inject constructor(
         viewModelScope.launch { fillForm(getMealDay(date)) }
     }
 
-    fun onModeChange(mode: MenuMode) = form.update { it.copy(mode = mode) }
+    fun onModeChange(mode: MenuShape) = form.update { it.copy(mode = mode) }
 
     fun onDishSelect(slot: MenuSlot, dish: Dish?) = form.update { current ->
         current.copy(selections = dish?.let { current.selections + (slot to it) } ?: (current.selections - slot))
@@ -117,9 +114,7 @@ class DayEditorViewModel @Inject constructor(
 
     fun onRandomDish(slot: MenuSlot) {
         val state = uiState.value
-        val current = state.selectionFor(slot)
-        val options = state.optionsFor(slot)
-        options.filterNot { it.id == current?.id }.ifEmpty { options }.randomOrNull()?.let { onDishSelect(slot, it) }
+        pickRandomDish(state.optionsFor(slot), state.selectionFor(slot))?.let { onDishSelect(slot, it) }
     }
 
     fun onSave() {
@@ -138,20 +133,7 @@ class DayEditorViewModel @Inject constructor(
     override suspend fun clearDay() = clearMealDay(date)
 
     private fun fillForm(day: MealDay?) = form.update { current ->
-        when (val menu = day?.menu) {
-            null -> current.copy(isLoading = false)
-            is DailyMenu.Courses -> current.copy(
-                isLoading = false,
-                hasSavedDay = true,
-                mode = MenuMode.COURSES,
-                selections = mapOf(MenuSlot.STARTER to menu.starter, MenuSlot.MAIN to menu.main)
-            )
-            is DailyMenu.Single -> current.copy(
-                isLoading = false,
-                hasSavedDay = true,
-                mode = MenuMode.SINGLE,
-                selections = mapOf(MenuSlot.SINGLE to menu.single)
-            )
-        }
+        val menu = day?.menu ?: return@update current.copy(isLoading = false)
+        current.copy(isLoading = false, hasSavedDay = true, mode = menu.shape, selections = menu.slots.toMap())
     }
 }

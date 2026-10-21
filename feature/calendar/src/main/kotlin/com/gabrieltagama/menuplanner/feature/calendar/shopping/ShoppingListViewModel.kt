@@ -7,6 +7,7 @@ import androidx.navigation.toRoute
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
+import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearExpiredShoppingChecksUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearShoppingChecksUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveShoppingChecksUseCase
@@ -48,7 +49,7 @@ data class ShoppingListUiState(
     val isLoading: Boolean = true,
     val items: List<ShoppingItem> = emptyList(),
     val selectedMeals: Set<Meal> = Meal.entries.toSet(),
-    val checked: Set<String> = emptySet()
+    val checked: Set<IngredientKey> = emptySet()
 ) {
     val filter: ShoppingFilter get() = ShoppingFilter(from = from, to = to, meals = selectedMeals)
 

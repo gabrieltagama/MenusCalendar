@@ -4,6 +4,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
+import com.gabrieltagama.menuplanner.core.domain.model.MenuShape
 import com.gabrieltagama.menuplanner.core.domain.model.PlanningPolicy
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import java.time.LocalDate
@@ -60,11 +61,6 @@ internal class MenuPicker(dishes: List<Dish>, private val window: RepeatWindow, 
         val all = dishesByType[type].orEmpty()
         return all.filterNot { it.id == context.dinnerOfDay }.ifEmpty { all }
     }
-}
-
-internal enum class MenuShape(val requiredTypes: List<DishType>) {
-    COURSES(listOf(DishType.STARTER, DishType.MAIN)),
-    SINGLE(listOf(DishType.SINGLE))
 }
 
 internal data class MenuPick(val menu: DailyMenu, val repeated: Boolean, val breaksHeavyRule: Boolean)

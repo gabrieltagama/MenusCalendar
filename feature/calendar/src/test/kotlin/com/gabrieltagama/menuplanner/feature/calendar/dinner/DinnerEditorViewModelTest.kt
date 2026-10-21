@@ -16,12 +16,14 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUs
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetDinnerDayUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PickRandomDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveDinnerDayUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
@@ -126,7 +128,8 @@ class DinnerEditorViewModelTest {
             observeDishUsage = ObserveDishUsageUseCase(FakeDishUsageRepository(), clock),
             getDinnerDay = GetDinnerDayUseCase(dinnerPlanRepository),
             saveDinnerDay = SaveDinnerDayUseCase(dinnerPlanRepository, clock),
-            clearDinnerDay = ClearDinnerDayUseCase(dinnerPlanRepository)
+            clearDinnerDay = ClearDinnerDayUseCase(dinnerPlanRepository),
+            pickRandomDish = PickRandomDishUseCase(Random(7))
         )
         val collector: Job = launch { viewModel.uiState.collect {} }
         try {

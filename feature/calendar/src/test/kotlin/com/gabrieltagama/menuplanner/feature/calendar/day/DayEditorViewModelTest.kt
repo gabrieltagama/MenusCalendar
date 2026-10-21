@@ -1,10 +1,9 @@
 package com.gabrieltagama.menuplanner.feature.calendar.day
 
-import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageRepository
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMealPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
@@ -12,17 +11,21 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.MenuShape
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearMealDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetMealDayUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PickRandomDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveMealDayUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
@@ -64,7 +67,7 @@ class DayEditorViewModelTest {
     fun emptyDayStartsInCoursesModeAndCannotSave() = withViewModel { viewModel, _ ->
         val state = awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
 
-        assertEquals(MenuMode.COURSES, state.form.mode)
+        assertEquals(MenuShape.COURSES, state.form.mode)
         assertFalse(state.form.hasSavedDay)
         assertFalse(state.canSave)
         assertEquals(listOf(MenuSlot.STARTER, MenuSlot.MAIN), state.visibleSlots)
@@ -93,17 +96,17 @@ class DayEditorViewModelTest {
         viewModel.onDishSelect(MenuSlot.MAIN, main)
         awaitState(viewModel) { it.canSave }
 
-        viewModel.onModeChange(MenuMode.SINGLE)
+        viewModel.onModeChange(MenuShape.SINGLE)
 
-        val singleState = awaitState(viewModel) { it.form.mode == MenuMode.SINGLE }
+        val singleState = awaitState(viewModel) { it.form.mode == MenuShape.SINGLE }
         assertEquals(listOf(MenuSlot.SINGLE), singleState.visibleSlots)
         assertFalse(singleState.canSave)
 
         viewModel.onDishSelect(MenuSlot.SINGLE, single)
         assertTrue(awaitState(viewModel) { it.selectionFor(MenuSlot.SINGLE) == single }.canSave)
 
-        viewModel.onModeChange(MenuMode.COURSES)
-        val coursesState = awaitState(viewModel) { it.form.mode == MenuMode.COURSES }
+        viewModel.onModeChange(MenuShape.COURSES)
+        val coursesState = awaitState(viewModel) { it.form.mode == MenuShape.COURSES }
         assertEquals(starter, coursesState.selectionFor(MenuSlot.STARTER))
         assertEquals(main, coursesState.selectionFor(MenuSlot.MAIN))
     }
@@ -113,8 +116,8 @@ class DayEditorViewModelTest {
         awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
         viewModel.onDishSelect(MenuSlot.STARTER, starter)
         viewModel.onDishSelect(MenuSlot.SINGLE, single)
-        viewModel.onModeChange(MenuMode.SINGLE)
-        awaitState(viewModel) { it.form.mode == MenuMode.SINGLE && it.canSave }
+        viewModel.onModeChange(MenuShape.SINGLE)
+        awaitState(viewModel) { it.form.mode == MenuShape.SINGLE && it.canSave }
 
         viewModel.onSave()
 
@@ -132,7 +135,7 @@ class DayEditorViewModelTest {
             val state = awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
 
             assertTrue(state.form.hasSavedDay)
-            assertEquals(MenuMode.SINGLE, state.form.mode)
+            assertEquals(MenuShape.SINGLE, state.form.mode)
             assertEquals(single, state.selectionFor(MenuSlot.SINGLE))
             assertTrue(state.canSave)
         }
@@ -177,7 +180,8 @@ class DayEditorViewModelTest {
             observeDishUsage = ObserveDishUsageUseCase(FakeDishUsageRepository(), clock),
             getMealDay = GetMealDayUseCase(mealPlanRepository),
             saveMealDay = SaveMealDayUseCase(mealPlanRepository, clock),
-            clearMealDay = ClearMealDayUseCase(mealPlanRepository)
+            clearMealDay = ClearMealDayUseCase(mealPlanRepository),
+            pickRandomDish = PickRandomDishUseCase(Random(7))
         )
         val collector: Job = launch { viewModel.uiState.collect {} }
         try {

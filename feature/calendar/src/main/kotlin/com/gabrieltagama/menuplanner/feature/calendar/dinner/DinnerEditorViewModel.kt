@@ -11,6 +11,7 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUs
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetDinnerDayUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PickRandomDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveDinnerDayUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorViewModel
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.DinnerEditorRoute
@@ -59,7 +60,8 @@ class DinnerEditorViewModel @Inject constructor(
     observeDishUsage: ObserveDishUsageUseCase,
     private val getDinnerDay: GetDinnerDayUseCase,
     private val saveDinnerDay: SaveDinnerDayUseCase,
-    private val clearDinnerDay: ClearDinnerDayUseCase
+    private val clearDinnerDay: ClearDinnerDayUseCase,
+    private val pickRandomDish: PickRandomDishUseCase
 ) : PlanEditorViewModel<DinnerEditorForm>(DinnerEditorForm()) {
 
     private val date: LocalDate = LocalDate.ofEpochDay(savedStateHandle.toRoute<DinnerEditorRoute>().epochDay)
@@ -83,7 +85,7 @@ class DinnerEditorViewModel @Inject constructor(
 
     fun onRandomDish() {
         val state = uiState.value
-        state.options.filterNot { it.id == state.form.selected?.id }.ifEmpty { state.options }.randomOrNull()?.let(::onDishSelect)
+        pickRandomDish(state.options, state.form.selected)?.let(::onDishSelect)
     }
 
     fun onSave() {
