@@ -8,11 +8,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
  * name or in the name of any of its ingredients. SearchableDish normalizes those texts once, so a
  * list can be searched on every keystroke without normalizing every dish again.
  */
-fun String.normalizedForSearch(): String = trim().withoutAccents().lowercase()
+fun String.normalizedForSearch(): String = trim().foldedCaseAndAccents()
 
 fun Dish.searchableTexts(): List<String> = listOf(name.normalizedForSearch()) + ingredients.map { it.name.normalizedForSearch() }
-
-fun Dish.matchesSearch(query: String): Boolean = SearchableDish(this).matches(query.normalizedForSearch())
 
 class SearchableDish(val dish: Dish) {
     private val searchableTexts: List<String> = dish.searchableTexts()

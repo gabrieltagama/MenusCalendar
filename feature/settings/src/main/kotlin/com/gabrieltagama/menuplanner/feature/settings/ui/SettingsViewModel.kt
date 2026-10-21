@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Settings screen state: the chosen theme mode, the days without repeating a dish of the autofill
- * and the optional Google backup of recipes and calendar, which can
+ * and the optional Google backup of the recipes (never the calendar), which can
  * be linked, run or restored on demand and unlinked. Only one backup operation runs at a time and
  * the busy flag is always released, even when the operation fails or is cancelled. Backup results surface as a nullable
  * [BackupMessage] in [BackupUiState].

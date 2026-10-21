@@ -2,8 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.model.share
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
-import java.text.Normalizer
-import java.util.Locale
+import com.gabrieltagama.menuplanner.core.domain.text.foldedCaseAndAccents
 
 /**
  * Natural identity of a dish: its name without accents, case, punctuation or extra spaces, plus its
@@ -16,7 +15,6 @@ import java.util.Locale
 value class DishKey private constructor(val value: String) {
 
     companion object {
-        private val DIACRITICS = Regex("\\p{Mn}+")
         private val SEPARATORS = Regex("[^\\p{L}\\p{N}]+")
 
         fun of(dish: Dish): DishKey = of(dish.name, dish.type)
@@ -24,10 +22,6 @@ value class DishKey private constructor(val value: String) {
         fun of(name: String, type: DishType): DishKey = DishKey("${normalize(name)}|${type.name}")
 
         private fun normalize(name: String): String =
-            Normalizer.normalize(name, Normalizer.Form.NFD)
-                .replace(DIACRITICS, "")
-                .lowercase(Locale.ROOT)
-                .replace(SEPARATORS, " ")
-                .trim()
+            name.foldedCaseAndAccents().replace(SEPARATORS, " ").trim()
     }
 }

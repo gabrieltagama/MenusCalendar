@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Welcome screen state shown only on the first start. Linking Google restores the recipes and calendar from
+ * Welcome screen state shown only on the first start. Linking Google restores the recipes (never the calendar) from
  * the backup before entering; continuing without an account enters straight away. Either way
  * the onboarding is completed and the screen is never shown again.
  */

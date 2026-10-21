@@ -25,6 +25,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -129,7 +130,8 @@ class DinnerEditorViewModelTest {
             getDinnerDay = GetDinnerDayUseCase(dinnerPlanRepository),
             saveDinnerDay = SaveDinnerDayUseCase(dinnerPlanRepository, clock),
             clearDinnerDay = ClearDinnerDayUseCase(dinnerPlanRepository),
-            pickRandomDish = PickRandomDishUseCase(Random(7))
+            pickRandomDish = PickRandomDishUseCase(Random(7)),
+            defaultDispatcher = Dispatchers.Default
         )
         val collector: Job = launch { viewModel.uiState.collect {} }
         try {

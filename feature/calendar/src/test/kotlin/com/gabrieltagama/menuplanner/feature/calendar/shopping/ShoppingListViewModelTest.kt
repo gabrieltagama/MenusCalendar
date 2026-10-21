@@ -29,6 +29,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
@@ -170,7 +171,8 @@ class ShoppingListViewModelTest {
         observeShoppingList = ObserveShoppingListUseCase(FakePlanQueries(lunchPlan, dinnerPlan)),
         clearExpiredShoppingChecks = ClearExpiredShoppingChecksUseCase(checklist, clock),
         setShoppingItemChecked = SetShoppingItemCheckedUseCase(checklist),
-        clearShoppingChecks = ClearShoppingChecksUseCase(checklist)
+        clearShoppingChecks = ClearShoppingChecksUseCase(checklist),
+        defaultDispatcher = Dispatchers.Default
     ).also(viewModels::add)
 
     private suspend fun awaitState(

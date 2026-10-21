@@ -29,7 +29,7 @@ import org.junit.Test
  * span several months, and that it emits again when the plan changes.
  */
 class ObserveShoppingListUseCaseTest {
-    private val october = YearMonth.of(2026, 10)
+    private val october = YearMonth.of(2026, 10).let { it.atDay(1)..it.atEndOfMonth() }
 
     private val starter = dish(
         name = "Ensalada",

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.gabrieltagama.menuplanner.core.domain.common.DefaultDispatcher
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
@@ -19,7 +20,7 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -73,7 +74,8 @@ class ShoppingListViewModel @Inject constructor(
     observeShoppingList: ObserveShoppingListUseCase,
     clearExpiredShoppingChecks: ClearExpiredShoppingChecksUseCase,
     private val setShoppingItemChecked: SetShoppingItemCheckedUseCase,
-    private val clearShoppingChecks: ClearShoppingChecksUseCase
+    private val clearShoppingChecks: ClearShoppingChecksUseCase,
+    @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -85,7 +87,7 @@ class ShoppingListViewModel @Inject constructor(
         viewModelScope.launch {
             filters()
                 .onEach { _uiState.update { it.copy(isLoading = true) } }
-                .flatMapLatest { filter -> observeShoppingList(filter.dates, filter.meals).flowOn(Dispatchers.Default) }
+                .flatMapLatest { filter -> observeShoppingList(filter.dates, filter.meals).flowOn(defaultDispatcher) }
                 .collect { items -> _uiState.update { it.copy(isLoading = false, items = items) } }
         }
         viewModelScope.launch {

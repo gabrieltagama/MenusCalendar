@@ -62,7 +62,7 @@ import com.gabrieltagama.menuplanner.feature.settings.R
  * Settings tab: stateful route bound to [SettingsViewModel] and the Google consent flow, and a
  * stateless screen grouped in sections: "Apariencia" with the theme choice (system, light or dark),
  * "Calendario" with the days without repeating a dish of the autofill (RepeatWindow), the optional
- * Google Drive backup of recipes and calendar and "Compartir" with the export (to share or to save
+ * Google Drive backup of the recipes (never the calendar) and "Compartir" with the export (to share or to save
  * a copy in a folder of the phone) and import of a JSON file. The share flow lives in another feature, so the app shell hands in rememberFileShare, which
  * reports its results in this screen's snackbar host. Bottom insets are left to the app shell, which
  * draws the NavigationBar below this screen.

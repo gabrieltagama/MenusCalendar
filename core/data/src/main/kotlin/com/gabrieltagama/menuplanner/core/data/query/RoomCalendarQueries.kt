@@ -19,16 +19,12 @@ import kotlinx.coroutines.flow.map
 internal class RoomCalendarQueries @Inject constructor(private val dao: PlanQueryDao) : CalendarQueries {
 
     override fun observeLunches(month: YearMonth): Flow<List<PlannedLunch>> =
-        dao.observeLunchRows(month.firstEpochDay(), month.lastEpochDay())
+        dao.observeLunchRows(month.atDay(1), month.atEndOfMonth())
             .map { rows -> rows.mapNotNull { it.toPlannedLunch() } }
             .distinctUntilChanged()
 
     override fun observeDinners(month: YearMonth): Flow<List<PlannedDinner>> =
-        dao.observeDinnerRows(month.firstEpochDay(), month.lastEpochDay())
+        dao.observeDinnerRows(month.atDay(1), month.atEndOfMonth())
             .map { rows -> rows.map { it.toPlannedDinner() } }
             .distinctUntilChanged()
-
-    private fun YearMonth.firstEpochDay(): Long = atDay(1).toEpochDay()
-
-    private fun YearMonth.lastEpochDay(): Long = atEndOfMonth().toEpochDay()
 }

@@ -5,6 +5,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Row of the `meal_days` table, keyed by epoch day. Either single_id or starter_id + main_id
@@ -21,11 +23,11 @@ import androidx.room.PrimaryKey
     indices = [Index("starter_id"), Index("main_id"), Index("single_id")]
 )
 internal data class LunchDayEntity(
-    @PrimaryKey override val date: Long,
+    @PrimaryKey override val date: LocalDate,
     @ColumnInfo(name = "starter_id") val starterId: String?,
     @ColumnInfo(name = "main_id") val mainId: String?,
     @ColumnInfo(name = "single_id") val singleId: String?,
-    @ColumnInfo(name = "updated_at") override val updatedAt: Long
+    @ColumnInfo(name = "updated_at") override val updatedAt: Instant
 ) : DayPlanRow
 
 internal val LunchDayEntity.dishIds: List<String>

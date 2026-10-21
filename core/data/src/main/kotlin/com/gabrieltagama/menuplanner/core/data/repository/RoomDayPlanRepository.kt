@@ -23,18 +23,18 @@ internal abstract class RoomDayPlanRepository<E : DayPlanRow, D : PlannedDay<D>>
     private val toEntity: (D) -> E
 ) : DayPlanRepository<D> {
 
-    override suspend fun getDay(date: LocalDate): D? = dao.getByDate(date.toEpochDay())?.let { resolve(listOf(it)).firstOrNull() }
+    override suspend fun getDay(date: LocalDate): D? = dao.getByDate(date)?.let { resolve(listOf(it)).firstOrNull() }
 
     override suspend fun getRange(dates: ClosedRange<LocalDate>): List<D> =
-        resolve(dao.getRange(dates.start.toEpochDay(), dates.endInclusive.toEpochDay()))
+        resolve(dao.getRange(dates.start, dates.endInclusive))
 
     override suspend fun save(day: D) = dao.upsert(toEntity(day))
 
     override suspend fun saveAll(days: List<D>) = dao.upsertAll(days.map(toEntity))
 
-    override suspend fun clear(date: LocalDate) = dao.deleteByDate(date.toEpochDay())
+    override suspend fun clear(date: LocalDate) = dao.deleteByDate(date)
 
-    override suspend fun clearAll(dates: Collection<LocalDate>) = dao.deleteByDates(dates.map(LocalDate::toEpochDay))
+    override suspend fun clearAll(dates: Collection<LocalDate>) = dao.deleteByDates(dates.toList())
 
     private suspend fun resolve(rows: List<E>): List<D> {
         val dishesById = dishDao.dishesById(rows.flatMap(dishIdsOf).distinct())

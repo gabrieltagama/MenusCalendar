@@ -19,6 +19,7 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUs
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -48,7 +49,7 @@ class DishListViewModelTest {
             salad.id to listOf(LocalDate.of(2026, 1, 14))
         )
     )
-    private val viewModel by lazy { DishListViewModel(ObserveDishesUseCase(repository), ObserveDishUsageUseCase(usageRepository, TestDishes.fixedClock)) }
+    private val viewModel by lazy { DishListViewModel(ObserveDishesUseCase(repository), ObserveDishUsageUseCase(usageRepository, TestDishes.fixedClock), Dispatchers.Default) }
 
     @Test
     fun `loads every dish sorted by name`() = runTest {
@@ -188,7 +189,7 @@ class DishListViewModelTest {
 
     @Test
     fun `empty repository reports no dishes`() = runTest {
-        val emptyViewModel = DishListViewModel(ObserveDishesUseCase(FakeDishRepository()), ObserveDishUsageUseCase(FakeDishUsageQueries(), TestDishes.fixedClock))
+        val emptyViewModel = DishListViewModel(ObserveDishesUseCase(FakeDishRepository()), ObserveDishUsageUseCase(FakeDishUsageQueries(), TestDishes.fixedClock), Dispatchers.Default)
 
         emptyViewModel.uiState.test {
             val state = awaitItemMatching { !it.isLoading }

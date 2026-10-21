@@ -1,6 +1,9 @@
 package com.gabrieltagama.menuplanner.core.data.database.entity
 
 import androidx.room.ColumnInfo
+import com.gabrieltagama.menuplanner.core.domain.model.DishType
+import com.gabrieltagama.menuplanner.core.domain.model.MealTime
+import java.time.Instant
 
 /**
  * Projection of a dish id, type, meal time and last update. Used to merge imports with a single
@@ -9,7 +12,7 @@ import androidx.room.ColumnInfo
  */
 internal data class DishVersion(
     val id: String,
-    val type: String,
-    @ColumnInfo(name = "meal_time") val mealTime: String,
-    @ColumnInfo(name = "updated_at") val updatedAt: Long
+    val type: DishType,
+    @ColumnInfo(name = "meal_time") val mealTime: MealTime,
+    @ColumnInfo(name = "updated_at") val updatedAt: Instant
 )

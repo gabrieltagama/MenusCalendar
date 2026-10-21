@@ -18,11 +18,9 @@ import kotlinx.coroutines.flow.map
 internal class RoomShoppingListQueries @Inject constructor(private val dao: PlanQueryDao) : ShoppingListQueries {
 
     override fun observeIngredientLines(dates: ClosedRange<LocalDate>, meal: Meal): Flow<List<Ingredient>> {
-        val from = dates.start.toEpochDay()
-        val to = dates.endInclusive.toEpochDay()
         val rows = when (meal) {
-            Meal.LUNCH -> dao.observeLunchIngredientLines(from, to)
-            Meal.DINNER -> dao.observeDinnerIngredientLines(from, to)
+            Meal.LUNCH -> dao.observeLunchIngredientLines(dates.start, dates.endInclusive)
+            Meal.DINNER -> dao.observeDinnerIngredientLines(dates.start, dates.endInclusive)
         }
         return rows.map { lines -> lines.map { it.toDomain() } }.distinctUntilChanged()
     }

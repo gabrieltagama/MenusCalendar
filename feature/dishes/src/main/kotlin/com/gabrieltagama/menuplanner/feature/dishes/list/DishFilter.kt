@@ -28,8 +28,6 @@ internal object DishFilter {
 
     fun index(dishes: List<Dish>): List<SearchableDish> = dishes.map(::SearchableDish).sortedBy(SearchableDish::sortKey)
 
-    fun apply(dishes: List<Dish>, criteria: DishFilterCriteria): List<Dish> = filter(index(dishes), criteria)
-
     fun filter(index: List<SearchableDish>, criteria: DishFilterCriteria): List<Dish> {
         val normalizedQuery = criteria.query.normalizedForSearch()
         return index

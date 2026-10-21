@@ -6,6 +6,7 @@ import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.gabrieltagama.menuplanner.core.domain.common.IoDispatcher
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,8 +14,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Qualifier
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 /**
@@ -36,11 +37,14 @@ internal object DataStoreModule {
     @Provides
     @Singleton
     @SettingsDataStore
-    fun provideSettingsDataStore(@ApplicationContext context: Context): DataStore<Preferences> = settingsDataStore(context)
+    fun provideSettingsDataStore(
+        @ApplicationContext context: Context,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): DataStore<Preferences> = settingsDataStore(context, CoroutineScope(ioDispatcher + SupervisorJob()))
 
     fun settingsDataStore(
         context: Context,
-        scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        scope: CoroutineScope
     ): DataStore<Preferences> = PreferenceDataStoreFactory.create(
         migrations = listOf(
             SharedPreferencesMigration(context, SETTINGS_FILE),

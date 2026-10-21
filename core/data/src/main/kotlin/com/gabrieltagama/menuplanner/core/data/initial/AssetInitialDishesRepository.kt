@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import com.gabrieltagama.menuplanner.core.data.database.dao.DishDao
 import com.gabrieltagama.menuplanner.core.data.di.SettingsDataStore
+import com.gabrieltagama.menuplanner.core.domain.common.IoDispatcher
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.port.InitialDishesRepository
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
@@ -14,7 +15,7 @@ import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -33,7 +34,8 @@ internal class AssetInitialDishesRepository @Inject constructor(
     private val dishDao: DishDao,
     private val codec: MenuSnapshotCodec,
     private val snapshots: MenuSnapshotRepository,
-    @param:SettingsDataStore private val dataStore: DataStore<Preferences>
+    @param:SettingsDataStore private val dataStore: DataStore<Preferences>,
+    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : InitialDishesRepository {
 
     private val mutex = Mutex()
@@ -47,7 +49,7 @@ internal class AssetInitialDishesRepository @Inject constructor(
     }
 
     private suspend fun readInitialDishes(): String =
-        withContext(Dispatchers.IO) { context.assets.open(ASSET_NAME).bufferedReader().use { it.readText() } }
+        withContext(ioDispatcher) { context.assets.open(ASSET_NAME).bufferedReader().use { it.readText() } }
 
     private companion object {
         const val ASSET_NAME = "initial_dishes.json"
