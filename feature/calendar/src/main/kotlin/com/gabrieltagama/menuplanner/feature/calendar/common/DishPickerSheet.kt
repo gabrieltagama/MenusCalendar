@@ -43,9 +43,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.text.SearchableDish
 import com.gabrieltagama.menuplanner.core.domain.text.normalizedForSearch
 import com.gabrieltagama.menuplanner.core.ui.component.DishSortChip
-import com.gabrieltagama.menuplanner.core.ui.text.lastServedText
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
+import com.gabrieltagama.menuplanner.core.ui.text.lastServedText
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import kotlinx.coroutines.launch
 
@@ -146,7 +146,11 @@ private fun PickerRow(
     trailing: @Composable () -> Unit = {}
 ) = ListItem(
     headlineContent = { Text(text = headline, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-    supportingContent = if (supporting == null) null else { { Text(text = supporting, maxLines = 1) } },
+    supportingContent = if (supporting == null) {
+        null
+    } else {
+        { Text(text = supporting, maxLines = 1) }
+    },
     leadingContent = leading,
     trailingContent = {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
