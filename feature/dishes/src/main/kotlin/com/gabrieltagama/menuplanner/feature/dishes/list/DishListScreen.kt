@@ -2,12 +2,9 @@ package com.gabrieltagama.menuplanner.feature.dishes.list
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,26 +15,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
@@ -46,7 +33,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -66,13 +52,11 @@ import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
-import com.gabrieltagama.menuplanner.core.ui.component.DishSortChip
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.EmptyState
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
 import com.gabrieltagama.menuplanner.core.ui.preview.PreviewDishes
-import com.gabrieltagama.menuplanner.core.ui.text.label
 import com.gabrieltagama.menuplanner.core.ui.text.lastServedText
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.dishes.R
@@ -159,102 +143,6 @@ private fun DishListContent(state: DishListUiState, listState: LazyListState, on
 }
 
 @Composable
-private fun SearchField(query: String, onQueryChange: (String) -> Unit) = OutlinedTextField(
-    value = query,
-    onValueChange = onQueryChange,
-    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-    placeholder = { Text(stringResource(R.string.dishes_search_hint)) },
-    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-    trailingIcon = {
-        if (query.isNotEmpty())
-            IconButton(onClick = { onQueryChange("") }) {
-                Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.dishes_clear_search))
-            }
-    },
-    singleLine = true,
-    shape = MaterialTheme.shapes.extraLarge
-)
-
-@Composable
-private fun FilterRow(state: DishListUiState, actions: DishListActions) = Row(
-    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
-    horizontalArrangement = Arrangement.spacedBy(8.dp)
-) {
-    DishSortChip(sort = state.sort, onSortChange = actions.onSortChange)
-    MultiSelectFilterChip(
-        title = stringResource(R.string.dishes_column_type),
-        allLabel = stringResource(R.string.dishes_filter_all_types),
-        options = DishType.entries,
-        selected = state.selectedTypes,
-        optionLabel = { it.shortLabel() },
-        onChange = actions.onTypesChange
-    )
-    MultiSelectFilterChip(
-        title = stringResource(R.string.dishes_column_heaviness),
-        allLabel = stringResource(R.string.dishes_filter_all_heaviness),
-        options = Heaviness.entries,
-        selected = state.selectedHeaviness,
-        optionLabel = { it.label() },
-        onChange = actions.onHeavinessChange
-    )
-    MultiSelectFilterChip(
-        title = stringResource(R.string.dishes_column_rating),
-        allLabel = stringResource(R.string.dishes_filter_all_ratings),
-        options = Rating.entries.reversed(),
-        selected = state.selectedRatings,
-        optionLabel = { it.label() },
-        onChange = actions.onRatingsChange
-    )
-    MultiSelectFilterChip(
-        title = stringResource(R.string.dishes_column_meal_time),
-        allLabel = stringResource(R.string.dishes_filter_all_meal_times),
-        options = MealTime.entries,
-        selected = state.selectedMealTimes,
-        optionLabel = { it.label() },
-        onChange = actions.onMealTimesChange
-    )
-}
-
-@Composable
-private fun <T : Any> MultiSelectFilterChip(
-    title: String,
-    allLabel: String,
-    options: List<T>,
-    selected: Set<T>,
-    optionLabel: @Composable (T) -> String,
-    onChange: (Set<T>) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val chipLabel = when (selected.size) {
-        0 -> title
-        1 -> optionLabel(selected.first())
-        else -> stringResource(R.string.dishes_filter_selected_count, title, selected.size)
-    }
-    Box {
-        FilterChip(
-            selected = selected.isNotEmpty(),
-            onClick = { expanded = true },
-            label = { Text(chipLabel) },
-            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp)) }
-        )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(allLabel) },
-                leadingIcon = { Checkbox(checked = selected.isEmpty(), onCheckedChange = null) },
-                onClick = { onChange(emptySet()) }
-            )
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(optionLabel(option)) },
-                    leadingIcon = { Checkbox(checked = option in selected, onCheckedChange = null) },
-                    onClick = { onChange(if (option in selected) selected - option else selected + option) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun DishList(dishes: List<Dish>, usage: DishUsage?, listState: LazyListState, onOpenDish: (String?) -> Unit) = LazyColumn(
     state = listState,
     modifier = Modifier.fillMaxSize(),
@@ -293,7 +181,7 @@ private fun Dish.supportingText(): String {
 }
 
 @Composable
-private fun DishType.shortLabel(): String = stringResource(
+internal fun DishType.shortLabel(): String = stringResource(
     when (this) {
         DishType.STARTER -> R.string.dishes_type_starter_short
         DishType.MAIN -> R.string.dishes_type_main_short
