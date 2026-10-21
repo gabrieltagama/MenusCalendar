@@ -17,6 +17,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
+import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearExpiredShoppingChecksUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearShoppingChecksUseCase
@@ -138,7 +139,7 @@ class ShoppingListViewModelTest {
     @Test
     fun ticksOfRangesAlreadyOverAreClearedOnOpening() = runBlocking {
         val expired = ShoppingFilter(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30))
-        val checklist = FakeShoppingChecklistRepository(mapOf(expired to setOf("arroz")))
+        val checklist = FakeShoppingChecklistRepository(mapOf(expired to setOf(IngredientKey.of("arroz"))))
 
         val viewModel = createViewModel(checklist = checklist)
         awaitState(viewModel) { !it.isLoading }
