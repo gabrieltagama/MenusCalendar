@@ -15,18 +15,16 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Use cases of the monthly dinner calendar. Observing a month is a query that returns read
- * models (PlannedDinner); the other use cases are commands over DinnerDay. Saving accepts only dishes served at dinner (DINNER
- * or ANY) that are not desserts, because a dinner is a single dish. Clearing several dinners
- * returns the removed ones so they can be restored (undo).
+ * Use cases of the monthly dinner calendar. Observing a month is a query that returns read models
+ * (PlannedDinner); the other use cases are commands over DinnerDay, most of them the shared plan
+ * commands (PlanDaysUseCases) bound to the dinner repository. Saving accepts only dinner options
+ * (Dish.isDinnerOption), because a dinner is a single dish.
  */
 class ObserveMonthDinnersUseCase @Inject constructor(private val queries: CalendarQueries) {
     operator fun invoke(month: YearMonth): Flow<List<PlannedDinner>> = queries.observeDinners(month)
 }
 
-class GetDinnerDayUseCase @Inject constructor(private val repository: DinnerPlanRepository) {
-    suspend operator fun invoke(date: LocalDate): DinnerDay? = repository.getDay(date)
-}
+class GetDinnerDayUseCase @Inject constructor(repository: DinnerPlanRepository) : GetPlanDayUseCase<DinnerDay>(repository)
 
 class SaveDinnerDayUseCase @Inject constructor(
     private val repository: DinnerPlanRepository,
@@ -40,19 +38,8 @@ class SaveDinnerDayUseCase @Inject constructor(
     }
 }
 
-class ClearDinnerDayUseCase @Inject constructor(private val repository: DinnerPlanRepository) {
-    suspend operator fun invoke(date: LocalDate) = repository.clear(date)
-}
+class ClearDinnerDayUseCase @Inject constructor(repository: DinnerPlanRepository) : ClearPlanDayUseCase<DinnerDay>(repository)
 
-class ClearDinnerDaysUseCase @Inject constructor(private val repository: DinnerPlanRepository) {
-    suspend operator fun invoke(dates: Set<LocalDate>): List<DinnerDay> {
-        if (dates.isEmpty()) return emptyList()
-        val removed = repository.getRange(dates.min()..dates.max()).filter { it.date in dates }
-        if (removed.isNotEmpty()) repository.clearAll(removed.map(DinnerDay::date))
-        return removed
-    }
-}
+class ClearDinnerDaysUseCase @Inject constructor(repository: DinnerPlanRepository) : ClearPlanDaysUseCase<DinnerDay>(repository)
 
-class RestoreDinnerDaysUseCase @Inject constructor(private val repository: DinnerPlanRepository) {
-    suspend operator fun invoke(days: List<DinnerDay>) = repository.saveAll(days)
-}
+class RestoreDinnerDaysUseCase @Inject constructor(repository: DinnerPlanRepository) : RestorePlanDaysUseCase<DinnerDay>(repository)

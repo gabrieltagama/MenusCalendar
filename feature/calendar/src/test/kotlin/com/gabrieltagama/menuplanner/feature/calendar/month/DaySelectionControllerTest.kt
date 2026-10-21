@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.feature.calendar.month
 
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -61,7 +62,7 @@ class DaySelectionControllerTest {
         controller.start()
 
         assertTrue(controller.take().isEmpty())
-        assertNull(controller.copy(PlanView.LUNCH))
+        assertNull(controller.copy(Meal.LUNCH))
         assertTrue(controller.mode.value is CalendarMode.Selecting)
     }
 
@@ -70,20 +71,20 @@ class DaySelectionControllerTest {
         controller.start()
         controller.toggle(day(1))
 
-        val clipboard = controller.copy(PlanView.DINNER)
+        val clipboard = controller.copy(Meal.DINNER)
         controller.startDrag(day(9))
 
-        assertEquals(PlanClipboard(setOf(day(1)), PlanView.DINNER), clipboard)
-        assertEquals(CalendarMode.Pasting(PlanClipboard(setOf(day(1)), PlanView.DINNER)), controller.mode.value)
+        assertEquals(PlanClipboard(setOf(day(1)), Meal.DINNER), clipboard)
+        assertEquals(CalendarMode.Pasting(PlanClipboard(setOf(day(1)), Meal.DINNER)), controller.mode.value)
     }
 
     @Test
     fun `take clipboard returns the copy once`() {
         controller.start()
         controller.toggle(day(1))
-        controller.copy(PlanView.LUNCH)
+        controller.copy(Meal.LUNCH)
 
-        assertEquals(PlanClipboard(setOf(day(1)), PlanView.LUNCH), controller.takeClipboard())
+        assertEquals(PlanClipboard(setOf(day(1)), Meal.LUNCH), controller.takeClipboard())
         assertNull(controller.takeClipboard())
         assertEquals(CalendarMode.Browsing, controller.mode.value)
     }
@@ -92,7 +93,7 @@ class DaySelectionControllerTest {
     fun `start while pasting drops the copy`() {
         controller.start()
         controller.toggle(day(1))
-        controller.copy(PlanView.LUNCH)
+        controller.copy(Meal.LUNCH)
 
         controller.start()
 
@@ -109,7 +110,7 @@ class DaySelectionControllerTest {
 
         controller.start()
         controller.toggle(day(1))
-        controller.copy(PlanView.LUNCH)
+        controller.copy(Meal.LUNCH)
         controller.cancel()
         assertTrue(controller.mode.value is CalendarMode.Pasting)
         controller.cancelPaste()

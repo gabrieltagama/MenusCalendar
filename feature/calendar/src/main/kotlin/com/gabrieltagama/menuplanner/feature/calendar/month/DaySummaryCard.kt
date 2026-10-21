@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.model.plan.DishSummary
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
@@ -42,7 +43,7 @@ import java.time.LocalDate
  * dinner editor of that day.
  */
 @Composable
-internal fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, DishSummary>>, view: PlanView, onOpen: () -> Unit) = Surface(
+internal fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, DishSummary>>, view: Meal, onOpen: () -> Unit) = Surface(
     shape = MaterialTheme.shapes.large,
     color = MaterialTheme.colorScheme.surfaceContainer,
     modifier = Modifier.fillMaxWidth()
@@ -61,16 +62,16 @@ internal fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, DishSummar
 
 @Composable
 internal fun CalendarUiState.summaryLines(): List<Pair<String, DishSummary>> = when (view) {
-    PlanView.LUNCH -> selectedDay?.summaryLines().orEmpty()
-    PlanView.DINNER -> listOfNotNull(selectedDinner?.let { stringResource(R.string.calendar_slot_dinner) to it.dish })
+    Meal.LUNCH -> selectedDay?.summaryLines().orEmpty()
+    Meal.DINNER -> listOfNotNull(selectedDinner?.let { stringResource(R.string.calendar_slot_dinner) to it.dish })
 }
 
 @Composable
-private fun EmptyDaySummary(view: PlanView, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+private fun EmptyDaySummary(view: Meal, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Icons.Filled.EventBusy, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
-            text = stringResource(if (view == PlanView.LUNCH) R.string.calendar_no_menu else R.string.calendar_no_dinner),
+            text = stringResource(if (view == Meal.LUNCH) R.string.calendar_no_menu else R.string.calendar_no_dinner),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.plan.DishSummary
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessDot
 import com.gabrieltagama.menuplanner.feature.calendar.R
@@ -237,8 +238,8 @@ private fun DayCell(date: LocalDate, dishes: List<DishSummary>, isToday: Boolean
 }
 
 private fun CalendarUiState.plannedDishes(date: LocalDate): List<DishSummary> = when (view) {
-    PlanView.LUNCH -> days[date]?.dishes.orEmpty()
-    PlanView.DINNER -> listOfNotNull(dinners[date]?.dish)
+    Meal.LUNCH -> days[date]?.dishes.orEmpty()
+    Meal.DINNER -> listOfNotNull(dinners[date]?.dish)
 }
 
 private fun YearMonth.weeks(): List<List<LocalDate?>> {

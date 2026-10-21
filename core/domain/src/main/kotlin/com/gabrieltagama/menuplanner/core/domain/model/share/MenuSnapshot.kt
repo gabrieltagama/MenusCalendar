@@ -5,6 +5,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
+import com.gabrieltagama.menuplanner.core.domain.model.PlannedDay
 import java.time.Instant
 import java.time.LocalDate
 
@@ -14,7 +15,8 @@ import java.time.LocalDate
  * dish that arrives in the same snapshot; resolving an entry applies the same rules as planning it
  * by hand (shape of the menu, dish in the slot of its type, dinner option), so an entry that breaks
  * them resolves to null and is not imported. remapped translates those ids with the idMap of a
- * DishMergePlan when an incoming dish was matched to a local one with another id.
+ * DishMergePlan when an incoming dish was matched to a local one with another id. PlanEntry is what
+ * lunch and dinner entries share, so an import merges both the same way.
  */
 data class MenuSnapshot(
     val dishes: List<Dish>,
@@ -24,20 +26,27 @@ data class MenuSnapshot(
 
 enum class SnapshotScope { RECIPES, EVERYTHING }
 
+interface PlanEntry<D : PlannedDay<D>> {
+    val date: LocalDate
+    val updatedAt: Instant
+
+    fun resolve(dishesById: Map<DishId, Dish>): D?
+}
+
 data class LunchEntry(
-    val date: LocalDate,
+    override val date: LocalDate,
     val starterId: DishId? = null,
     val mainId: DishId? = null,
     val singleId: DishId? = null,
-    val updatedAt: Instant
-) {
+    override val updatedAt: Instant
+) : PlanEntry<MealDay> {
     fun remapped(idMap: Map<DishId, DishId>): LunchEntry = copy(
         starterId = starterId?.let { idMap[it] ?: it },
         mainId = mainId?.let { idMap[it] ?: it },
         singleId = singleId?.let { idMap[it] ?: it }
     )
 
-    fun resolve(dishesById: Map<DishId, Dish>): MealDay? =
+    override fun resolve(dishesById: Map<DishId, Dish>): MealDay? =
         menuOf(dishesById)?.takeIf { it.violation == null }?.let { MealDay(date = date, menu = it, updatedAt = updatedAt) }
 
     private fun menuOf(dishesById: Map<DishId, Dish>): DailyMenu? = when {
@@ -59,13 +68,13 @@ data class LunchEntry(
 }
 
 data class DinnerEntry(
-    val date: LocalDate,
+    override val date: LocalDate,
     val dishId: DishId,
-    val updatedAt: Instant
-) {
+    override val updatedAt: Instant
+) : PlanEntry<DinnerDay> {
     fun remapped(idMap: Map<DishId, DishId>): DinnerEntry = copy(dishId = idMap[dishId] ?: dishId)
 
-    fun resolve(dishesById: Map<DishId, Dish>): DinnerDay? =
+    override fun resolve(dishesById: Map<DishId, Dish>): DinnerDay? =
         dishesById[dishId]?.takeIf(Dish::isDinnerOption)?.let { DinnerDay(date = date, dish = it, updatedAt = updatedAt) }
 
     companion object {

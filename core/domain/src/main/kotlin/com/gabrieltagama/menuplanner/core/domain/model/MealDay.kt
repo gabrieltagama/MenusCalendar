@@ -10,10 +10,12 @@ import java.time.LocalDate
  * menu knows its invariant: every dish must sit in the slot of its type (violation).
  */
 data class MealDay(
-    val date: LocalDate,
+    override val date: LocalDate,
     val menu: DailyMenu,
-    val updatedAt: Instant
-)
+    override val updatedAt: Instant
+) : PlannedDay<MealDay> {
+    override fun movedTo(date: LocalDate, updatedAt: Instant): MealDay = copy(date = date, updatedAt = updatedAt)
+}
 
 sealed interface DailyMenu {
     val slots: List<Pair<MenuSlot, Dish>>

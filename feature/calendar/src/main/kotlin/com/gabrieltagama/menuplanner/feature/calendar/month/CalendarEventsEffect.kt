@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import kotlinx.coroutines.flow.Flow
 
@@ -55,12 +56,12 @@ internal fun CalendarEventsEffect(
     }
 }
 
-private fun PlanView.deletedTextRes(): Int = when (this) {
-    PlanView.LUNCH -> R.plurals.calendar_deleted_lunches
-    PlanView.DINNER -> R.plurals.calendar_deleted_dinners
+private fun Meal.deletedTextRes(): Int = when (this) {
+    Meal.LUNCH -> R.plurals.calendar_deleted_lunches
+    Meal.DINNER -> R.plurals.calendar_deleted_dinners
 }
 
-private fun PlanView.pastedTextRes(): Int = when (this) {
-    PlanView.LUNCH -> R.plurals.calendar_pasted_lunches
-    PlanView.DINNER -> R.plurals.calendar_pasted_dinners
+private fun Meal.pastedTextRes(): Int = when (this) {
+    Meal.LUNCH -> R.plurals.calendar_pasted_lunches
+    Meal.DINNER -> R.plurals.calendar_pasted_dinners
 }

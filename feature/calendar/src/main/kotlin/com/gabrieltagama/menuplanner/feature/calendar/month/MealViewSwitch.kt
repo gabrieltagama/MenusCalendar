@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.feature.calendar.R
 
 /**
@@ -30,7 +31,7 @@ import com.gabrieltagama.menuplanner.feature.calendar.R
  * the active one highlighted.
  */
 @Composable
-internal fun MealViewSwitch(view: PlanView, onViewChange: (PlanView) -> Unit) = Row(
+internal fun MealViewSwitch(view: Meal, onViewChange: (Meal) -> Unit) = Row(
     modifier = Modifier.fillMaxWidth(),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
@@ -38,15 +39,15 @@ internal fun MealViewSwitch(view: PlanView, onViewChange: (PlanView) -> Unit) = 
     MealViewLabel(
         text = stringResource(R.string.calendar_view_lunch),
         icon = Icons.Filled.WbSunny,
-        isActive = view == PlanView.LUNCH,
-        onClick = { onViewChange(PlanView.LUNCH) }
+        isActive = view == Meal.LUNCH,
+        onClick = { onViewChange(Meal.LUNCH) }
     )
     Switch(
-        checked = view == PlanView.DINNER,
-        onCheckedChange = { isDinner -> onViewChange(if (isDinner) PlanView.DINNER else PlanView.LUNCH) },
+        checked = view == Meal.DINNER,
+        onCheckedChange = { isDinner -> onViewChange(if (isDinner) Meal.DINNER else Meal.LUNCH) },
         thumbContent = {
             Icon(
-                imageVector = if (view == PlanView.DINNER) Icons.Filled.Bedtime else Icons.Filled.WbSunny,
+                imageVector = if (view == Meal.DINNER) Icons.Filled.Bedtime else Icons.Filled.WbSunny,
                 contentDescription = null,
                 modifier = Modifier.size(SwitchDefaults.IconSize)
             )
@@ -61,8 +62,8 @@ internal fun MealViewSwitch(view: PlanView, onViewChange: (PlanView) -> Unit) = 
     MealViewLabel(
         text = stringResource(R.string.calendar_view_dinner),
         icon = Icons.Filled.Bedtime,
-        isActive = view == PlanView.DINNER,
-        onClick = { onViewChange(PlanView.DINNER) }
+        isActive = view == Meal.DINNER,
+        onClick = { onViewChange(Meal.DINNER) }
     )
 }
 

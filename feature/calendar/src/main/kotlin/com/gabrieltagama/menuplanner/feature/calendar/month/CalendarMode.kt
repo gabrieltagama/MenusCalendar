@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.feature.calendar.month
 
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import java.time.LocalDate
 
 /**
@@ -15,6 +16,6 @@ sealed interface CalendarMode {
     data class Pasting(val clipboard: PlanClipboard) : CalendarMode
 }
 
-data class PlanClipboard(val dates: Set<LocalDate>, val view: PlanView) {
+data class PlanClipboard(val dates: Set<LocalDate>, val view: Meal) {
     val count: Int get() = dates.size
 }

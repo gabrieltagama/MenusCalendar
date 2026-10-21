@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.feature.calendar.month
 
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,7 +43,7 @@ class DaySelectionController {
 
     fun take(): Set<LocalDate> = markedDates.also { if (it.isNotEmpty()) _mode.value = CalendarMode.Browsing }
 
-    fun copy(view: PlanView): PlanClipboard? =
+    fun copy(view: Meal): PlanClipboard? =
         markedDates.takeIf(Set<LocalDate>::isNotEmpty)
             ?.let { PlanClipboard(it, view) }
             ?.also { _mode.value = CalendarMode.Pasting(it) }

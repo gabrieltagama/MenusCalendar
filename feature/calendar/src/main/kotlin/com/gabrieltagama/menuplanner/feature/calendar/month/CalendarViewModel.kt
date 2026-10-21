@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.feature.calendar.month
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
@@ -45,7 +46,7 @@ class CalendarViewModel @Inject constructor(
     private val month = MutableStateFlow(YearMonth.now(clock))
     private val selectedDate = MutableStateFlow(LocalDate.now(clock))
     private val today = MutableStateFlow(LocalDate.now(clock))
-    private val view = MutableStateFlow(PlanView.LUNCH)
+    private val view = MutableStateFlow(Meal.LUNCH)
     private val autoFillStatus = MutableStateFlow(AutoFillStatus())
     private val selection = DaySelectionController()
 
@@ -101,7 +102,7 @@ class CalendarViewModel @Inject constructor(
         selectedDate.value = date
     }
 
-    fun onViewChange(target: PlanView) {
+    fun onViewChange(target: Meal) {
         view.value = target
     }
 

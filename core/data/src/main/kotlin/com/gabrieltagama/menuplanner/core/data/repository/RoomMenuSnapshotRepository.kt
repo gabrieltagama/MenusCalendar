@@ -10,12 +10,14 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
+import com.gabrieltagama.menuplanner.core.domain.model.PlannedDay
 import com.gabrieltagama.menuplanner.core.domain.model.share.DinnerEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.DishMergePlan
 import com.gabrieltagama.menuplanner.core.domain.model.share.ImportPolicy
 import com.gabrieltagama.menuplanner.core.domain.model.share.LunchEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
 import com.gabrieltagama.menuplanner.core.domain.model.share.MergeDecision
+import com.gabrieltagama.menuplanner.core.domain.model.share.PlanEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
 import com.gabrieltagama.menuplanner.core.domain.repository.MenuSnapshotRepository
 import java.time.Instant
@@ -58,17 +60,24 @@ internal class RoomMenuSnapshotRepository @Inject constructor(
 
     private suspend fun mergeLunches(entries: List<LunchEntry>, known: Map<DishId, Dish>): List<MergeDecision> {
         val local = mealDayDao.getAll().associate { LocalDate.ofEpochDay(it.date) to Instant.ofEpochMilli(it.updatedAt) }
-        val decisions = entries.map { entry -> entry.resolve(known) to entry }
-            .map { (day, entry) -> day to if (day == null) MergeDecision.SKIP else ImportPolicy.decide(local[entry.date], entry.updatedAt) }
-        mealDayDao.upsertAll(decisions.filter { (_, decision) -> decision != MergeDecision.SKIP }.mapNotNull { (day, _) -> day?.toEntity() })
+        val decisions = entries.decide(known, local)
+        mealDayDao.upsertAll(decisions.accepted().map { it.toEntity() })
         return decisions.map { it.second }
     }
 
     private suspend fun mergeDinners(entries: List<DinnerEntry>, known: Map<DishId, Dish>): List<MergeDecision> {
         val local = dinnerDayDao.getAll().associate { LocalDate.ofEpochDay(it.date) to Instant.ofEpochMilli(it.updatedAt) }
-        val decisions = entries.map { entry -> entry.resolve(known) to entry }
-            .map { (day, entry) -> day to if (day == null) MergeDecision.SKIP else ImportPolicy.decide(local[entry.date], entry.updatedAt) }
-        dinnerDayDao.upsertAll(decisions.filter { (_, decision) -> decision != MergeDecision.SKIP }.mapNotNull { (day, _) -> day?.toEntity() })
+        val decisions = entries.decide(known, local)
+        dinnerDayDao.upsertAll(decisions.accepted().map { it.toEntity() })
         return decisions.map { it.second }
     }
 }
+
+private fun <D : PlannedDay<D>> List<PlanEntry<D>>.decide(known: Map<DishId, Dish>, local: Map<LocalDate, Instant>): List<Pair<D?, MergeDecision>> =
+    map { entry ->
+        val day = entry.resolve(known)
+        day to if (day == null) MergeDecision.SKIP else ImportPolicy.decide(local[entry.date], entry.updatedAt)
+    }
+
+private fun <D> List<Pair<D?, MergeDecision>>.accepted(): List<D> =
+    filter { (_, decision) -> decision != MergeDecision.SKIP }.mapNotNull { (day, _) -> day }

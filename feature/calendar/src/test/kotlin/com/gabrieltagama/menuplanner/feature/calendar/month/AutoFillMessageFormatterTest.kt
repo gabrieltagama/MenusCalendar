@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.feature.calendar.month
 
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -37,7 +38,7 @@ class AutoFillMessageFormatterTest {
     fun `dinner view without dishes asks for dinner dishes`() =
         assertEquals(
             "No hay platos para cenar: marca platos como Cena o Indiferente",
-            formatter.format(AutoFillResult(0, 0, 0, 12), PlanView.DINNER)
+            formatter.format(AutoFillResult(0, 0, 0, 12), Meal.DINNER)
         )
 
     @Test

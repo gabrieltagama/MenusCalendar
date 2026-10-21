@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedLunch
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
@@ -149,7 +150,7 @@ fun CalendarScreen(
     onDateSelect: (LocalDate) -> Unit,
     onOpenDay: (LocalDate) -> Unit,
     onOpenDinner: (LocalDate) -> Unit = {},
-    onViewChange: (PlanView) -> Unit = {},
+    onViewChange: (Meal) -> Unit = {},
     onOpenShoppingList: () -> Unit = {},
     autoFillActions: AutoFillActions = AutoFillActions(),
     selectionActions: SelectionActions = SelectionActions(),
@@ -198,7 +199,7 @@ fun CalendarScreen(
                 date = state.selectedDate,
                 lines = state.summaryLines(),
                 view = state.view,
-                onOpen = { if (state.view == PlanView.LUNCH) onOpenDay(state.selectedDate) else onOpenDinner(state.selectedDate) }
+                onOpen = { if (state.view == Meal.LUNCH) onOpenDay(state.selectedDate) else onOpenDinner(state.selectedDate) }
             )
             OutlinedButton(onClick = onOpenShoppingList, enabled = !state.isLoading, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.ShoppingCart, contentDescription = null)
@@ -221,9 +222,9 @@ private fun AutoFillFab(scrollState: ScrollState, onClick: () -> Unit) = Extende
 private fun CalendarUiState.autoFillPeriodText(): String =
     if (isShowingCurrentMonth) stringResource(R.string.calendar_autofill_from_today, month.inlineText()) else month.inlineText()
 
-private fun PlanView.autoFillTextRes(): Int = when (this) {
-    PlanView.LUNCH -> R.string.calendar_autofill_text
-    PlanView.DINNER -> R.string.calendar_autofill_dinner_text
+private fun Meal.autoFillTextRes(): Int = when (this) {
+    Meal.LUNCH -> R.string.calendar_autofill_text
+    Meal.DINNER -> R.string.calendar_autofill_dinner_text
 }
 
 @Preview(showBackground = true)

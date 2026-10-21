@@ -7,7 +7,9 @@ import java.time.LocalDate
  * The dinner planned for one calendar day: always a single dish (see Dish.isDinnerOption).
  */
 data class DinnerDay(
-    val date: LocalDate,
+    override val date: LocalDate,
     val dish: Dish,
-    val updatedAt: Instant
-)
+    override val updatedAt: Instant
+) : PlannedDay<DinnerDay> {
+    override fun movedTo(date: LocalDate, updatedAt: Instant): DinnerDay = copy(date = date, updatedAt = updatedAt)
+}

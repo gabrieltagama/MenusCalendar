@@ -13,6 +13,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedLunch
@@ -86,16 +87,20 @@ class CalendarViewModelTest {
             ObserveMonthPlanUseCase(queries),
             ObserveMonthDinnersUseCase(queries),
             PlanCommands(
-                AutoFillMonthUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
-                AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
-                ClearMealDaysUseCase(repository),
-                ClearDinnerDaysUseCase(dinnerRepository),
-                RestoreMealDaysUseCase(repository),
-                RestoreDinnerDaysUseCase(dinnerRepository),
-                PasteMealDaysUseCase(repository, clock),
-                PasteDinnerDaysUseCase(dinnerRepository, clock),
-                UndoPasteMealDaysUseCase(repository),
-                UndoPasteDinnerDaysUseCase(dinnerRepository)
+                LunchPlanCommands(
+                    AutoFillMonthUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
+                    ClearMealDaysUseCase(repository),
+                    RestoreMealDaysUseCase(repository),
+                    PasteMealDaysUseCase(repository, clock),
+                    UndoPasteMealDaysUseCase(repository)
+                ),
+                DinnerPlanCommands(
+                    AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
+                    ClearDinnerDaysUseCase(dinnerRepository),
+                    RestoreDinnerDaysUseCase(dinnerRepository),
+                    PasteDinnerDaysUseCase(dinnerRepository, clock),
+                    UndoPasteDinnerDaysUseCase(dinnerRepository)
+                )
             ),
             clock
         )
@@ -289,7 +294,7 @@ class CalendarViewModelTest {
         viewModel.events.test {
             viewModel.onAutoFill()
 
-            assertEquals(CalendarEvent.AutoFillCompleted(AutoFillResult(0, 0, 0, 22), PlanView.LUNCH), awaitItem())
+            assertEquals(CalendarEvent.AutoFillCompleted(AutoFillResult(0, 0, 0, 22), Meal.LUNCH), awaitItem())
         }
         assertTrue(repository.saved.isEmpty())
     }
@@ -298,11 +303,11 @@ class CalendarViewModelTest {
     fun `switching to dinners shows the dinner of the selected day`() = runTest {
         viewModel.uiState.test {
             val lunchState = awaitItemMatching { !it.isLoading }
-            assertEquals(PlanView.LUNCH, lunchState.view)
+            assertEquals(Meal.LUNCH, lunchState.view)
 
-            viewModel.onViewChange(PlanView.DINNER)
+            viewModel.onViewChange(Meal.DINNER)
 
-            val state = awaitItemMatching { it.view == PlanView.DINNER }
+            val state = awaitItemMatching { it.view == Meal.DINNER }
             assertEquals(todayDinner.toPlannedDinner(), state.selectedDinner)
             assertTrue(state.isPlanned(today))
             assertFalse(state.isPlanned(today.plusDays(1)))
@@ -314,14 +319,14 @@ class CalendarViewModelTest {
     fun `autofill in the dinner view fills only dinners`() = runTest {
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
-            viewModel.onViewChange(PlanView.DINNER)
-            awaitItemMatching { it.view == PlanView.DINNER }
+            viewModel.onViewChange(Meal.DINNER)
+            awaitItemMatching { it.view == Meal.DINNER }
 
             viewModel.events.test {
                 viewModel.onAutoFill()
 
                 val event = awaitItem() as CalendarEvent.AutoFillCompleted
-                assertEquals(PlanView.DINNER, event.view)
+                assertEquals(Meal.DINNER, event.view)
                 assertEquals(22, event.result.filledDays)
             }
 
@@ -385,9 +390,9 @@ class CalendarViewModelTest {
             viewModel.onSelectionToggle(today)
             awaitItemMatching { it.selection?.count == 1 }
 
-            viewModel.onViewChange(PlanView.DINNER)
+            viewModel.onViewChange(Meal.DINNER)
 
-            val state = awaitItemMatching { it.view == PlanView.DINNER }
+            val state = awaitItemMatching { it.view == Meal.DINNER }
             assertEquals(setOf(today), state.selection?.dates)
             cancelAndIgnoreRemainingEvents()
         }
@@ -409,7 +414,7 @@ class CalendarViewModelTest {
 
                 deletion = (awaitItem() as CalendarEvent.DaysDeleted).deletion
             }
-            assertEquals(PlanView.LUNCH, deletion.view)
+            assertEquals(Meal.LUNCH, deletion.view)
             assertEquals(2, deletion.count)
 
             val cleared = awaitItemMatching { it.days.isEmpty() && !it.isLoading }
@@ -445,8 +450,8 @@ class CalendarViewModelTest {
         repository.saveAll(listOf(nextPlan))
         viewModel.uiState.test {
             awaitItemMatching { !it.isLoading }
-            viewModel.onViewChange(PlanView.DINNER)
-            awaitItemMatching { it.view == PlanView.DINNER }
+            viewModel.onViewChange(Meal.DINNER)
+            awaitItemMatching { it.view == Meal.DINNER }
             viewModel.onSelectionStart()
             viewModel.onSelectionToggle(today)
             awaitItemMatching { it.selection?.count == 1 }
@@ -454,7 +459,7 @@ class CalendarViewModelTest {
             viewModel.events.test {
                 viewModel.onDeleteSelected()
 
-                assertEquals(PlanView.DINNER, (awaitItem() as CalendarEvent.DaysDeleted).deletion.view)
+                assertEquals(Meal.DINNER, (awaitItem() as CalendarEvent.DaysDeleted).deletion.view)
             }
 
             awaitItemMatching { it.dinners.isEmpty() }

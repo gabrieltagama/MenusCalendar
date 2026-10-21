@@ -22,11 +22,11 @@ internal class MenuPicker(dishes: List<Dish>, private val window: RepeatWindow, 
 
     private val dishesByType: Map<DishType, List<Dish>> = dishes.groupBy(Dish::type)
 
-    fun pick(date: LocalDate, history: Map<LocalDate, DailyMenu>, dinners: Map<LocalDate, Dish> = emptyMap()): MenuPick? {
+    fun pick(date: LocalDate, history: PlanHistory): MenuPick? {
         val context = PickContext(
-            dinnerOfDay = dinners[date]?.id,
-            nearbyDishIds = nearbyDishIds(date, history, dinners),
-            neighbourDayHeavy = PlanningPolicy.isHeavyDay(history[date.minusDays(1)]) || PlanningPolicy.isHeavyDay(history[date.plusDays(1)])
+            dinnerOfDay = history.dinnerOf(date)?.id,
+            nearbyDishIds = history.dishIdsNear(date, window),
+            neighbourDayHeavy = history.isNextToHeavyDay(date)
         )
         val shapes = MenuShape.entries.filter { shape -> shape.isBuildable { candidatesOf(it, context) } }
         if (shapes.isEmpty()) return null
@@ -59,13 +59,6 @@ internal class MenuPicker(dishes: List<Dish>, private val window: RepeatWindow, 
     private fun candidatesOf(type: DishType, context: PickContext): List<Dish> {
         val all = dishesByType[type].orEmpty()
         return all.filterNot { it.id == context.dinnerOfDay }.ifEmpty { all }
-    }
-
-    private fun nearbyDishIds(date: LocalDate, history: Map<LocalDate, DailyMenu>, dinners: Map<LocalDate, Dish>): Set<DishId> {
-        val nearbyDates = window.nearbyDates(date)
-        val lunchDishes = nearbyDates.mapNotNull(history::get).flatMap(DailyMenu::dishes)
-        val dinnerDishes = nearbyDates.mapNotNull(dinners::get)
-        return (lunchDishes + dinnerDishes).map(Dish::id).toSet()
     }
 }
 
