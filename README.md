@@ -41,5 +41,5 @@ Si existen estos secrets en el repositorio, la CI genera también un `app-releas
 ## Desarrollo
 
 - Módulos: `app`, `core:domain` (Kotlin puro), `core:data` (Room, DataStore, JSON), `core:cloud` y `core:cloud-ui` (Google Drive), `core:ui` y las features `onboarding`, `dishes`, `calendar`, `settings` y `share`. La configuración común de Gradle está en los convention plugins de `build-logic`.
-- Todos los tests son de JVM (los de Room, ViewModels y pantallas con Robolectric), así que la CI los ejecuta en cada pull request junto con Android Lint, la cobertura de Kover, ktlint (estilo en `.editorconfig`) y detekt (reglas en `config/detekt/detekt.yml`); ktlint y detekt bloquean si hay infracciones.
+- Todos los tests son de JVM (los de Room, ViewModels y pantallas con Robolectric), así que la CI los ejecuta en cada pull request junto con Android Lint, la cobertura de Kover (mínimo de líneas en `build.gradle.kts`), ktlint (estilo en `.editorconfig`) y detekt (reglas en `config/detekt/detekt.yml`); ktlint y detekt bloquean si hay infracciones.
 - Los esquemas de Room de cada versión están en `core/data/schemas` y los tests de migración los usan; al cambiar la base de datos hay que subir la versión, añadir la migración en `Migrations` y versionar el nuevo esquema que genera el build.
