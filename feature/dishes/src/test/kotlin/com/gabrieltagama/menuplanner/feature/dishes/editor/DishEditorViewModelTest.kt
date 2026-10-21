@@ -304,7 +304,7 @@ class DishEditorViewModelTest {
     private fun createViewModel(handle: SavedStateHandle): DishEditorViewModel = DishEditorViewModel(
         savedStateHandle = handle,
         getDish = GetDishUseCase(repository),
-        saveDish = SaveDishUseCase(repository, repository, clock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository), ImmediateTransactionRunner()),
+        saveDish = SaveDishUseCase(repository, clock, TestDishes.idGenerator, StandardizeRecipeBookUseCase(repository), ImmediateTransactionRunner()),
         deleteDish = DeleteDishUseCase(repository)
     )
 
