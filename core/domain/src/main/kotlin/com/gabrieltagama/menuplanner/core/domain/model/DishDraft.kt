@@ -23,9 +23,9 @@ data class DishDraft(
 
     fun toDish(id: DishId, updatedAt: Instant): Dish = Dish(
         id = id,
-        name = name.trim(),
+        name = DishName.normalize(name),
         description = description.trim(),
-        ingredients = ingredients.map { it.copy(name = it.name.trim()) },
+        ingredients = ingredients.map { it.copy(name = IngredientName.normalize(it.name)) },
         preparation = preparation.trim(),
         type = type,
         heaviness = heaviness,

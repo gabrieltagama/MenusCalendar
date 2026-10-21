@@ -1,11 +1,14 @@
 package com.gabrieltagama.menuplanner.feature.dishes.editor
 
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.model.DishName
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
+import com.gabrieltagama.menuplanner.core.domain.model.IngredientName
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.Quantity
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
 
 /**
@@ -30,7 +33,7 @@ data class DishEditorUiState(
     val showDiscardConfirm: Boolean = false,
     val error: DomainError? = null
 ) {
-    val isNameInvalid: Boolean get() = showValidationErrors && name.isBlank()
+    val isNameInvalid: Boolean get() = showValidationErrors && !DishName.isValid(name)
     val canSubmit: Boolean get() = !isLoading && !isSaving
 }
 
@@ -42,9 +45,9 @@ data class IngredientForm(
 ) {
     val parsedQuantity: Double?
         get() = if (quantityText.isBlank() && unit == MeasureUnit.TO_TASTE) 0.0
-        else quantityText.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0.0 }
+        else quantityText.trim().replace(',', '.').toDoubleOrNull()?.let(Quantity::of)?.value
 
-    val isNameValid: Boolean get() = name.isNotBlank()
+    val isNameValid: Boolean get() = IngredientName.isValid(name)
     val isQuantityValid: Boolean get() = parsedQuantity != null
 
     fun toDomain(): Ingredient? = parsedQuantity?.let { Ingredient(name = name, quantity = it, unit = unit) }
