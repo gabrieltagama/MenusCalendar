@@ -39,7 +39,7 @@ import com.gabrieltagama.menuplanner.feature.onboarding.R
 /**
  * First-start welcome UI: [WelcomeScreenRoute] wires [WelcomeViewModel] and the Google consent
  * flow, while [WelcomeScreen] is a stateless rendering of [WelcomeUiState] with the choice between
- * linking Google for the backup of recipes and calendar or using the app only on this device.
+ * linking Google for the backup of the recipes (never the calendar) or using the app only on this device.
  */
 @Composable
 fun WelcomeScreenRoute(viewModel: WelcomeViewModel = hiltViewModel()) {

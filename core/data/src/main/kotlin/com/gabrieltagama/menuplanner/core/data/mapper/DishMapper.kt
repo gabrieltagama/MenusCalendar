@@ -5,17 +5,11 @@ import com.gabrieltagama.menuplanner.core.data.database.entity.DishWithIngredien
 import com.gabrieltagama.menuplanner.core.data.database.entity.IngredientEntity
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.model.DishType
-import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
-import com.gabrieltagama.menuplanner.core.domain.model.MealTime
-import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
-import com.gabrieltagama.menuplanner.core.domain.model.Rating
-import java.time.Instant
 
 /**
- * Maps dishes between Room rows and the domain. Enums are stored by name and the ingredient
- * order is preserved through the position column.
+ * Maps dishes between Room rows and the domain (column types are converted by Room, see
+ * Converters); the ingredient order is preserved through the position column.
  */
 internal fun DishWithIngredients.toDomain(): Dish = Dish(
     id = DishId(dish.id),
@@ -23,11 +17,11 @@ internal fun DishWithIngredients.toDomain(): Dish = Dish(
     description = dish.description,
     ingredients = ingredients.sortedBy(IngredientEntity::position).map(IngredientEntity::toDomain),
     preparation = dish.preparation,
-    type = DishType.valueOf(dish.type),
-    heaviness = Heaviness.valueOf(dish.heaviness),
-    rating = Rating.valueOf(dish.rating),
-    mealTime = MealTime.valueOf(dish.mealTime),
-    updatedAt = Instant.ofEpochMilli(dish.updatedAt)
+    type = dish.type,
+    heaviness = dish.heaviness,
+    rating = dish.rating,
+    mealTime = dish.mealTime,
+    updatedAt = dish.updatedAt
 )
 
 internal fun Dish.toEntity(): DishEntity = DishEntity(
@@ -35,11 +29,11 @@ internal fun Dish.toEntity(): DishEntity = DishEntity(
     name = name,
     description = description,
     preparation = preparation,
-    type = type.name,
-    heaviness = heaviness.name,
-    rating = rating.name,
-    mealTime = mealTime.name,
-    updatedAt = updatedAt.toEpochMilli()
+    type = type,
+    heaviness = heaviness,
+    rating = rating,
+    mealTime = mealTime,
+    updatedAt = updatedAt
 )
 
 internal fun Dish.toIngredientEntities(): List<IngredientEntity> =
@@ -49,9 +43,9 @@ internal fun Dish.toIngredientEntities(): List<IngredientEntity> =
             position = index,
             name = ingredient.name,
             quantity = ingredient.quantity,
-            unit = ingredient.unit.name
+            unit = ingredient.unit
         )
     }
 
 private fun IngredientEntity.toDomain(): Ingredient =
-    Ingredient(name = name, quantity = quantity, unit = MeasureUnit.valueOf(unit))
+    Ingredient(name = name, quantity = quantity, unit = unit)

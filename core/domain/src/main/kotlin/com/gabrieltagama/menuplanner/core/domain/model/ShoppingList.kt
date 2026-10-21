@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.model
 
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientStandardizer
+import com.gabrieltagama.menuplanner.core.domain.text.collapsedSpaces
 import com.gabrieltagama.menuplanner.core.domain.text.spanishCollator
 
 /**
@@ -25,8 +26,6 @@ value class ShoppingList private constructor(val items: List<ShoppingItem>) {
     }
 }
 
-private val whitespace = Regex("\\s+")
-
 private fun List<Ingredient>.toShoppingItem(): ShoppingItem {
     val total = sumOf { it.quantity }
     val unit = first().unit
@@ -38,7 +37,7 @@ private fun List<Ingredient>.toShoppingItem(): ShoppingItem {
 }
 
 private fun List<Ingredient>.displayName(): String =
-    map { it.name.trim().replace(whitespace, " ") }
+    map { it.name.collapsedSpaces() }
         .groupingBy { it }
         .eachCount()
         .maxBy { it.value }

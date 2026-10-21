@@ -5,8 +5,6 @@ import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
-import java.time.Instant
-import java.time.LocalDate
 
 /**
  * Maps planned days between Room rows and the domain. A row with single_id becomes a Single
@@ -14,15 +12,15 @@ import java.time.LocalDate
  */
 internal fun LunchDayEntity.toDomain(dishesById: Map<DishId, Dish>): LunchDay? =
     toMenu(dishesById)?.let { menu ->
-        LunchDay(date = LocalDate.ofEpochDay(date), menu = menu, updatedAt = Instant.ofEpochMilli(updatedAt))
+        LunchDay(date = date, menu = menu, updatedAt = updatedAt)
     }
 
 internal fun LunchDay.toEntity(): LunchDayEntity = LunchDayEntity(
-    date = date.toEpochDay(),
+    date = date,
     starterId = (menu as? DailyMenu.Courses)?.starter?.id?.value,
     mainId = (menu as? DailyMenu.Courses)?.main?.id?.value,
     singleId = (menu as? DailyMenu.Single)?.single?.id?.value,
-    updatedAt = updatedAt.toEpochMilli()
+    updatedAt = updatedAt
 )
 
 private fun LunchDayEntity.toMenu(dishesById: Map<DishId, Dish>): DailyMenu? {

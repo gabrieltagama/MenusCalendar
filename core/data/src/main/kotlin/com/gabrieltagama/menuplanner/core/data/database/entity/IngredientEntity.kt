@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 
 /**
  * Row of the `ingredients` table. Owned by a dish (cascade delete); position keeps the order
@@ -28,5 +29,5 @@ internal data class IngredientEntity(
     val position: Int,
     val name: String,
     val quantity: Double,
-    val unit: String
+    val unit: MeasureUnit
 )

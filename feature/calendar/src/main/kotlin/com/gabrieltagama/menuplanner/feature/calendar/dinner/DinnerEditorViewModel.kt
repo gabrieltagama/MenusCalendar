@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.feature.calendar.dinner
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.gabrieltagama.menuplanner.core.domain.common.DefaultDispatcher
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishSort
@@ -18,7 +19,7 @@ import com.gabrieltagama.menuplanner.feature.calendar.navigation.DinnerEditorRou
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -61,13 +62,14 @@ class DinnerEditorViewModel @Inject constructor(
     private val getDinnerDay: GetDinnerDayUseCase,
     private val saveDinnerDay: SaveDinnerDayUseCase,
     private val clearDinnerDay: ClearDinnerDayUseCase,
-    private val pickRandomDish: PickRandomDishUseCase
+    private val pickRandomDish: PickRandomDishUseCase,
+    @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
 ) : PlanEditorViewModel<DinnerEditorForm>(DinnerEditorForm()) {
 
     private val date: LocalDate = LocalDate.ofEpochDay(savedStateHandle.toRoute<DinnerEditorRoute>().epochDay)
 
     private val options: Flow<List<Dish>> =
-        observeDishes().map { dishes -> DishSort.NAME.sorted(dishes.filter(Dish::isDinnerOption)) }.flowOn(Dispatchers.Default)
+        observeDishes().map { dishes -> DishSort.NAME.sorted(dishes.filter(Dish::isDinnerOption)) }.flowOn(defaultDispatcher)
 
     val uiState: StateFlow<DinnerEditorUiState> =
         combine(form, options, observeDishUsage()) { currentForm, currentOptions, usage ->

@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.map
 internal class RoomDishUsageQueries @Inject constructor(private val dao: DishUsageDao) : DishUsageQueries {
 
     override fun observeLastServed(until: LocalDate): Flow<Map<DishId, LocalDate>> =
-        dao.observeLastServed(until.toEpochDay())
-            .map { rows -> rows.associate { DishId(it.dishId) to LocalDate.ofEpochDay(it.lastDate) } }
+        dao.observeLastServed(until)
+            .map { rows -> rows.associate { DishId(it.dishId) to it.lastDate } }
             .distinctUntilChanged()
 }

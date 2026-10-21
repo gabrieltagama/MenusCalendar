@@ -92,6 +92,7 @@ class AssetInitialDishesRepositoryTest {
         dishDao = database.dishDao(),
         codec = JsonMenuSnapshotCodec(TestData.json),
         snapshots = RoomMenuSnapshotRepository(database),
-        dataStore = dataStore
+        dataStore = dataStore,
+        ioDispatcher = Dispatchers.IO
     )
 }

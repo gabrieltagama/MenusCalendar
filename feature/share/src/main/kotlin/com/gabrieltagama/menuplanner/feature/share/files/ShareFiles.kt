@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.feature.share.files
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.gabrieltagama.menuplanner.core.domain.common.IoDispatcher
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -14,7 +15,7 @@ import java.time.Clock
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 /**
@@ -33,17 +34,18 @@ interface ShareFiles {
 
 internal class CacheShareFiles @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val clock: Clock
+    private val clock: Clock,
+    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ShareFiles {
 
-    override suspend fun write(content: String): Uri = withContext(Dispatchers.IO) {
+    override suspend fun write(content: String): Uri = withContext(ioDispatcher) {
         val directory = File(context.cacheDir, SHARED_DIRECTORY).apply { mkdirs() }
         directory.listFiles()?.forEach(File::delete)
         val file = File(directory, exportFileName()).apply { writeText(content) }
         FileProvider.getUriForFile(context, "${context.packageName}$AUTHORITY_SUFFIX", file)
     }
 
-    override suspend fun save(uri: Uri, content: String): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun save(uri: Uri, content: String): Boolean = withContext(ioDispatcher) {
         try {
             context.contentResolver.openOutputStream(uri, TRUNCATE_MODE)?.bufferedWriter()?.use { it.write(content) } != null
         } catch (expected: IOException) {
@@ -55,7 +57,7 @@ internal class CacheShareFiles @Inject constructor(
 
     override fun exportFileName(): String = "menuplanner-${LocalDateTime.now(clock).format(FILE_DATE_FORMAT)}.json"
 
-    override suspend fun read(uri: Uri): String? = withContext(Dispatchers.IO) {
+    override suspend fun read(uri: Uri): String? = withContext(ioDispatcher) {
         try {
             context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
         } catch (expected: IOException) {

@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.feature.dishes.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gabrieltagama.menuplanner.core.domain.common.DefaultDispatcher
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishSort
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
@@ -13,7 +14,7 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUs
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,7 +55,8 @@ private data class Listing(val criteria: DishFilterCriteria, val sort: DishSort)
 @HiltViewModel
 class DishListViewModel @Inject constructor(
     observeDishes: ObserveDishesUseCase,
-    observeDishUsage: ObserveDishUsageUseCase
+    observeDishUsage: ObserveDishUsageUseCase,
+    @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val _query = MutableStateFlow("")
@@ -79,7 +81,7 @@ class DishListViewModel @Inject constructor(
                 dishes = DishFilter.filter(index, criteria.copy(query = query)).let { if (order == DishSort.NAME) it else order.sorted(it, usage) }
             )
         }
-            .flowOn(Dispatchers.Default)
+            .flowOn(defaultDispatcher)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DishListUiState())
 
     fun onQueryChange(value: String) {

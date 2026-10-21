@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.feature.calendar.day
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.gabrieltagama.menuplanner.core.domain.common.DefaultDispatcher
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
@@ -23,7 +24,7 @@ import com.gabrieltagama.menuplanner.feature.calendar.navigation.DayEditorRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -85,7 +86,8 @@ class DayEditorViewModel @Inject constructor(
     private val getLunchDay: GetLunchDayUseCase,
     private val saveLunchDay: SaveLunchDayUseCase,
     private val clearLunchDay: ClearLunchDayUseCase,
-    private val pickRandomDish: PickRandomDishUseCase
+    private val pickRandomDish: PickRandomDishUseCase,
+    @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
 ) : PlanEditorViewModel<DayEditorForm>(DayEditorForm()) {
 
     private val date: LocalDate = LocalDate.ofEpochDay(savedStateHandle.toRoute<DayEditorRoute>().epochDay)
@@ -95,7 +97,7 @@ class DayEditorViewModel @Inject constructor(
     private val options: Flow<Map<DishType, List<Dish>>> =
         observeDishes().map { dishes ->
             DishSort.NAME.sorted(dishes.filter { it.type in plannableTypes }).groupBy(Dish::type)
-        }.flowOn(Dispatchers.Default)
+        }.flowOn(defaultDispatcher)
 
     val uiState: StateFlow<DayEditorUiState> =
         combine(form, options, observeDishUsage()) { currentForm, currentOptions, usage ->

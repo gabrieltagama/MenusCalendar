@@ -7,23 +7,21 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
-import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.model.plan.DishSummary
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
-import java.time.LocalDate
 
 /**
  * Maps the rows of PlanQueryDao to read models. Like LunchDayMapper, a lunch with single_id is a
  * single dish, otherwise it needs both starter and main; an incomplete row maps to null.
  */
-internal fun LunchRow.toPlannedLunch(): PlannedLunch? = toSlots()?.let { PlannedLunch(date = LocalDate.ofEpochDay(date), slots = it) }
+internal fun LunchRow.toPlannedLunch(): PlannedLunch? = toSlots()?.let { PlannedLunch(date = date, slots = it) }
 
 internal fun DinnerRow.toPlannedDinner(): PlannedDinner =
-    PlannedDinner(date = LocalDate.ofEpochDay(date), dish = summaryOf(dishId, dishName, dishType, dishHeaviness))
+    PlannedDinner(date = date, dish = DishSummary(id = DishId(dishId), name = dishName, type = dishType, heaviness = dishHeaviness))
 
-internal fun IngredientLineRow.toDomain(): Ingredient = Ingredient(name = name, quantity = quantity, unit = MeasureUnit.valueOf(unit))
+internal fun IngredientLineRow.toDomain(): Ingredient = Ingredient(name = name, quantity = quantity, unit = unit)
 
 private fun LunchRow.toSlots(): List<Pair<MenuSlot, DishSummary>>? {
     if (singleId != null) return single()?.let { listOf(MenuSlot.SINGLE to it) }
@@ -38,11 +36,8 @@ private fun LunchRow.main(): DishSummary? = summaryOrNull(mainId, mainName, main
 
 private fun LunchRow.single(): DishSummary? = summaryOrNull(singleId, singleName, singleType, singleHeaviness)
 
-private fun summaryOrNull(id: String?, name: String?, type: String?, heaviness: String?): DishSummary? {
+private fun summaryOrNull(id: String?, name: String?, type: DishType?, heaviness: Heaviness?): DishSummary? {
     if (id == null || name == null) return null
     if (type == null || heaviness == null) return null
-    return summaryOf(id, name, type, heaviness)
+    return DishSummary(id = DishId(id), name = name, type = type, heaviness = heaviness)
 }
-
-private fun summaryOf(id: String, name: String, type: String, heaviness: String): DishSummary =
-    DishSummary(id = DishId(id), name = name, type = DishType.valueOf(type), heaviness = Heaviness.valueOf(heaviness))

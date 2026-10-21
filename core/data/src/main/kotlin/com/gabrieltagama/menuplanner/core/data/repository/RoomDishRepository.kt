@@ -7,12 +7,10 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
 import com.gabrieltagama.menuplanner.core.domain.query.PlannedUseQueries
-import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -40,8 +38,7 @@ internal class RoomDishRepository @Inject constructor(
     override suspend fun deleteIfUnused(id: DishId): Boolean = dishDao.deleteIfUnused(id.value)
 
     override suspend fun getPlannedUses(id: DishId): List<PlannedUse> =
-        dishDao.getLunchUses(id.value).map { PlannedUse.Lunch(LocalDate.ofEpochDay(it.date), MenuSlot.valueOf(it.slot)) } +
-            dishDao.getDinnerDates(id.value).map { PlannedUse.Dinner(LocalDate.ofEpochDay(it)) }
+        dishDao.getLunchUses(id.value).map { PlannedUse.Lunch(it.date, it.slot) } + dishDao.getDinnerDates(id.value).map(PlannedUse::Dinner)
 
     private fun List<DishWithIngredients>.toDomainList(): List<Dish> = map(DishWithIngredients::toDomain)
 }

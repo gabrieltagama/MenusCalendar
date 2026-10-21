@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.text
 
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
+import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import org.junit.Assert.assertFalse
@@ -15,18 +16,20 @@ class SearchTextTest {
 
     @Test
     fun `matches name without accents or case`() {
-        assertTrue(puree.matchesSearch("PURE"))
-        assertTrue(puree.matchesSearch("  calabaza "))
+        assertTrue(puree.matches("PURE"))
+        assertTrue(puree.matches("  calabaza "))
     }
 
     @Test
     fun `matches ingredient names`() {
-        assertTrue(puree.matchesSearch("cebolla"))
+        assertTrue(puree.matches("cebolla"))
     }
 
     @Test
     fun `empty query matches and unrelated text does not`() {
-        assertTrue(puree.matchesSearch(""))
-        assertFalse(puree.matchesSearch("lentejas"))
+        assertTrue(puree.matches(""))
+        assertFalse(puree.matches("lentejas"))
     }
+
+    private fun Dish.matches(query: String): Boolean = SearchableDish(this).matches(query.normalizedForSearch())
 }

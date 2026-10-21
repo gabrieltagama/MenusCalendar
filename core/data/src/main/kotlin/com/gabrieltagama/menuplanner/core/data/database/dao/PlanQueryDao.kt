@@ -3,6 +3,10 @@ package com.gabrieltagama.menuplanner.core.data.database.dao
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Query
+import com.gabrieltagama.menuplanner.core.domain.model.DishType
+import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
+import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -24,77 +28,77 @@ internal interface PlanQueryDao {
         LEFT JOIN dishes s ON s.id = m.starter_id
         LEFT JOIN dishes mn ON mn.id = m.main_id
         LEFT JOIN dishes sg ON sg.id = m.single_id
-        WHERE m.date BETWEEN :fromEpochDay AND :toEpochDay
+        WHERE m.date BETWEEN :from AND :to
         ORDER BY m.date
         """
     )
-    fun observeLunchRows(fromEpochDay: Long, toEpochDay: Long): Flow<List<LunchRow>>
+    fun observeLunchRows(from: LocalDate, to: LocalDate): Flow<List<LunchRow>>
 
     @Query(
         """
         SELECT d.date, ds.id AS dish_id, ds.name AS dish_name, ds.type AS dish_type, ds.heaviness AS dish_heaviness
         FROM dinner_days d
         JOIN dishes ds ON ds.id = d.dish_id
-        WHERE d.date BETWEEN :fromEpochDay AND :toEpochDay
+        WHERE d.date BETWEEN :from AND :to
         ORDER BY d.date
         """
     )
-    fun observeDinnerRows(fromEpochDay: Long, toEpochDay: Long): Flow<List<DinnerRow>>
+    fun observeDinnerRows(from: LocalDate, to: LocalDate): Flow<List<DinnerRow>>
 
     @Query(
         """
         SELECT i.name, i.quantity, i.unit FROM (
             SELECT date, single_id AS dish_id, 2 AS slot FROM meal_days
-                WHERE single_id IS NOT NULL AND date BETWEEN :fromEpochDay AND :toEpochDay
+                WHERE single_id IS NOT NULL AND date BETWEEN :from AND :to
             UNION ALL SELECT date, starter_id, 0 FROM meal_days
-                WHERE single_id IS NULL AND starter_id IS NOT NULL AND main_id IS NOT NULL AND date BETWEEN :fromEpochDay AND :toEpochDay
+                WHERE single_id IS NULL AND starter_id IS NOT NULL AND main_id IS NOT NULL AND date BETWEEN :from AND :to
             UNION ALL SELECT date, main_id, 1 FROM meal_days
-                WHERE single_id IS NULL AND starter_id IS NOT NULL AND main_id IS NOT NULL AND date BETWEEN :fromEpochDay AND :toEpochDay
+                WHERE single_id IS NULL AND starter_id IS NOT NULL AND main_id IS NOT NULL AND date BETWEEN :from AND :to
         ) p
         JOIN ingredients i ON i.dish_id = p.dish_id
         ORDER BY p.date, p.slot, i.position
         """
     )
-    fun observeLunchIngredientLines(fromEpochDay: Long, toEpochDay: Long): Flow<List<IngredientLineRow>>
+    fun observeLunchIngredientLines(from: LocalDate, to: LocalDate): Flow<List<IngredientLineRow>>
 
     @Query(
         """
         SELECT i.name, i.quantity, i.unit
         FROM dinner_days d
         JOIN ingredients i ON i.dish_id = d.dish_id
-        WHERE d.date BETWEEN :fromEpochDay AND :toEpochDay
+        WHERE d.date BETWEEN :from AND :to
         ORDER BY d.date, i.position
         """
     )
-    fun observeDinnerIngredientLines(fromEpochDay: Long, toEpochDay: Long): Flow<List<IngredientLineRow>>
+    fun observeDinnerIngredientLines(from: LocalDate, to: LocalDate): Flow<List<IngredientLineRow>>
 }
 
 internal data class LunchRow(
-    val date: Long,
+    val date: LocalDate,
     @ColumnInfo(name = "starter_id") val starterId: String?,
     @ColumnInfo(name = "starter_name") val starterName: String?,
-    @ColumnInfo(name = "starter_type") val starterType: String?,
-    @ColumnInfo(name = "starter_heaviness") val starterHeaviness: String?,
+    @ColumnInfo(name = "starter_type") val starterType: DishType?,
+    @ColumnInfo(name = "starter_heaviness") val starterHeaviness: Heaviness?,
     @ColumnInfo(name = "main_id") val mainId: String?,
     @ColumnInfo(name = "main_name") val mainName: String?,
-    @ColumnInfo(name = "main_type") val mainType: String?,
-    @ColumnInfo(name = "main_heaviness") val mainHeaviness: String?,
+    @ColumnInfo(name = "main_type") val mainType: DishType?,
+    @ColumnInfo(name = "main_heaviness") val mainHeaviness: Heaviness?,
     @ColumnInfo(name = "single_id") val singleId: String?,
     @ColumnInfo(name = "single_name") val singleName: String?,
-    @ColumnInfo(name = "single_type") val singleType: String?,
-    @ColumnInfo(name = "single_heaviness") val singleHeaviness: String?
+    @ColumnInfo(name = "single_type") val singleType: DishType?,
+    @ColumnInfo(name = "single_heaviness") val singleHeaviness: Heaviness?
 )
 
 internal data class DinnerRow(
-    val date: Long,
+    val date: LocalDate,
     @ColumnInfo(name = "dish_id") val dishId: String,
     @ColumnInfo(name = "dish_name") val dishName: String,
-    @ColumnInfo(name = "dish_type") val dishType: String,
-    @ColumnInfo(name = "dish_heaviness") val dishHeaviness: String
+    @ColumnInfo(name = "dish_type") val dishType: DishType,
+    @ColumnInfo(name = "dish_heaviness") val dishHeaviness: Heaviness
 )
 
 internal data class IngredientLineRow(
     val name: String,
     val quantity: Double,
-    val unit: String
+    val unit: MeasureUnit
 )

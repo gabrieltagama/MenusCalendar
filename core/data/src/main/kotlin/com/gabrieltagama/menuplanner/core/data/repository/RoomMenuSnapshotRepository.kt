@@ -67,7 +67,7 @@ internal class RoomMenuSnapshotRepository @Inject constructor(
         dao: DayPlanDao<E>,
         toEntity: (D) -> E
     ): List<MergeDecision> {
-        val local = dao.getAll().associate { LocalDate.ofEpochDay(it.date) to Instant.ofEpochMilli(it.updatedAt) }
+        val local = dao.getAll().associate { it.date to it.updatedAt }
         val decisions = entries.decide(known, local)
         dao.upsertAll(decisions.accepted().map(toEntity))
         return decisions.map { it.second }
