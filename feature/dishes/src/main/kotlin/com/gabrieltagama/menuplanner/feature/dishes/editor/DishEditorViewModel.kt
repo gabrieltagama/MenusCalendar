@@ -4,7 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.domain.common.fold
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -120,38 +121,26 @@ class DishEditorViewModel @Inject constructor(
     fun onSave() {
         val state = _uiState.value
         if (!state.canSubmit) return
-        val isFormValid = state.name.isNotBlank() && state.ingredients.all { it.isNameValid && it.isQuantityValid }
-        if (!isFormValid) {
+        val draft = draftOf(state)?.takeIf { it.validationError == null }
+        if (draft == null) {
             _uiState.update { it.copy(showValidationErrors = true) }
             return
         }
-        val draft = draftOf(state)
         _uiState.update { it.copy(isSaving = true, showValidationErrors = true) }
-        viewModelScope.launch {
-            when (val outcome = saveDish(draft)) {
-                is Outcome.Success -> _events.send(DishEditorEvent.Close)
-                is Outcome.Failure -> _uiState.update { it.copy(isSaving = false, error = outcome.error) }
-            }
-        }
+        viewModelScope.launch { saveDish(draft).fold(onSuccess = { _events.send(DishEditorEvent.Close) }, onFailure = ::showError) }
     }
 
     fun onDeleteConfirm() {
         val id = dishId ?: return
         _uiState.update { it.copy(showDeleteConfirm = false, isSaving = true) }
-        viewModelScope.launch {
-            when (val outcome = deleteDish(id)) {
-                is Outcome.Success -> _events.send(DishEditorEvent.Close)
-                is Outcome.Failure -> _uiState.update { it.copy(isSaving = false, error = outcome.error) }
-            }
-        }
+        viewModelScope.launch { deleteDish(id).fold(onSuccess = { _events.send(DishEditorEvent.Close) }, onFailure = ::showError) }
     }
 
     private fun load(id: DishId) = viewModelScope.launch {
-        when (val outcome = getDish(id)) {
-            is Outcome.Success -> fillForm(outcome.value)
-            is Outcome.Failure -> _uiState.update { it.copy(isLoading = false, error = outcome.error) }
-        }
+        getDish(id).fold(onSuccess = ::fillForm, onFailure = { error -> _uiState.update { it.copy(isLoading = false, error = error) } })
     }
+
+    private fun showError(error: DomainError) = _uiState.update { it.copy(isSaving = false, error = error) }
 
     private fun fillForm(dish: Dish) {
         _uiState.update {
@@ -197,17 +186,21 @@ class DishEditorViewModel @Inject constructor(
         viewModelScope.launch { _events.send(DishEditorEvent.Close) }
     }
 
-    private fun draftOf(state: DishEditorUiState): DishDraft = DishDraft(
-        id = dishId,
-        name = state.name,
-        description = state.description,
-        ingredients = state.ingredients.mapNotNull { it.toDomain() },
-        preparation = state.preparation,
-        type = state.type,
-        heaviness = state.heaviness,
-        rating = state.rating,
-        mealTime = state.mealTime
-    )
+    private fun draftOf(state: DishEditorUiState): DishDraft? {
+        val ingredients = state.ingredients.map { it.toDomain() }
+        if (null in ingredients) return null
+        return DishDraft(
+            id = dishId,
+            name = state.name,
+            description = state.description,
+            ingredients = ingredients.filterNotNull(),
+            preparation = state.preparation,
+            type = state.type,
+            heaviness = state.heaviness,
+            rating = state.rating,
+            mealTime = state.mealTime
+        )
+    }
 
     private fun updateIngredient(key: Long, transform: (IngredientForm) -> IngredientForm) = _uiState.update { state ->
         state.copy(ingredients = state.ingredients.map { if (it.key == key) transform(it) else it })

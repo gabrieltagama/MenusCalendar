@@ -408,11 +408,11 @@ class CalendarViewModelTest {
             viewModel.onSelectionDragEnd()
             awaitItemMatching { it.selection?.count == 3 }
 
-            lateinit var deletion: PlanDeletion
+            lateinit var deletion: UndoableChange
             viewModel.events.test {
                 viewModel.onDeleteSelected()
 
-                deletion = (awaitItem() as CalendarEvent.DaysDeleted).deletion
+                deletion = (awaitItem() as CalendarEvent.DaysDeleted).change
             }
             assertEquals(Meal.LUNCH, deletion.view)
             assertEquals(2, deletion.count)
@@ -421,7 +421,7 @@ class CalendarViewModelTest {
             assertFalse(cleared.isSelecting)
             assertEquals(setOf(today), dinnerRepository.current.keys)
 
-            viewModel.onUndoDelete(deletion)
+            viewModel.onUndo(deletion)
 
             awaitItemMatching { it.days.keys == setOf(today, nextPlan.date) }
             cancelAndIgnoreRemainingEvents()
@@ -459,7 +459,7 @@ class CalendarViewModelTest {
             viewModel.events.test {
                 viewModel.onDeleteSelected()
 
-                assertEquals(Meal.DINNER, (awaitItem() as CalendarEvent.DaysDeleted).deletion.view)
+                assertEquals(Meal.DINNER, (awaitItem() as CalendarEvent.DaysDeleted).change.view)
             }
 
             awaitItemMatching { it.dinners.isEmpty() }
@@ -508,11 +508,11 @@ class CalendarViewModelTest {
             assertEquals(3, pasting.clipboard?.count)
 
             val target = today.plusDays(7)
-            lateinit var paste: PlanPaste
+            lateinit var paste: UndoableChange
             viewModel.events.test {
                 viewModel.onPasteAt(target)
 
-                paste = (awaitItem() as CalendarEvent.DaysPasted).paste
+                paste = (awaitItem() as CalendarEvent.DaysPasted).change
             }
             assertEquals(2, paste.count)
 
@@ -521,7 +521,7 @@ class CalendarViewModelTest {
             assertEquals(nextPlan.toPlannedLunch().slots, pasted.days[target.plusDays(2)]?.slots)
             assertNull(pasted.days[target.plusDays(1)])
 
-            viewModel.onUndoPaste(paste)
+            viewModel.onUndo(paste)
 
             awaitItemMatching { it.days.keys == setOf(today, nextPlan.date) }
             cancelAndIgnoreRemainingEvents()

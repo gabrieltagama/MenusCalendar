@@ -28,8 +28,8 @@ import javax.inject.Inject
  * Commands of the monthly calendar on the lunch or the dinner plan. MealPlanCommands holds the use
  * cases of one meal, written once for any PlannedDay; LunchPlanCommands and DinnerPlanCommands bind
  * them to each meal, and PlanCommands picks the one of the active view, so CalendarViewModel never
- * branches on the meal. Deletions and pastes return what changed (PlanDeletion, PlanPaste) together
- * with how to undo it.
+ * branches on the meal. Deletions and pastes return what changed as an UndoableChange that knows
+ * how to undo it.
  */
 class PlanCommands @Inject constructor(
     private val lunches: LunchPlanCommands,
@@ -39,13 +39,11 @@ class PlanCommands @Inject constructor(
 
     suspend fun autoFill(dates: Set<LocalDate>, meal: Meal): AutoFillResult = of(meal).autoFill(dates)
 
-    suspend fun delete(dates: Set<LocalDate>, meal: Meal): PlanDeletion = of(meal).delete(dates)
+    suspend fun delete(dates: Set<LocalDate>, meal: Meal): UndoableChange = of(meal).delete(dates)
 
-    suspend fun paste(clipboard: PlanClipboard, target: LocalDate): PlanPaste = of(clipboard.view).paste(clipboard.dates, target)
+    suspend fun paste(clipboard: PlanClipboard, target: LocalDate): UndoableChange = of(clipboard.view).paste(clipboard.dates, target)
 
-    suspend fun undo(deletion: PlanDeletion) = deletion.undo()
-
-    suspend fun undo(paste: PlanPaste) = paste.undo()
+    suspend fun undo(change: UndoableChange) = change.undo()
 
     private fun of(meal: Meal): MealPlanCommands<*> = when (meal) {
         Meal.LUNCH -> lunches
@@ -65,14 +63,14 @@ abstract class MealPlanCommands<D : PlannedDay<D>>(
 
     suspend fun autoFill(dates: Set<LocalDate>): AutoFillResult = autoFillPlan(dates)
 
-    suspend fun delete(dates: Set<LocalDate>): PlanDeletion {
+    suspend fun delete(dates: Set<LocalDate>): UndoableChange {
         val removed = clearDays(dates)
-        return PlanDeletion(view = meal, count = removed.size) { restoreDays(removed) }
+        return UndoableChange(view = meal, count = removed.size) { restoreDays(removed) }
     }
 
-    suspend fun paste(dates: Set<LocalDate>, target: LocalDate): PlanPaste {
+    suspend fun paste(dates: Set<LocalDate>, target: LocalDate): UndoableChange {
         val pasted = pasteDays(dates, target)
-        return PlanPaste(view = meal, count = pasted.count) { undoPasteDays(pasted) }
+        return UndoableChange(view = meal, count = pasted.count) { undoPasteDays(pasted) }
     }
 }
 
@@ -92,10 +90,6 @@ class DinnerPlanCommands @Inject constructor(
     undoPaste: UndoPasteDinnerDaysUseCase
 ) : MealPlanCommands<DinnerDay>(Meal.DINNER, autoFill, clear, restore, paste, undoPaste)
 
-class PlanDeletion(val view: Meal, val count: Int, private val undoAction: suspend () -> Unit) {
-    suspend fun undo() = undoAction()
-}
-
-class PlanPaste(val view: Meal, val count: Int, private val undoAction: suspend () -> Unit) {
+class UndoableChange(val view: Meal, val count: Int, private val undoAction: suspend () -> Unit) {
     suspend fun undo() = undoAction()
 }

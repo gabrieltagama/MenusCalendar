@@ -3,7 +3,7 @@ package com.gabrieltagama.menuplanner.feature.onboarding.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.fold
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ConnectCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.CompleteOnboardingUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,10 +51,10 @@ class WelcomeViewModel @Inject constructor(
 
     private fun connect(accessToken: String) {
         viewModelScope.launch {
-            when (val outcome = connectCloudAccount(accessToken)) {
-                is Outcome.Success -> completeOnboarding()
-                is Outcome.Failure -> showMessage(WelcomeMessage.Failed(outcome.error))
-            }
+            connectCloudAccount(accessToken).fold(
+                onSuccess = { completeOnboarding() },
+                onFailure = { error -> showMessage(WelcomeMessage.Failed(error)) }
+            )
         }
     }
 

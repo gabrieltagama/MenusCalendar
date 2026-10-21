@@ -104,8 +104,7 @@ fun CalendarScreenRoute(
     CalendarEventsEffect(
         events = viewModel.events,
         snackbarHostState = snackbarHostState,
-        onUndoDelete = viewModel::onUndoDelete,
-        onUndoPaste = viewModel::onUndoPaste
+        onUndo = viewModel::onUndo
     )
 
     CalendarScreen(

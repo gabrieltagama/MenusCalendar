@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.fold
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,10 +53,10 @@ abstract class PlanEditorViewModel<F>(initialForm: F) : ViewModel() {
     protected fun save(action: suspend () -> Outcome<*>) {
         form.update { it.withSaving(true) }
         viewModelScope.launch {
-            when (val outcome = action()) {
-                is Outcome.Success -> _events.send(PlanEditorEvent.Close)
-                is Outcome.Failure -> form.update { it.withSaving(false).withError(outcome.error) }
-            }
+            action().fold(
+                onSuccess = { _events.send(PlanEditorEvent.Close) },
+                onFailure = { error -> form.update { it.withSaving(false).withError(error) } }
+            )
         }
     }
 }

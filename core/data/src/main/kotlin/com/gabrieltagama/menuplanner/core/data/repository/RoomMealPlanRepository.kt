@@ -8,35 +8,18 @@ import com.gabrieltagama.menuplanner.core.data.mapper.toDomain
 import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.domain.model.MealDay
 import com.gabrieltagama.menuplanner.core.domain.port.MealPlanRepository
-import java.time.LocalDate
 import javax.inject.Inject
 
 /**
- * Room-backed lunch calendar (write side and the reads that commands need). Referenced dishes are
- * resolved with one query per read and several days are saved in one transaction. The calendar
- * screen reads through RoomCalendarQueries instead.
+ * Room-backed lunch calendar (see RoomDayPlanRepository): a lunch row references up to three dishes.
  */
 internal class RoomMealPlanRepository @Inject constructor(
-    private val mealDayDao: MealDayDao,
-    private val dishDao: DishDao
-) : MealPlanRepository {
-
-    override suspend fun getDay(date: LocalDate): MealDay? =
-        mealDayDao.getByDate(date.toEpochDay())?.let { resolve(listOf(it)).firstOrNull() }
-
-    override suspend fun getRange(dates: ClosedRange<LocalDate>): List<MealDay> =
-        resolve(mealDayDao.getRange(dates.start.toEpochDay(), dates.endInclusive.toEpochDay()))
-
-    override suspend fun save(day: MealDay) = mealDayDao.upsert(day.toEntity())
-
-    override suspend fun saveAll(days: List<MealDay>) = mealDayDao.upsertAll(days.map { it.toEntity() })
-
-    override suspend fun clear(date: LocalDate) = mealDayDao.deleteByDate(date.toEpochDay())
-
-    override suspend fun clearAll(dates: Collection<LocalDate>) = mealDayDao.deleteByDates(dates.map(LocalDate::toEpochDay))
-
-    private suspend fun resolve(days: List<MealDayEntity>): List<MealDay> {
-        val dishesById = dishDao.dishesById(days.flatMap { it.dishIds }.distinct())
-        return days.mapNotNull { it.toDomain(dishesById) }
-    }
-}
+    mealDayDao: MealDayDao,
+    dishDao: DishDao
+) : RoomDayPlanRepository<MealDayEntity, MealDay>(
+    dao = mealDayDao,
+    dishDao = dishDao,
+    dishIdsOf = MealDayEntity::dishIds,
+    toDomain = MealDayEntity::toDomain,
+    toEntity = MealDay::toEntity
+), MealPlanRepository

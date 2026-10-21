@@ -1,6 +1,8 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.share
 
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.map
+import com.gabrieltagama.menuplanner.core.domain.common.onSuccess
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
@@ -28,8 +30,8 @@ class ImportMenusUseCase @Inject constructor(
     private val codec: MenuSnapshotCodec,
     private val standardizeRecipeBook: StandardizeRecipeBookUseCase
 ) {
-    suspend operator fun invoke(text: String, scope: SnapshotScope = SnapshotScope.EVERYTHING): Outcome<ImportSummary> = when (val decoded = codec.decode(text)) {
-        is Outcome.Failure -> decoded
-        is Outcome.Success -> Outcome.Success(repository.merge(decoded.value.limitedTo(scope))).also { standardizeRecipeBook() }
-    }
+    suspend operator fun invoke(text: String, scope: SnapshotScope = SnapshotScope.EVERYTHING): Outcome<ImportSummary> =
+        codec.decode(text)
+            .map { snapshot -> repository.merge(snapshot.limitedTo(scope)) }
+            .onSuccess { standardizeRecipeBook() }
 }

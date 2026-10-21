@@ -46,20 +46,17 @@ data class CalendarUiState(
 
     fun isMarked(date: LocalDate): Boolean = selection?.dates?.contains(date) == true
 
-    fun isPlanned(date: LocalDate): Boolean = when (view) {
-        Meal.LUNCH -> date in days
-        Meal.DINNER -> date in dinners
-    }
+    fun isPlanned(date: LocalDate): Boolean = date in plannedDates
 }
 
 sealed interface CalendarEvent {
     data class AutoFillCompleted(val result: AutoFillResult, val view: Meal) : CalendarEvent
 
-    data class DaysDeleted(val deletion: PlanDeletion) : CalendarEvent
+    data class DaysDeleted(val change: UndoableChange) : CalendarEvent
 
     data class SelectionFilled(val result: AutoFillResult, val view: Meal) : CalendarEvent
 
-    data class DaysPasted(val paste: PlanPaste) : CalendarEvent
+    data class DaysPasted(val change: UndoableChange) : CalendarEvent
 
     data object NothingPlanned : CalendarEvent
 }
