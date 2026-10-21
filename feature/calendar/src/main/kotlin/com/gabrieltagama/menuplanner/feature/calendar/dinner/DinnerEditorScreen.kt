@@ -67,16 +67,6 @@ import java.time.LocalDate
  * stateless screen with one card for the single dinner dish. Tapping the card opens the
  * searchable list of dinner options; the dice button picks a random one.
  */
-data class DinnerEditorActions(
-    val onBack: () -> Unit = {},
-    val onSave: () -> Unit = {},
-    val onDishSelect: (Dish?) -> Unit = {},
-    val onRandomDish: () -> Unit = {},
-    val onClearRequest: () -> Unit = {},
-    val onClearConfirm: () -> Unit = {},
-    val onClearDismiss: () -> Unit = {}
-)
-
 @Composable
 fun DinnerEditorScreenRoute(
     onBack: () -> Unit,

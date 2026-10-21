@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 
-import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.port.AppStateRepository
 import javax.inject.Inject
 
 /**
@@ -9,7 +9,7 @@ import javax.inject.Inject
  * conversion rules or the ingredient catalog change, so existing books are converted again.
  */
 class MigrateRecipeUnitsUseCase @Inject constructor(
-    private val settings: SettingsRepository,
+    private val settings: AppStateRepository,
     private val standardizeRecipeBook: StandardizeRecipeBookUseCase
 ) {
     suspend operator fun invoke() {

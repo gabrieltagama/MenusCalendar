@@ -10,6 +10,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.port.DishIdGenerator
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.port.TransactionRunner
+import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
+import com.gabrieltagama.menuplanner.core.domain.query.PlannedUseQueries
 import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
@@ -22,8 +24,8 @@ import kotlinx.coroutines.flow.Flow
  * DishPlannedIncompatibly, so the calendar never holds days that an export could not restore; the
  * check and the save run in one transaction.
  */
-class ObserveDishesUseCase @Inject constructor(private val repository: DishRepository) {
-    operator fun invoke(): Flow<List<Dish>> = repository.observeDishes()
+class ObserveDishesUseCase @Inject constructor(private val queries: DishCatalogQueries) {
+    operator fun invoke(): Flow<List<Dish>> = queries.observeDishes()
 }
 
 class GetDishUseCase @Inject constructor(private val repository: DishRepository) {
@@ -32,7 +34,7 @@ class GetDishUseCase @Inject constructor(private val repository: DishRepository)
 }
 
 class SaveDishUseCase @Inject constructor(
-    private val repository: DishRepository,
+    private val plannedUses: PlannedUseQueries,
     private val clock: Clock,
     private val idGenerator: DishIdGenerator,
     private val standardizeRecipeBook: StandardizeRecipeBookUseCase,
@@ -48,7 +50,7 @@ class SaveDishUseCase @Inject constructor(
     }
 
     private suspend fun planConflictOf(id: DishId, draft: DishDraft): DomainError? =
-        repository.getPlannedUses(id)
+        plannedUses.getPlannedUses(id)
             .filterNot { it.allows(draft.type, draft.mealTime) }
             .takeIf { it.isNotEmpty() }
             ?.let { conflicts -> RecipeError.DishPlannedIncompatibly(firstDate = conflicts.minOf(PlannedUse::date), days = conflicts.map(PlannedUse::date).distinct().size) }

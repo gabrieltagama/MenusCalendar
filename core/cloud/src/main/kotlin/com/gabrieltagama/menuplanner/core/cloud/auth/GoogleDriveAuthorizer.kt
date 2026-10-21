@@ -28,21 +28,21 @@ class GoogleDriveAuthorizer @Inject constructor(@param:ApplicationContext privat
     suspend fun request(): AuthorizationStep =
         try {
             client.authorize(authorizationRequest(account = null)).await().toStep()
-        } catch (exception: ApiException) {
+        } catch (expected: ApiException) {
             AuthorizationStep.Failed
         }
 
     suspend fun silentToken(email: String): String? =
         try {
             client.authorize(authorizationRequest(accountOf(email))).await().takeUnless { it.hasResolution() }?.accessToken
-        } catch (exception: ApiException) {
+        } catch (expected: ApiException) {
             null
         }
 
     fun tokenFromConsent(data: Intent?): String? =
         try {
             client.getAuthorizationResultFromIntent(data).accessToken
-        } catch (exception: ApiException) {
+        } catch (expected: ApiException) {
             null
         }
 
@@ -63,7 +63,7 @@ class GoogleDriveAuthorizer @Inject constructor(@param:ApplicationContext privat
     private suspend fun bestEffort(action: suspend () -> Unit) =
         try {
             action()
-        } catch (exception: ApiException) {
+        } catch (expected: ApiException) {
             Unit
         }
 

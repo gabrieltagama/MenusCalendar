@@ -10,7 +10,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.gabrieltagama.menuplanner.core.data.di.SettingsDataStore
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
-import com.gabrieltagama.menuplanner.core.domain.port.SettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.port.AppStateRepository
+import com.gabrieltagama.menuplanner.core.domain.port.UserPreferencesRepository
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,7 +29,7 @@ import kotlinx.coroutines.flow.map
 @Singleton
 internal class DataStoreSettingsRepository @Inject constructor(
     @param:SettingsDataStore private val dataStore: DataStore<Preferences>
-) : SettingsRepository {
+) : UserPreferencesRepository, AppStateRepository {
 
     private val preferences: Flow<Preferences> = dataStore.data.catch { if (it is IOException) emit(emptyPreferences()) else throw it }
 

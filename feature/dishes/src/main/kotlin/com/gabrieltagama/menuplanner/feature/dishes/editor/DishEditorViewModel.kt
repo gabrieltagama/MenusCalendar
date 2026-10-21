@@ -177,7 +177,7 @@ class DishEditorViewModel @Inject constructor(
         savedStateHandle.get<String>(key)?.let { text ->
             try {
                 formJson.decodeFromString(DishFormDraft.serializer(), text)
-            } catch (exception: IllegalArgumentException) {
+            } catch (expected: IllegalArgumentException) {
                 null
             }
         }

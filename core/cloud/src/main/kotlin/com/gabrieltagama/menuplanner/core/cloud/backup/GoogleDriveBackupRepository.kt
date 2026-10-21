@@ -83,10 +83,10 @@ internal class GoogleDriveBackupRepository @Inject constructor(
     private suspend fun <T> remote(token: String, block: suspend (String) -> T): Outcome<T> =
         try {
             Outcome.Success(block(token))
-        } catch (exception: DriveUnauthorizedException) {
+        } catch (expected: DriveUnauthorizedException) {
             authorizer.invalidate(token)
             Outcome.Failure(CloudError.CloudAuthorizationRequired)
-        } catch (exception: IOException) {
+        } catch (expected: IOException) {
             Outcome.Failure(CloudError.CloudUnavailable)
         }
 

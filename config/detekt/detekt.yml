@@ -1,0 +1,39 @@
+# Reglas de detekt del proyecto, encima de la configuración por defecto. Se alinean con ktlint y
+# .editorconfig (sin límite de línea) y con Jetpack Compose: funciones @Composable en PascalCase,
+# previews privadas, muchos parámetros, medidas en dp y árboles de UI largos por convención de
+# Compose. Los ViewModels, DAOs y módulos de Hilt tienen una función por evento, consulta o binding,
+# los constructores con @Inject reciben un caso de uso por dependencia y los controladores de estado
+# de pantalla exponen una función por gesto (hasta 15 por clase).
+complexity:
+  LongParameterList:
+    ignoreDefaultParameters: true
+    ignoreAnnotated: ['Composable', 'Inject', 'HiltViewModel']
+  TooManyFunctions:
+    thresholdInClasses: 15
+    ignorePrivate: true
+    ignoreAnnotated: ['HiltViewModel', 'Dao', 'Module']
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+  CyclomaticComplexMethod:
+    ignoreAnnotated: ['Composable']
+  NestedBlockDepth:
+    excludes: ['**/test/**', '**/testFixtures/**']
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+performance:
+  SpreadOperator:
+    active: false
+style:
+  MaxLineLength:
+    active: false
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreEnums: true
+    ignoreAnnotated: ['Composable', 'Preview']
+  ReturnCount:
+    excludeGuardClauses: true
+  LoopWithTooManyJumpStatements:
+    excludes: ['**/test/**', '**/testFixtures/**']
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Preview']

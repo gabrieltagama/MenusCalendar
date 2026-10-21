@@ -4,6 +4,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
+import com.gabrieltagama.menuplanner.core.domain.query.PlannedUseQueries
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -12,7 +14,7 @@ import kotlinx.coroutines.flow.map
  * In-memory DishRepository backed by a MutableStateFlow; usedInCalendar marks ids planned in the
  * calendar and plannedUses gives the calendar days returned by getPlannedUses. Ids are exposed as plain text (current, usedInCalendar, deletedIds) to keep tests short.
  */
-class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository {
+class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository, DishCatalogQueries, PlannedUseQueries {
     private val dishes = MutableStateFlow(initial.associateBy { it.id })
     val usedInCalendar = mutableSetOf<String>()
     val upserted = mutableListOf<Dish>()

@@ -46,9 +46,9 @@ internal class CacheShareFiles @Inject constructor(
     override suspend fun save(uri: Uri, content: String): Boolean = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openOutputStream(uri, TRUNCATE_MODE)?.bufferedWriter()?.use { it.write(content) } != null
-        } catch (exception: IOException) {
+        } catch (expected: IOException) {
             false
-        } catch (exception: SecurityException) {
+        } catch (expected: SecurityException) {
             false
         }
     }
@@ -58,9 +58,9 @@ internal class CacheShareFiles @Inject constructor(
     override suspend fun read(uri: Uri): String? = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-        } catch (exception: IOException) {
+        } catch (expected: IOException) {
             null
-        } catch (exception: SecurityException) {
+        } catch (expected: SecurityException) {
             null
         }
     }

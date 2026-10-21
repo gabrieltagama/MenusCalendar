@@ -10,6 +10,8 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
+import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
+import com.gabrieltagama.menuplanner.core.domain.query.PlannedUseQueries
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +24,7 @@ import kotlinx.coroutines.flow.map
  */
 internal class RoomDishRepository @Inject constructor(
     private val dishDao: DishDao
-) : DishRepository {
+) : DishRepository, DishCatalogQueries, PlannedUseQueries {
 
     override fun observeDishes(): Flow<List<Dish>> = dishDao.observeAll().map { it.toDomainList() }
 
