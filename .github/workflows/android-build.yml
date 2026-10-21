@@ -63,6 +63,9 @@ jobs:
               out.write(f'### Cobertura\n\n{summary}\n')
           PY
 
+      - name: Coverage minimum (Kover)
+        run: .github/scripts/gradle.sh koverVerify
+
       - name: Android Lint
         run: .github/scripts/gradle.sh lintDebug --continue
 

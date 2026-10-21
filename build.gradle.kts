@@ -24,3 +24,13 @@ dependencies {
     kover(project(":feature:settings"))
     kover(project(":feature:share"))
 }
+
+kover {
+    reports {
+        verify {
+            rule("Cobertura mínima de líneas") {
+                minBound(59)
+            }
+        }
+    }
+}
