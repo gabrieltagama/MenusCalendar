@@ -25,7 +25,9 @@ import kotlinx.coroutines.flow.first
  * Restoring imports the recipes of the backup like a shared file (newest updatedAt wins, standard
  * units) and ignores any calendar an older backup may contain; an automatic backup uploads only when
  * the snapshot fingerprint changed since the last upload.
- * Connecting restores, uploads and schedules the daily backup; disconnecting cancels it.
+ * Connecting restores, schedules the daily backup and uploads; the daily backup is scheduled only
+ * once the restore succeeded, so it can never replace the backup with a recipe book that is still
+ * missing the restored recipes. Disconnecting cancels it.
  */
 
 class ObserveCloudAccountUseCase @Inject constructor(private val cloud: CloudBackupRepository) {
@@ -63,8 +65,8 @@ class ConnectCloudAccountUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(accessToken: String): Outcome<ImportSummary> =
         cloud.connect(accessToken)
-            .onSuccess { scheduler.scheduleDaily() }
             .flatMap { restoreBackup() }
+            .onSuccess { scheduler.scheduleDaily() }
             .flatMap { summary -> backUp(onlyIfChanged = true).map { summary } }
 }
 

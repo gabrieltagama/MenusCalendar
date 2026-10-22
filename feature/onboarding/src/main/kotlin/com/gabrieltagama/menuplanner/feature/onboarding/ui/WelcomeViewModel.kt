@@ -6,6 +6,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.fold
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ConnectCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.CompleteOnboardingUseCase
+import com.gabrieltagama.menuplanner.core.ui.state.catchingStorageFailure
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,7 +52,7 @@ class WelcomeViewModel @Inject constructor(
 
     private fun connect(accessToken: String) {
         viewModelScope.launch {
-            connectCloudAccount(accessToken).fold(
+            catchingStorageFailure { connectCloudAccount(accessToken) }.fold(
                 onSuccess = { completeOnboarding() },
                 onFailure = { error -> showMessage(WelcomeMessage.Failed(error)) }
             )

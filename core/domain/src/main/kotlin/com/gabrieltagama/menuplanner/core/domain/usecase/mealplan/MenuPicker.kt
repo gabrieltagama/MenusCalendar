@@ -37,12 +37,9 @@ internal class MenuPicker(dishes: List<Dish>, private val window: RepeatWindow, 
     }
 
     private fun build(shape: MenuShape, context: PickContext): MenuPick {
-        val slots = shape.requiredTypes.map { pickSlot(it, context) }
-        val menu = when (shape) {
-            MenuShape.COURSES -> DailyMenu.Courses(starter = slots[0].dish, main = slots[1].dish)
-            MenuShape.SINGLE -> DailyMenu.Single(single = slots[0].dish)
-        }
-        return MenuPick(menu, repeated = slots.any(SlotPick::repeated), breaksHeavyRule = slots.any(SlotPick::breaksHeavyRule))
+        val picks = shape.slots.associateWith { pickSlot(it.dishType, context) }
+        val menu = checkNotNull(DailyMenu.of(shape, picks.mapValues { (_, pick) -> pick.dish }))
+        return MenuPick(menu, repeated = picks.values.any(SlotPick::repeated), breaksHeavyRule = picks.values.any(SlotPick::breaksHeavyRule))
     }
 
     private fun pickSlot(type: DishType, context: PickContext): SlotPick {

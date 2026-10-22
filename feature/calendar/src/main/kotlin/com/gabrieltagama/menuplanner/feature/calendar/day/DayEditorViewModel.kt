@@ -67,15 +67,7 @@ data class DayEditorUiState(
 
     fun selectionFor(slot: MenuSlot): Dish? = form.selections[slot]
 
-    fun toMenu(): DailyMenu? {
-        val selections = form.selections
-        return when (form.mode) {
-            MenuShape.COURSES -> selections[MenuSlot.STARTER]?.let { starter ->
-                selections[MenuSlot.MAIN]?.let { main -> DailyMenu.Courses(starter = starter, main = main) }
-            }
-            MenuShape.SINGLE -> selections[MenuSlot.SINGLE]?.let { DailyMenu.Single(single = it) }
-        }
-    }
+    fun toMenu(): DailyMenu? = DailyMenu.of(form.mode, form.selections)
 }
 
 @HiltViewModel

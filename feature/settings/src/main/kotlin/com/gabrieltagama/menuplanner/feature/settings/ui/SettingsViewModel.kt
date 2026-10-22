@@ -18,6 +18,8 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveThemeMo
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetRepeatWindowUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetThemeModeUseCase
 import com.gabrieltagama.menuplanner.core.ui.state.BusyRunner
+import com.gabrieltagama.menuplanner.core.ui.state.catchingStorageFailure
+import com.gabrieltagama.menuplanner.core.ui.state.runStorageAction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -87,17 +89,14 @@ class SettingsViewModel @Inject constructor(
 
     fun onGoogleAuthorization(accessToken: String?) {
         if (accessToken == null) showMessage(BackupMessage.ConnectionCancelled)
-        else runBusy { connectCloudAccount(accessToken).fold(BackupMessage::Restored, BackupMessage::Failed) }
+        else runBusy { catchingStorageFailure { connectCloudAccount(accessToken) }.fold(BackupMessage::Restored, BackupMessage::Failed) }
     }
 
-    fun onBackUpNow() = runBusy { backUp(onlyIfChanged = false).fold({ BackupMessage.BackedUp }, BackupMessage::Failed) }
+    fun onBackUpNow() = runBusy { catchingStorageFailure { backUp(onlyIfChanged = false) }.fold({ BackupMessage.BackedUp }, BackupMessage::Failed) }
 
-    fun onRestore() = runBusy { restoreBackup().fold(BackupMessage::Restored, BackupMessage::Failed) }
+    fun onRestore() = runBusy { catchingStorageFailure { restoreBackup() }.fold(BackupMessage::Restored, BackupMessage::Failed) }
 
-    fun onDisconnect() = runBusy {
-        disconnectCloudAccount()
-        BackupMessage.Disconnected
-    }
+    fun onDisconnect() = runBusy { runStorageAction { disconnectCloudAccount() }.fold({ BackupMessage.Disconnected }, BackupMessage::Failed) }
 
     fun onMessageShown() = _backupState.update { it.copy(message = null) }
 

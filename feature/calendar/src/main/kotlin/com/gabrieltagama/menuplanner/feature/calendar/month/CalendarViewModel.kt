@@ -2,6 +2,9 @@ package com.gabrieltagama.menuplanner.feature.calendar.month
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.fold
+import com.gabrieltagama.menuplanner.core.domain.common.onFailure
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
@@ -9,6 +12,8 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDi
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthLunchesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PlanCommandService
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoableChange
+import com.gabrieltagama.menuplanner.core.ui.state.catchingStorageFailure
+import com.gabrieltagama.menuplanner.core.ui.state.runStorageAction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -34,7 +39,8 @@ import kotlinx.coroutines.launch
  * copy mode in DaySelectionController and the changes on the plan of the active view (autofill,
  * delete, paste and their undo) in PlanCommandService; this class
  * only wires them to the screen, runs the autofill after confirmation and reports results as
- * one-shot events that carry what changed so deletions and pastes can be undone.
+ * one-shot events that carry what changed so deletions and pastes can be undone, or StorageFailed
+ * when the device storage could not apply a change.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -121,8 +127,10 @@ class CalendarViewModel @Inject constructor(
         if (marked.isEmpty()) return
         val targetView = view.value
         viewModelScope.launch {
-            val deletion = commands.delete(marked, targetView)
-            _events.send(if (deletion.count > 0) CalendarEvent.DaysDeleted(deletion) else CalendarEvent.NothingPlanned)
+            sendResult {
+                val deletion = commands.delete(marked, targetView)
+                if (deletion.count > 0) CalendarEvent.DaysDeleted(deletion) else CalendarEvent.NothingPlanned
+            }
         }
     }
 
@@ -141,15 +149,17 @@ class CalendarViewModel @Inject constructor(
     fun onPasteAt(target: LocalDate) {
         val copied = selection.takeClipboard() ?: return
         viewModelScope.launch {
-            val paste = commands.paste(copied.dates, copied.view, target)
-            _events.send(if (paste.count > 0) CalendarEvent.DaysPasted(paste) else CalendarEvent.NothingPlanned)
+            sendResult {
+                val paste = commands.paste(copied.dates, copied.view, target)
+                if (paste.count > 0) CalendarEvent.DaysPasted(paste) else CalendarEvent.NothingPlanned
+            }
         }
     }
 
     fun onPasteCancel() = selection.cancelPaste()
 
     fun onUndo(change: UndoableChange) {
-        viewModelScope.launch { commands.undo(change) }
+        viewModelScope.launch { runStorageAction { commands.undo(change) }.onFailure { _events.send(CalendarEvent.StorageFailed) } }
     }
 
     fun onAutoFillRequest() = autoFillStatus.update { if (it.isRunning) it else it.copy(showConfirm = true) }
@@ -163,11 +173,14 @@ class CalendarViewModel @Inject constructor(
         runAutoFill { CalendarEvent.AutoFillCompleted(commands.autoFill(target, targetView), targetView) }
     }
 
+    private suspend fun sendResult(command: suspend () -> CalendarEvent) =
+        _events.send(catchingStorageFailure { Outcome.Success(command()) }.fold(onSuccess = { it }, onFailure = { CalendarEvent.StorageFailed }))
+
     private fun runAutoFill(fill: suspend () -> CalendarEvent) {
         autoFillStatus.value = AutoFillStatus(isRunning = true)
         viewModelScope.launch {
             try {
-                _events.send(fill())
+                sendResult(fill)
             } finally {
                 autoFillStatus.update { it.copy(isRunning = false) }
             }

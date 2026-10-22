@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.common.fold
+import com.gabrieltagama.menuplanner.core.ui.state.catchingStorageFailure
+import com.gabrieltagama.menuplanner.core.ui.state.runStorageAction
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +16,8 @@ import kotlinx.coroutines.launch
 
 /**
  * Shared behaviour of the day editors (lunch and dinner): clear confirmation, error dismissal and
- * the save/clear flows that close the editor when they finish. Subclasses only describe how their
+ * the save/clear flows that close the editor when they finish or show the error (a business rule or
+ * a storage failure) and keep it open. Subclasses only describe how their
  * form reflects each status change and how the day is saved or cleared.
  */
 sealed interface PlanEditorEvent {
@@ -44,14 +47,15 @@ abstract class PlanEditorViewModel<F>(initialForm: F) : ViewModel() {
 
     fun onClearConfirm() {
         form.update { it.withClearConfirm(false).withSaving(true) }
-        viewModelScope.launch {
-            clearDay()
-            _events.send(PlanEditorEvent.Close)
-        }
+        finish { runStorageAction { clearDay() } }
     }
 
     protected fun save(action: suspend () -> Outcome<*>) {
         form.update { it.withSaving(true) }
+        finish { catchingStorageFailure { action() } }
+    }
+
+    private fun finish(action: suspend () -> Outcome<*>) {
         viewModelScope.launch {
             action().fold(
                 onSuccess = { _events.send(PlanEditorEvent.Close) },

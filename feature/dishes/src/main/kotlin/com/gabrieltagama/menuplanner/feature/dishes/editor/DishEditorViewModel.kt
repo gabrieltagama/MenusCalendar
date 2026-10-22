@@ -17,6 +17,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.DeleteDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.GetDishUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.SaveDishUseCase
+import com.gabrieltagama.menuplanner.core.ui.state.catchingStorageFailure
 import com.gabrieltagama.menuplanner.feature.dishes.navigation.DishEditorRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -127,17 +128,17 @@ class DishEditorViewModel @Inject constructor(
             return
         }
         _uiState.update { it.copy(isSaving = true, showValidationErrors = true) }
-        viewModelScope.launch { saveDish(draft).fold(onSuccess = { _events.send(DishEditorEvent.Close) }, onFailure = ::showError) }
+        viewModelScope.launch { catchingStorageFailure { saveDish(draft) }.fold(onSuccess = { _events.send(DishEditorEvent.Close) }, onFailure = ::showError) }
     }
 
     fun onDeleteConfirm() {
         val id = dishId ?: return
         _uiState.update { it.copy(showDeleteConfirm = false, isSaving = true) }
-        viewModelScope.launch { deleteDish(id).fold(onSuccess = { _events.send(DishEditorEvent.Close) }, onFailure = ::showError) }
+        viewModelScope.launch { catchingStorageFailure { deleteDish(id) }.fold(onSuccess = { _events.send(DishEditorEvent.Close) }, onFailure = ::showError) }
     }
 
     private fun load(id: DishId) = viewModelScope.launch {
-        getDish(id).fold(onSuccess = ::fillForm, onFailure = { error -> _uiState.update { it.copy(isLoading = false, error = error) } })
+        catchingStorageFailure { getDish(id) }.fold(onSuccess = ::fillForm, onFailure = { error -> _uiState.update { it.copy(isLoading = false, error = error) } })
     }
 
     private fun showError(error: DomainError) = _uiState.update { it.copy(isSaving = false, error = error) }

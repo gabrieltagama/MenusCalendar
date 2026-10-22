@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.backup
 
 import com.gabrieltagama.menuplanner.core.domain.common.CloudError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeBackupScheduler
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeCloudBackupRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
@@ -144,6 +145,15 @@ class BackupUseCasesTest {
         val cloud = FakeCloudBackupRepository(failure = failure)
 
         assertEquals(failure, connect(cloud)("token"))
+        assertFalse(scheduler.isScheduled)
+    }
+
+    @Test
+    fun `failed restore does not schedule the daily backup`() = runBlocking {
+        val cloud = FakeCloudBackupRepository(remoteJson = "not a backup")
+
+        assertEquals(Outcome.Failure(ShareError.InvalidImportFile), connect(cloud)("token"))
+        assertTrue(cloud.uploads.isEmpty())
         assertFalse(scheduler.isScheduled)
     }
 

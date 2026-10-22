@@ -10,15 +10,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import com.gabrieltagama.menuplanner.core.domain.common.StorageError
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoableChange
+import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import kotlinx.coroutines.flow.Flow
 
 /**
  * Shows every one-shot CalendarEvent in the snackbar: autofill summaries (AutoFillMessageFormatter),
- * "nothing to do" notices, and deletions and pastes with a Deshacer action that calls back with
- * what changed so it can be reverted.
+ * "nothing to do" notices, storage failures, and deletions and pastes with a Deshacer action that
+ * calls back with what changed so it can be reverted.
  */
 @Composable
 internal fun CalendarEventsEffect(
@@ -29,6 +31,7 @@ internal fun CalendarEventsEffect(
     val resources = LocalResources.current
     val formatter = remember(resources) { AutoFillMessageFormatter(ResourcesAutoFillTexts(resources)) }
     val undoLabel = stringResource(R.string.calendar_undo)
+    val storageFailedText = StorageError.StorageUnavailable.message()
     val currentOnUndo by rememberUpdatedState(onUndo)
 
     suspend fun showUndoable(change: UndoableChange, textRes: Int) {
@@ -48,6 +51,7 @@ internal fun CalendarEventsEffect(
                     else formatter.format(event.result, event.view)
                 )
                 CalendarEvent.NothingPlanned -> snackbarHostState.showSnackbar(resources.getString(R.string.calendar_selection_nothing_planned))
+                CalendarEvent.StorageFailed -> snackbarHostState.showSnackbar(storageFailedText)
             }
         }
     }

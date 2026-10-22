@@ -4,6 +4,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
@@ -20,8 +21,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * PlanCommandService routes each command to the plan of the requested meal and its results undo
- * exactly what changed.
+ * PlanCommandService routes each command to the plan of the requested meal, runs each command and
+ * each undo in its own transaction, and its results undo exactly what changed.
  */
 class PlanCommandServiceTest {
     private val first = LocalDate.of(2026, 3, 2)
@@ -33,6 +34,7 @@ class PlanCommandServiceTest {
     private val dishes = FakeDishRepository(listOf(single, dinnerDish))
     private val settings = FakeSettingsRepository()
     private val clock = TestDishes.fixedClock
+    private val transaction = ImmediateTransactionRunner()
 
     private val service = PlanCommandService(
         LunchPlanCommands(
@@ -48,7 +50,8 @@ class PlanCommandServiceTest {
             RestoreDinnerDaysUseCase(dinners),
             PasteDinnerDaysUseCase(dinners, clock),
             UndoPasteDinnerDaysUseCase(dinners)
-        )
+        ),
+        transaction
     )
 
     @Test
@@ -76,5 +79,14 @@ class PlanCommandServiceTest {
         service.undo(change)
 
         assertEquals(setOf(first), lunches.current.keys)
+    }
+
+    @Test
+    fun `every command and every undo runs in its own transaction`() = runBlocking {
+        val change = service.delete(setOf(first), Meal.LUNCH)
+        service.undo(change)
+        service.autoFill(setOf(second), Meal.DINNER)
+
+        assertEquals(3, transaction.transactions)
     }
 }

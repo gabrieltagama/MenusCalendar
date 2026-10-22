@@ -62,4 +62,6 @@ sealed interface CalendarEvent {
     data class DaysPasted(val change: UndoableChange) : CalendarEvent
 
     data object NothingPlanned : CalendarEvent
+
+    data object StorageFailed : CalendarEvent
 }
