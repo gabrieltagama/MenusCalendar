@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
+import com.gabrieltagama.menuplanner.core.domain.model.firstPlannableDay
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -27,7 +28,5 @@ internal inline fun <D> fillEmptyDays(emptyDays: List<LocalDate>, pick: (LocalDa
     )
 }
 
-internal fun YearMonth.daysToFill(today: LocalDate): List<LocalDate> {
-    val firstDay = if (YearMonth.from(today) == this) today.dayOfMonth else 1
-    return (firstDay..lengthOfMonth()).map(::atDay)
-}
+internal fun YearMonth.daysToFill(today: LocalDate): List<LocalDate> =
+    (firstPlannableDay(today).dayOfMonth..lengthOfMonth()).map(::atDay)

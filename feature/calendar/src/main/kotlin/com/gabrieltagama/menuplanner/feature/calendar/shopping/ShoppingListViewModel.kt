@@ -8,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.DefaultDispatcher
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
+import com.gabrieltagama.menuplanner.core.domain.model.firstPlannableDay
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearExpiredShoppingChecksUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearShoppingChecksUseCase
@@ -126,6 +127,6 @@ class ShoppingListViewModel @Inject constructor(
 }
 
 private fun YearMonth.initialState(today: LocalDate): ShoppingListUiState = ShoppingListUiState(
-    from = if (YearMonth.from(today) == this) today else atDay(1),
+    from = firstPlannableDay(today),
     to = atEndOfMonth()
 )

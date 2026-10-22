@@ -8,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
+import com.gabrieltagama.menuplanner.core.domain.fake.TestPlanCommands
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
@@ -34,7 +35,7 @@ class DinnerPlanUseCasesTest {
     private val date = LocalDate.of(2026, 3, 10)
 
     private fun save(dish: Dish) = runBlocking {
-        SaveDinnerDayUseCase(FakeDinnerPlanRepository(), TestDishes.fixedClock)(date, dish)
+        TestPlanCommands().dinner.save(date, dish)
     }
 
     @Test
@@ -56,7 +57,7 @@ class DinnerPlanUseCasesTest {
     private fun autoFill(dishes: List<Dish>, seed: Int, lunches: List<LunchDay> = emptyList(), dinners: List<DinnerDay> = emptyList()): Run = runBlocking {
         val lunchRepository = FakeLunchPlanRepository(lunches)
         val dinnerRepository = FakeDinnerPlanRepository(dinners)
-        val useCase = AutoFillMonthDinnersUseCase(FakeDishRepository(dishes), lunchRepository, dinnerRepository, FakeSettingsRepository(), Random(seed), TestDishes.fixedClock)
+        val useCase = AutoFillMonthDinnersUseCase(FakeDishRepository(dishes), dinnerRepository, PlanHistoryReader(lunchRepository, dinnerRepository), FakeSettingsRepository(), Random(seed), TestDishes.fixedClock)
         Run(dinnerRepository, lunchRepository, useCase(month).filledDays)
     }
 

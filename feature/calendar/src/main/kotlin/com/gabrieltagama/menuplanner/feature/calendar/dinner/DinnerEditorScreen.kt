@@ -59,6 +59,7 @@ import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import com.gabrieltagama.menuplanner.feature.calendar.common.DishPickerSheet
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
+import com.gabrieltagama.menuplanner.feature.calendar.editor.EditorStatus
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEffects
 import java.time.LocalDate
 
@@ -75,7 +76,7 @@ fun DinnerEditorScreenRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    PlanEditorEffects(viewModel = viewModel, error = state.form.error, snackbarHostState = snackbarHostState, onClose = onBack)
+    PlanEditorEffects(viewModel = viewModel, error = state.status.error, snackbarHostState = snackbarHostState, onClose = onBack)
 
     DinnerEditorScreen(
         state = state,
@@ -117,8 +118,8 @@ fun DinnerEditorScreen(
                     }
                 },
                 actions = {
-                    if (state.form.hasSavedDinner)
-                        IconButton(onClick = actions.onClearRequest, enabled = !state.form.isSaving) {
+                    if (state.status.hasSavedPlan)
+                        IconButton(onClick = actions.onClearRequest, enabled = !state.status.isSaving) {
                             Icon(Icons.Filled.DeleteSweep, contentDescription = stringResource(R.string.dinner_editor_clear))
                         }
                     TextButton(onClick = actions.onSave, enabled = state.canSave) {
@@ -130,7 +131,7 @@ fun DinnerEditorScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         val contentModifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
-        if (state.form.isLoading || state.isOptionsLoading) LoadingIndicator(modifier = contentModifier)
+        if (state.status.isLoading || state.isOptionsLoading) LoadingIndicator(modifier = contentModifier)
         else
             Column(
                 modifier = contentModifier.verticalScroll(rememberScrollState()).padding(16.dp),
@@ -162,7 +163,7 @@ fun DinnerEditorScreen(
             usage = state.usage
         )
 
-    if (state.form.showClearConfirm)
+    if (state.status.showClearConfirm)
         ConfirmDialog(
             title = stringResource(R.string.dinner_editor_clear),
             text = stringResource(R.string.dinner_editor_clear_text),
@@ -236,7 +237,8 @@ private fun DinnerEditorScreenPreview() = MenuPlannerTheme {
     DinnerEditorScreen(
         state = DinnerEditorUiState(
             date = LocalDate.of(2026, 10, 9),
-            form = DinnerEditorForm(isLoading = false, selected = omelette),
+            form = DinnerEditorForm(selected = omelette),
+            status = EditorStatus(isLoading = false),
             options = listOf(omelette),
             isOptionsLoading = false
         ),

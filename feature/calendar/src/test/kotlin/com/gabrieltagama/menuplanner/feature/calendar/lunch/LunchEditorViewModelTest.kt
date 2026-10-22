@@ -1,10 +1,11 @@
-package com.gabrieltagama.menuplanner.feature.calendar.day
+package com.gabrieltagama.menuplanner.feature.calendar.lunch
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageQueries
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
+import com.gabrieltagama.menuplanner.core.domain.fake.TestPlanCommands
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -16,10 +17,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearLunchDayUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetLunchDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PickRandomDishUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveLunchDayUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
 import java.time.Clock
 import java.time.Instant
@@ -41,14 +39,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * DayEditorViewModel over the real use cases and in-memory repositories.
+ * LunchEditorViewModel over the real use cases and in-memory repositories.
  *
- * Instrumented because the ViewModel reads savedStateHandle.toRoute<DayEditorRoute>() (Bundle based
+ * Instrumented because the ViewModel reads savedStateHandle.toRoute<LunchEditorRoute>() (Bundle based
  * decoding). The handle uses the route property name "epochDay". uiState is a WhileSubscribed
  * StateFlow and onSave reads uiState.value, so each test keeps a collector active, as the screen does.
  */
 @RunWith(AndroidJUnit4::class)
-class DayEditorViewModelTest {
+class LunchEditorViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -66,10 +64,10 @@ class DayEditorViewModelTest {
 
     @Test
     fun emptyDayStartsInCoursesModeAndCannotSave() = withViewModel { viewModel, _ ->
-        val state = awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
+        val state = awaitState(viewModel) { !it.status.isLoading && !it.isOptionsLoading }
 
         assertEquals(MenuShape.COURSES, state.form.mode)
-        assertFalse(state.form.hasSavedDay)
+        assertFalse(state.status.hasSavedPlan)
         assertFalse(state.canSave)
         assertEquals(listOf(MenuSlot.STARTER, MenuSlot.MAIN), state.visibleSlots)
         assertEquals(listOf(starter), state.optionsFor(MenuSlot.STARTER))
@@ -78,7 +76,7 @@ class DayEditorViewModelTest {
 
     @Test
     fun requiredSlotsEnableSave() = withViewModel { viewModel, _ ->
-        awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
+        awaitState(viewModel) { !it.status.isLoading && !it.isOptionsLoading }
 
         viewModel.onDishSelect(MenuSlot.STARTER, starter)
         assertFalse(awaitState(viewModel) { it.selectionFor(MenuSlot.STARTER) == starter }.canSave)
@@ -92,7 +90,7 @@ class DayEditorViewModelTest {
 
     @Test
     fun modeSwitchKeepsSelectionsAndChangesRequiredSlots() = withViewModel { viewModel, _ ->
-        awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
+        awaitState(viewModel) { !it.status.isLoading && !it.isOptionsLoading }
         viewModel.onDishSelect(MenuSlot.STARTER, starter)
         viewModel.onDishSelect(MenuSlot.MAIN, main)
         awaitState(viewModel) { it.canSave }
@@ -114,7 +112,7 @@ class DayEditorViewModelTest {
 
     @Test
     fun saveCallsRepositoryWithActiveModeOnlyAndCloses() = withViewModel { viewModel, lunchPlanRepository ->
-        awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
+        awaitState(viewModel) { !it.status.isLoading && !it.isOptionsLoading }
         viewModel.onDishSelect(MenuSlot.STARTER, starter)
         viewModel.onDishSelect(MenuSlot.SINGLE, single)
         viewModel.onModeChange(MenuShape.SINGLE)
@@ -133,9 +131,9 @@ class DayEditorViewModelTest {
     fun existingSingleDayIsLoadedInSingleMode() {
         val existing = LunchDay(date = date, menu = DailyMenu.Single(single = single), updatedAt = Instant.EPOCH)
         withViewModel(initialDays = listOf(existing)) { viewModel, _ ->
-            val state = awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
+            val state = awaitState(viewModel) { !it.status.isLoading && !it.isOptionsLoading }
 
-            assertTrue(state.form.hasSavedDay)
+            assertTrue(state.status.hasSavedPlan)
             assertEquals(MenuShape.SINGLE, state.form.mode)
             assertEquals(single, state.selectionFor(MenuSlot.SINGLE))
             assertTrue(state.canSave)
@@ -146,9 +144,9 @@ class DayEditorViewModelTest {
     fun clearDayCallsRepositoryAndCloses() {
         val existing = LunchDay(date = date, menu = DailyMenu.Courses(starter = starter, main = main), updatedAt = Instant.EPOCH)
         withViewModel(initialDays = listOf(existing)) { viewModel, lunchPlanRepository ->
-            awaitState(viewModel) { it.form.hasSavedDay }
+            awaitState(viewModel) { it.status.hasSavedPlan }
             viewModel.onClearRequest()
-            assertTrue(awaitState(viewModel) { it.form.showClearConfirm }.form.showClearConfirm)
+            assertTrue(awaitState(viewModel) { it.status.showClearConfirm }.status.showClearConfirm)
 
             viewModel.onClearConfirm()
 
@@ -160,28 +158,26 @@ class DayEditorViewModelTest {
 
     @Test
     fun clearDismissHidesConfirmation() = withViewModel { viewModel, lunchPlanRepository ->
-        awaitState(viewModel) { !it.form.isLoading }
+        awaitState(viewModel) { !it.status.isLoading }
         viewModel.onClearRequest()
-        awaitState(viewModel) { it.form.showClearConfirm }
+        awaitState(viewModel) { it.status.showClearConfirm }
 
         viewModel.onClearDismiss()
 
-        assertFalse(awaitState(viewModel) { !it.form.showClearConfirm }.form.showClearConfirm)
+        assertFalse(awaitState(viewModel) { !it.status.showClearConfirm }.status.showClearConfirm)
         assertTrue(lunchPlanRepository.cleared.isEmpty())
     }
 
     private fun withViewModel(
         initialDays: List<LunchDay> = emptyList(),
-        block: suspend CoroutineScope.(DayEditorViewModel, FakeLunchPlanRepository) -> Unit
+        block: suspend CoroutineScope.(LunchEditorViewModel, FakeLunchPlanRepository) -> Unit
     ) = runBlocking {
         val lunchPlanRepository = FakeLunchPlanRepository(initialDays)
-        val viewModel = DayEditorViewModel(
+        val viewModel = LunchEditorViewModel(
             savedStateHandle = SavedStateHandle(mapOf("epochDay" to date.toEpochDay())),
             observeDishes = ObserveDishesUseCase(dishRepository),
             observeDishUsage = ObserveDishUsageUseCase(FakeDishUsageQueries(), clock),
-            getLunchDay = GetLunchDayUseCase(lunchPlanRepository),
-            saveLunchDay = SaveLunchDayUseCase(lunchPlanRepository, clock),
-            clearLunchDay = ClearLunchDayUseCase(lunchPlanRepository),
+            commands = TestPlanCommands(lunches = lunchPlanRepository, clock = clock).lunch,
             pickRandomDish = PickRandomDishUseCase(Random(7)),
             defaultDispatcher = Dispatchers.Default
         )
@@ -194,9 +190,9 @@ class DayEditorViewModelTest {
     }
 
     private suspend fun awaitState(
-        viewModel: DayEditorViewModel,
-        predicate: (DayEditorUiState) -> Boolean
-    ): DayEditorUiState = withTimeout(TIMEOUT_MS) { viewModel.uiState.first(predicate) }
+        viewModel: LunchEditorViewModel,
+        predicate: (LunchEditorUiState) -> Boolean
+    ): LunchEditorUiState = withTimeout(TIMEOUT_MS) { viewModel.uiState.first(predicate) }
 
     private fun dish(id: String, name: String, type: DishType) =
         Dish(id = DishId(id), name = name, type = type, heaviness = Heaviness.MEDIUM, updatedAt = Instant.EPOCH)

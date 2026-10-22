@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.feature.calendar.day
+package com.gabrieltagama.menuplanner.feature.calendar.lunch
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,9 +39,9 @@ import com.gabrieltagama.menuplanner.feature.calendar.R
  * the labels of shapes and slots.
  */
 @Composable
-internal fun DayEditorContent(
-    state: DayEditorUiState,
-    actions: DayEditorActions,
+internal fun LunchEditorContent(
+    state: LunchEditorUiState,
+    actions: LunchEditorActions,
     onPick: (MenuSlot) -> Unit,
     modifier: Modifier = Modifier
 ) = Column(

@@ -15,7 +15,6 @@ import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import java.time.Clock
-import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -45,7 +44,7 @@ class BackUpUseCase @Inject constructor(
         val snapshot = snapshots.read(BACKUP_SCOPE)
         val fingerprint = SnapshotFingerprint.of(snapshot)
         if (onlyIfChanged && fingerprint == cloud.lastUploadedFingerprint()) return Outcome.Success(BackupResult.NO_CHANGES)
-        return cloud.upload(codec.encode(snapshot, Instant.now(clock)), fingerprint).map { BackupResult.UPLOADED }
+        return cloud.upload(codec.encode(snapshot, clock.instant()), fingerprint).map { BackupResult.UPLOADED }
     }
 }
 

@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.feature.calendar.day
+package com.gabrieltagama.menuplanner.feature.calendar.lunch
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
@@ -14,6 +14,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MenuShape
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.feature.calendar.R
+import com.gabrieltagama.menuplanner.feature.calendar.editor.EditorStatus
 import java.time.Instant
 import java.time.LocalDate
 import org.junit.Rule
@@ -22,12 +23,12 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 /**
- * Stateless DayEditorScreen: a dish meant for dinner can be chosen for lunch and its card shows a
+ * Stateless LunchEditorScreen: a dish meant for dinner can be chosen for lunch and its card shows a
  * warning, while a lunch or any-time dish shows none.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "w412dp-h915dp-xxhdpi")
-class DayEditorScreenTest {
+class LunchEditorScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
@@ -56,14 +57,15 @@ class DayEditorScreenTest {
 
     private fun setScreen(dish: Dish) = composeRule.setContent {
         MaterialTheme {
-            DayEditorScreen(
-                state = DayEditorUiState(
+            LunchEditorScreen(
+                state = LunchEditorUiState(
                     date = LocalDate.of(2026, 10, 9),
-                    form = DayEditorForm(mode = MenuShape.SINGLE, selections = mapOf(MenuSlot.SINGLE to dish), isLoading = false),
+                    form = LunchEditorForm(mode = MenuShape.SINGLE, selections = mapOf(MenuSlot.SINGLE to dish)),
+                    status = EditorStatus(isLoading = false),
                     options = mapOf(DishType.SINGLE to listOf(dish)),
                     isOptionsLoading = false
                 ),
-                actions = DayEditorActions()
+                actions = LunchEditorActions()
             )
         }
     }

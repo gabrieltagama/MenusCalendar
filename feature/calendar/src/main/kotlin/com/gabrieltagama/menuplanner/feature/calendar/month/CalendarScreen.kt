@@ -88,7 +88,7 @@ private val FabClearance = 96.dp
 
 @Composable
 fun CalendarScreenRoute(
-    onOpenDay: (LocalDate) -> Unit,
+    onOpenLunch: (LocalDate) -> Unit,
     onOpenDinner: (LocalDate) -> Unit,
     onOpenShoppingList: (YearMonth) -> Unit,
     viewModel: CalendarViewModel = hiltViewModel()
@@ -113,7 +113,7 @@ fun CalendarScreenRoute(
         onNextMonth = viewModel::onNextMonth,
         onToday = viewModel::onToday,
         onDateSelect = viewModel::onDateSelect,
-        onOpenDay = onOpenDay,
+        onOpenLunch = onOpenLunch,
         onOpenDinner = onOpenDinner,
         onViewChange = viewModel::onViewChange,
         onOpenShoppingList = { onOpenShoppingList(state.month) },
@@ -147,7 +147,7 @@ fun CalendarScreen(
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
     onDateSelect: (LocalDate) -> Unit,
-    onOpenDay: (LocalDate) -> Unit,
+    onOpenLunch: (LocalDate) -> Unit,
     onOpenDinner: (LocalDate) -> Unit = {},
     onViewChange: (Meal) -> Unit = {},
     onOpenShoppingList: () -> Unit = {},
@@ -198,7 +198,7 @@ fun CalendarScreen(
                 date = state.selectedDate,
                 lines = state.summaryLines(),
                 view = state.view,
-                onOpen = { if (state.view == Meal.LUNCH) onOpenDay(state.selectedDate) else onOpenDinner(state.selectedDate) }
+                onOpen = { if (state.view == Meal.LUNCH) onOpenLunch(state.selectedDate) else onOpenDinner(state.selectedDate) }
             )
             OutlinedButton(onClick = onOpenShoppingList, enabled = !state.isLoading, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.ShoppingCart, contentDescription = null)
@@ -246,7 +246,7 @@ private fun CalendarScreenPreview() = MenuPlannerTheme {
         onNextMonth = {},
         onToday = {},
         onDateSelect = {},
-        onOpenDay = {}
+        onOpenLunch = {}
     )
 }
 

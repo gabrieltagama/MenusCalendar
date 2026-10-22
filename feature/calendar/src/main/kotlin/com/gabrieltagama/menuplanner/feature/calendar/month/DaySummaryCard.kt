@@ -54,8 +54,8 @@ internal fun DaySummaryCard(date: LocalDate, lines: List<Pair<String, DishSummar
                 text = shownDate.longTitleText().replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.titleLarge
             )
-            if (shownLines.isEmpty()) EmptyDaySummary(view = shownView, onOpenDay = onOpen)
-            else PlannedDaySummary(lines = shownLines, onOpenDay = onOpen)
+            if (shownLines.isEmpty()) EmptyDaySummary(view = shownView, onOpenLunch = onOpen)
+            else PlannedDaySummary(lines = shownLines, onOpenLunch = onOpen)
         }
     }
 }
@@ -67,7 +67,7 @@ internal fun CalendarUiState.summaryLines(): List<Pair<String, DishSummary>> = w
 }
 
 @Composable
-private fun EmptyDaySummary(view: Meal, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+private fun EmptyDaySummary(view: Meal, onOpenLunch: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Icons.Filled.EventBusy, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
@@ -76,7 +76,7 @@ private fun EmptyDaySummary(view: Meal, onOpenDay: () -> Unit) = Column(vertical
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-    FilledTonalButton(onClick = onOpenDay, modifier = Modifier.fillMaxWidth()) {
+    FilledTonalButton(onClick = onOpenLunch, modifier = Modifier.fillMaxWidth()) {
         Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
         Spacer(modifier = Modifier.size(8.dp))
         Text(stringResource(R.string.calendar_plan))
@@ -84,9 +84,9 @@ private fun EmptyDaySummary(view: Meal, onOpenDay: () -> Unit) = Column(vertical
 }
 
 @Composable
-private fun PlannedDaySummary(lines: List<Pair<String, DishSummary>>, onOpenDay: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+private fun PlannedDaySummary(lines: List<Pair<String, DishSummary>>, onOpenLunch: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
     lines.forEach { (label, dish) -> SummaryLine(label = label, dish = dish) }
-    OutlinedButton(onClick = onOpenDay, modifier = Modifier.fillMaxWidth()) {
+    OutlinedButton(onClick = onOpenLunch, modifier = Modifier.fillMaxWidth()) {
         Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
         Spacer(modifier = Modifier.size(8.dp))
         Text(stringResource(R.string.calendar_edit))

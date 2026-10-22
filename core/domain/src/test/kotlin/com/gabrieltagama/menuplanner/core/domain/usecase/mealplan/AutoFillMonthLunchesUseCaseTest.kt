@@ -67,7 +67,7 @@ class AutoFillMonthLunchesUseCaseTest {
     ) = AutoFillMonthLunchesUseCase(
         FakeDishRepository(dishes),
         repository,
-        FakeDinnerPlanRepository(dinners),
+        PlanHistoryReader(repository, FakeDinnerPlanRepository(dinners)),
         FakeSettingsRepository(initialRepeatWindow = window),
         Random(seed),
         clock

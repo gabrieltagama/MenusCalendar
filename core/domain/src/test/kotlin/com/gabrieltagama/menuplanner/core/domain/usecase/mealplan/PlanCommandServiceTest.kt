@@ -3,10 +3,8 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.mealplan
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
-import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
+import com.gabrieltagama.menuplanner.core.domain.fake.TestPlanCommands
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
@@ -15,7 +13,6 @@ import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import java.time.Instant
 import java.time.LocalDate
-import kotlin.random.Random
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -31,34 +28,14 @@ class PlanCommandServiceTest {
     private val dinnerDish = dish(id = "d", type = DishType.MAIN, mealTime = MealTime.DINNER)
     private val lunches = FakeLunchPlanRepository(listOf(LunchDay(first, DailyMenu.Single(single), Instant.EPOCH)))
     private val dinners = FakeDinnerPlanRepository(listOf(DinnerDay(first, dinnerDish, Instant.EPOCH)))
-    private val dishes = FakeDishRepository(listOf(single, dinnerDish))
-    private val settings = FakeSettingsRepository()
-    private val clock = TestDishes.fixedClock
-    private val transaction = ImmediateTransactionRunner()
-
-    private val service = PlanCommandService(
-        LunchPlanCommands(
-            AutoFillMonthLunchesUseCase(dishes, lunches, dinners, settings, Random(1), clock),
-            ClearLunchDaysUseCase(lunches),
-            RestoreLunchDaysUseCase(lunches),
-            PasteLunchDaysUseCase(lunches, clock),
-            UndoPasteLunchDaysUseCase(lunches)
-        ),
-        DinnerPlanCommands(
-            AutoFillMonthDinnersUseCase(dishes, lunches, dinners, settings, Random(1), clock),
-            ClearDinnerDaysUseCase(dinners),
-            RestoreDinnerDaysUseCase(dinners),
-            PasteDinnerDaysUseCase(dinners, clock),
-            UndoPasteDinnerDaysUseCase(dinners)
-        ),
-        transaction
-    )
+    private val commands = TestPlanCommands(lunches = lunches, dinners = dinners, dishes = FakeDishRepository(listOf(single, dinnerDish)))
+    private val service = commands.service
 
     @Test
     fun `deleting dinners leaves lunches untouched and undo restores them`() = runBlocking {
         val change = service.delete(setOf(first), Meal.DINNER)
 
-        assertEquals(Meal.DINNER, change.view)
+        assertEquals(Meal.DINNER, change.meal)
         assertEquals(1, change.count)
         assertEquals(emptySet<LocalDate>(), dinners.current.keys)
         assertEquals(setOf(first), lunches.current.keys)
@@ -72,7 +49,7 @@ class PlanCommandServiceTest {
     fun `pasting lunches writes the lunch plan and undo removes the pasted day`() = runBlocking {
         val change = service.paste(setOf(first), Meal.LUNCH, second)
 
-        assertEquals(Meal.LUNCH, change.view)
+        assertEquals(Meal.LUNCH, change.meal)
         assertEquals(setOf(first, second), lunches.current.keys)
         assertEquals(setOf(first), dinners.current.keys)
 
@@ -87,6 +64,6 @@ class PlanCommandServiceTest {
         service.undo(change)
         service.autoFill(setOf(second), Meal.DINNER)
 
-        assertEquals(3, transaction.transactions)
+        assertEquals(3, commands.transaction.transactions)
     }
 }
