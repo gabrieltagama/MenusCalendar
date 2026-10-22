@@ -53,6 +53,12 @@ internal class DataStoreSettingsRepository @Inject constructor(
         dataStore.edit { it[ONBOARDING_COMPLETED] = true }
     }
 
+    override suspend fun isInitialDishesLoaded(): Boolean = preferences.first()[INITIAL_DISHES_LOADED] ?: false
+
+    override suspend fun setInitialDishesLoaded() {
+        dataStore.edit { it[INITIAL_DISHES_LOADED] = true }
+    }
+
     override suspend fun recipeUnitsVersion(): Int = preferences.first()[RECIPE_UNITS_VERSION] ?: 0
 
     override suspend fun setRecipeUnitsVersion(version: Int) {
@@ -64,5 +70,6 @@ internal class DataStoreSettingsRepository @Inject constructor(
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val RECIPE_UNITS_VERSION = intPreferencesKey("recipe_units_version")
         val REPEAT_WINDOW_DAYS = intPreferencesKey("repeat_window_days")
+        val INITIAL_DISHES_LOADED = booleanPreferencesKey("initial_dishes_loaded")
     }
 }

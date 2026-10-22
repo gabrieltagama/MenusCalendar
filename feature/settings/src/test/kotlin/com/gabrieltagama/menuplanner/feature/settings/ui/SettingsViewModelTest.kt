@@ -8,8 +8,8 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
+import com.gabrieltagama.menuplanner.core.domain.fake.TestImports
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
@@ -19,10 +19,8 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.backup.BackUpUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ConnectCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.DisconnectCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.RestoreBackupUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetRepeatWindowUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetThemeModeUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -131,7 +129,7 @@ class SettingsViewModelTest {
 
     private fun viewModel(cloud: FakeCloudBackupRepository): SettingsViewModel {
         val backUp = BackUpUseCase(cloud, snapshots, codec, TestDishes.fixedClock)
-        val restore = RestoreBackupUseCase(cloud, ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes), ImmediateTransactionRunner()))
+        val restore = RestoreBackupUseCase(cloud, TestImports.importMenus(dishes, codec))
         return SettingsViewModel(
             preferences = settings,
             cloud = cloud,

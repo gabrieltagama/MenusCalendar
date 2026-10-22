@@ -2,7 +2,7 @@ package com.gabrieltagama.menuplanner.core.data.di
 
 import com.gabrieltagama.menuplanner.core.data.database.RoomTransactionRunner
 import com.gabrieltagama.menuplanner.core.data.id.UuidDishIdGenerator
-import com.gabrieltagama.menuplanner.core.data.initial.AssetInitialDishesRepository
+import com.gabrieltagama.menuplanner.core.data.initial.AssetInitialDishesSource
 import com.gabrieltagama.menuplanner.core.data.query.RoomDishUsageQueries
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
@@ -15,7 +15,7 @@ import com.gabrieltagama.menuplanner.core.domain.port.AppStateRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DishIdGenerator
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.port.InitialDishesRepository
+import com.gabrieltagama.menuplanner.core.domain.port.InitialDishesSource
 import com.gabrieltagama.menuplanner.core.domain.port.LunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
@@ -86,8 +86,7 @@ internal abstract class RepositoryModule {
     abstract fun bindOnboardingQueries(implementation: DataStoreSettingsRepository): OnboardingQueries
 
     @Binds
-    @Singleton
-    abstract fun bindInitialDishesRepository(implementation: AssetInitialDishesRepository): InitialDishesRepository
+    abstract fun bindInitialDishesSource(implementation: AssetInitialDishesSource): InitialDishesSource
 
     @Binds
     @Singleton

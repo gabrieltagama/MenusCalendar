@@ -8,10 +8,18 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.data.database.DatabaseTestData
 import com.gabrieltagama.menuplanner.core.data.database.MenuPlannerDatabase
+import com.gabrieltagama.menuplanner.core.data.database.RoomTransactionRunner
 import com.gabrieltagama.menuplanner.core.data.fake.TestData
+import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
-import com.gabrieltagama.menuplanner.core.data.repository.RoomMenuSnapshotRepository
+import com.gabrieltagama.menuplanner.core.data.repository.RoomLunchPlanRepository
+import com.gabrieltagama.menuplanner.core.data.settings.DataStoreSettingsRepository
 import com.gabrieltagama.menuplanner.core.data.share.JsonMenuSnapshotCodec
+import com.gabrieltagama.menuplanner.core.domain.common.Outcome
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.LoadInitialDishesUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
+import com.gabrieltagama.menuplanner.core.domain.usecase.share.MenuSnapshotMerger
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,12 +36,13 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 
 /**
- * Robolectric tests of AssetInitialDishesRepository with the real asset, codec and Room merge: the
- * family recipe book is loaded on the first launch with valid, unique dishes, it is loaded only
- * once even if the user later empties the book, and it is skipped when the book already has dishes.
+ * Robolectric tests of LoadInitialDishesUseCase wired as in the app, with the real asset
+ * (AssetInitialDishesSource), JSON codec, Room repositories and settings DataStore: the family recipe
+ * book is loaded on the first launch with valid, unique dishes, it is loaded only once even if the
+ * user later empties the book, and it is skipped when the book already has dishes.
  */
 @RunWith(AndroidJUnit4::class)
-class AssetInitialDishesRepositoryTest {
+class InitialDishesLoadingTest {
 
     @get:Rule
     val folder = TemporaryFolder()
@@ -59,20 +68,21 @@ class AssetInitialDishesRepositoryTest {
 
     @Test
     fun firstLaunchLoadsTheFamilyRecipeBook() = runTest {
-        repository().loadIfFirstLaunch()
+        val result = loadInitialDishes()
 
         val dishes = dishRepository.getDishes()
         assertTrue(dishes.isNotEmpty())
+        assertEquals(dishes.size, (result as Outcome.Success).value.dishesAdded)
         assertEquals(dishes.size, dishes.map { it.id }.toSet().size)
         assertTrue(dishes.all { it.validationError == null })
     }
 
     @Test
     fun theRecipeBookIsLoadedOnlyOnce() = runTest {
-        repository().loadIfFirstLaunch()
+        loadInitialDishes()
         dishRepository.getDishes().forEach { dishRepository.deleteIfUnused(it.id) }
 
-        repository().loadIfFirstLaunch()
+        loadInitialDishes()
 
         assertTrue(dishRepository.getDishes().isEmpty())
     }
@@ -82,17 +92,24 @@ class AssetInitialDishesRepositoryTest {
         val own = DatabaseTestData.dish("own", name = "Receta propia")
         dishRepository.upsert(own)
 
-        repository().loadIfFirstLaunch()
+        loadInitialDishes()
 
         assertEquals(listOf(own), dishRepository.getDishes())
     }
 
-    private fun repository() = AssetInitialDishesRepository(
-        context = ApplicationProvider.getApplicationContext<Context>(),
-        dishDao = database.dishDao(),
-        codec = JsonMenuSnapshotCodec(TestData.json),
-        snapshots = RoomMenuSnapshotRepository(database),
-        dataStore = dataStore,
-        ioDispatcher = Dispatchers.IO
-    )
+    private suspend fun loadInitialDishes() = LoadInitialDishesUseCase(
+        appState = DataStoreSettingsRepository(dataStore),
+        dishes = dishRepository,
+        source = AssetInitialDishesSource(ApplicationProvider.getApplicationContext<Context>(), Dispatchers.IO),
+        importMenus = ImportMenusUseCase(
+            codec = JsonMenuSnapshotCodec(TestData.json),
+            merger = MenuSnapshotMerger(
+                dishRepository,
+                RoomLunchPlanRepository(database.lunchDayDao(), database.dishDao()),
+                RoomDinnerPlanRepository(database.dinnerDayDao(), database.dishDao())
+            ),
+            standardizeRecipeBook = StandardizeRecipeBookUseCase(dishRepository),
+            transaction = RoomTransactionRunner(database)
+        )
+    )()
 }

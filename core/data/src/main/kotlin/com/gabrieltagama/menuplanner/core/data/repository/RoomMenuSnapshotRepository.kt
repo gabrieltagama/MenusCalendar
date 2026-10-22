@@ -2,37 +2,18 @@ package com.gabrieltagama.menuplanner.core.data.repository
 
 import androidx.room.withTransaction
 import com.gabrieltagama.menuplanner.core.data.database.MenuPlannerDatabase
-import com.gabrieltagama.menuplanner.core.data.database.dao.DayPlanDao
-import com.gabrieltagama.menuplanner.core.data.database.entity.DayPlanRow
 import com.gabrieltagama.menuplanner.core.data.database.entity.DishWithIngredients
 import com.gabrieltagama.menuplanner.core.data.mapper.toDomain
-import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.data.mapper.toEntry
-import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
-import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
-import com.gabrieltagama.menuplanner.core.domain.model.DishId
-import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
-import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
-import com.gabrieltagama.menuplanner.core.domain.model.PlannedDay
-import com.gabrieltagama.menuplanner.core.domain.model.share.DishMergePlan
-import com.gabrieltagama.menuplanner.core.domain.model.share.ImportPolicy
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
-import com.gabrieltagama.menuplanner.core.domain.model.share.MergeDecision
-import com.gabrieltagama.menuplanner.core.domain.model.share.PlanEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
 import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
-import java.time.Instant
-import java.time.LocalDate
 import javax.inject.Inject
 
 /**
- * Room-backed snapshot of the recipe book and calendar. read is one consistent transaction; merge
- * runs in one transaction: dishes first with a DishMergePlan (match by id, else by name and type,
- * newest updatedAt wins), so the planned days can use dishes that arrived in the same snapshot;
- * then the lunches and dinners, remapped to the local dish ids, that resolve against the known
- * dishes with the domain rules (LunchEntry.resolve, DinnerEntry.resolve) and are merged the same way for
- * both meals (mergeDays); the rest are skipped.
+ * Room-backed snapshot of the recipe book and, for EVERYTHING, of the calendar, read in one
+ * consistent transaction. Planned days keep their dish ids as stored (toEntry).
  */
 internal class RoomMenuSnapshotRepository @Inject constructor(
     private val database: MenuPlannerDatabase
@@ -50,35 +31,5 @@ internal class RoomMenuSnapshotRepository @Inject constructor(
         )
     }
 
-    override suspend fun merge(snapshot: MenuSnapshot): ImportSummary = database.withTransaction {
-        val plan = DishMergePlan.of(local = allDishes(), incoming = snapshot.dishes)
-        dishDao.upsertAllWithIngredients(plan.writes.map { it.toEntity() to it.toIngredientEntities() })
-        val known = allDishes().associateBy(Dish::id)
-        val dayDecisions = mergeDays(snapshot.lunches.map { it.remapped(plan.idMap) }, known, lunchDayDao, LunchDay::toEntity) +
-            mergeDays(snapshot.dinners.map { it.remapped(plan.idMap) }, known, dinnerDayDao, DinnerDay::toEntity)
-        ImportPolicy.summaryOf(plan.decisions, dayDecisions)
-    }
-
     private suspend fun allDishes(): List<Dish> = dishDao.getAll().map(DishWithIngredients::toDomain)
-
-    private suspend fun <E : DayPlanRow, D : PlannedDay<D>> mergeDays(
-        entries: List<PlanEntry<D>>,
-        known: Map<DishId, Dish>,
-        dao: DayPlanDao<E>,
-        toEntity: (D) -> E
-    ): List<MergeDecision> {
-        val local = dao.getAll().associate { it.date to it.updatedAt }
-        val decisions = entries.decide(known, local)
-        dao.upsertAll(decisions.accepted().map(toEntity))
-        return decisions.map { it.second }
-    }
 }
-
-private fun <D : PlannedDay<D>> List<PlanEntry<D>>.decide(known: Map<DishId, Dish>, local: Map<LocalDate, Instant>): List<Pair<D?, MergeDecision>> =
-    map { entry ->
-        val day = entry.resolve(known)
-        day to if (day == null) MergeDecision.SKIP else ImportPolicy.decide(local[entry.date], entry.updatedAt)
-    }
-
-private fun <D> List<Pair<D?, MergeDecision>>.accepted(): List<D> =
-    filter { (_, decision) -> decision != MergeDecision.SKIP }.mapNotNull { (day, _) -> day }
