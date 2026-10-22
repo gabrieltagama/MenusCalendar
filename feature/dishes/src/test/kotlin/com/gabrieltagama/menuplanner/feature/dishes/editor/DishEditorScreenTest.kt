@@ -31,7 +31,7 @@ class DishEditorScreenTest {
     @Test
     fun saveButtonTriggersCallback() {
         var saveCount = 0
-        setScreen(DishEditorUiState(name = "Gazpacho"), DishEditorActions(onSave = { saveCount++ }))
+        setScreen(DishEditorUiState(form = DishForm(name = "Gazpacho")), DishEditorActions(onSave = { saveCount++ }))
 
         composeRule.onNodeWithText(context.getString(R.string.dish_editor_save)).performClick()
 
@@ -40,7 +40,7 @@ class DishEditorScreenTest {
 
     @Test
     fun saveButtonIsDisabledWhileSaving() {
-        setScreen(DishEditorUiState(name = "Gazpacho", isSaving = true), DishEditorActions())
+        setScreen(DishEditorUiState(form = DishForm(name = "Gazpacho"), isSaving = true), DishEditorActions())
 
         composeRule.onNodeWithText(context.getString(R.string.dish_editor_save)).assertIsNotEnabled()
     }
@@ -57,7 +57,7 @@ class DishEditorScreenTest {
     fun editModeShowsDeleteActionThatTriggersCallback() {
         var deleteRequests = 0
         setScreen(
-            DishEditorUiState(isEditMode = true, name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM),
+            DishEditorUiState(isEditMode = true, form = DishForm(name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)),
             DishEditorActions(onDeleteRequest = { deleteRequests++ })
         )
 

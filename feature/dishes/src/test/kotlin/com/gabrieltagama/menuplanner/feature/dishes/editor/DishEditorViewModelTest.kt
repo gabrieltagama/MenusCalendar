@@ -77,9 +77,9 @@ class DishEditorViewModelTest {
         assertFalse(state.isEditMode)
         assertFalse(state.isLoading)
         assertTrue(state.canSubmit)
-        assertEquals("", state.name)
-        assertEquals(Rating.THREE, state.rating)
-        assertEquals(MealTime.ANY, state.mealTime)
+        assertEquals("", state.form.name)
+        assertEquals(Rating.THREE, state.form.rating)
+        assertEquals(MealTime.ANY, state.form.mealTime)
     }
 
     @Test
@@ -101,7 +101,7 @@ class DishEditorViewModelTest {
         val viewModel = createViewModel(dishId = null)
         viewModel.onNameChange("Gazpacho")
         viewModel.onAddIngredient()
-        val key = viewModel.uiState.value.ingredients.single().key
+        val key = viewModel.uiState.value.form.ingredients.single().key
         viewModel.onIngredientNameChange(key, "Tomate")
         viewModel.onIngredientQuantityChange(key, "1,2,3")
 
@@ -110,7 +110,7 @@ class DishEditorViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state.showValidationErrors)
         assertFalse(state.isNameInvalid)
-        assertFalse(state.ingredients.single().isQuantityValid)
+        assertFalse(state.form.ingredients.single().isQuantityValid)
         assertTrue(repository.upserted.isEmpty())
     }
 
@@ -131,7 +131,7 @@ class DishEditorViewModelTest {
         viewModel.onRatingChange(Rating.FIVE)
         viewModel.onMealTimeChange(MealTime.LUNCH)
         viewModel.onAddIngredient()
-        val key = viewModel.uiState.value.ingredients.single().key
+        val key = viewModel.uiState.value.form.ingredients.single().key
         viewModel.onIngredientNameChange(key, "Tomate")
         viewModel.onIngredientQuantityChange(key, "1,5")
         viewModel.onIngredientUnitChange(key, MeasureUnit.KILOGRAM)
@@ -156,16 +156,16 @@ class DishEditorViewModelTest {
         val state = awaitLoaded(viewModel)
 
         assertTrue(state.isEditMode)
-        assertEquals(existingDish.name, state.name)
-        assertEquals(Rating.FOUR, state.rating)
-        assertEquals(MealTime.DINNER, state.mealTime)
-        assertEquals(existingDish.description, state.description)
-        assertEquals(existingDish.type, state.type)
-        assertEquals(existingDish.heaviness, state.heaviness)
-        assertEquals(existingDish.preparation, state.preparation)
-        assertEquals(listOf("500", "250"), state.ingredients.map { it.quantityText })
-        assertEquals(listOf("Patata", "Aceite"), state.ingredients.map { it.name })
-        assertEquals(state.ingredients.size, state.ingredients.map { it.key }.toSet().size)
+        assertEquals(existingDish.name, state.form.name)
+        assertEquals(Rating.FOUR, state.form.rating)
+        assertEquals(MealTime.DINNER, state.form.mealTime)
+        assertEquals(existingDish.description, state.form.description)
+        assertEquals(existingDish.type, state.form.type)
+        assertEquals(existingDish.heaviness, state.form.heaviness)
+        assertEquals(existingDish.preparation, state.form.preparation)
+        assertEquals(listOf("500", "250"), state.form.ingredients.map { it.quantityText })
+        assertEquals(listOf("Patata", "Aceite"), state.form.ingredients.map { it.name })
+        assertEquals(state.form.ingredients.size, state.form.ingredients.map { it.key }.toSet().size)
     }
 
     @Test
@@ -246,7 +246,7 @@ class DishEditorViewModelTest {
 
         viewModel.onDiscardDismiss()
         assertFalse(viewModel.uiState.value.showDiscardConfirm)
-        assertEquals("Tortilla de patatas con cebolla", viewModel.uiState.value.name)
+        assertEquals("Tortilla de patatas con cebolla", viewModel.uiState.value.form.name)
 
         viewModel.onBackRequest()
         viewModel.onDiscardConfirm()
@@ -272,19 +272,19 @@ class DishEditorViewModelTest {
         withTimeout(TIMEOUT_MS) { first.uiState.first { !it.isLoading } }
         first.onNameChange("Tortilla con cebolla")
         first.onAddIngredient()
-        val key = first.uiState.value.ingredients.last().key
+        val key = first.uiState.value.form.ingredients.last().key
         first.onIngredientNameChange(key, "Cebolla")
         first.onIngredientQuantityChange(key, "150")
-        withTimeout(TIMEOUT_MS) { first.uiState.first { it.ingredients.last().quantityText == "150" } }
+        withTimeout(TIMEOUT_MS) { first.uiState.first { it.form.ingredients.last().quantityText == "150" } }
         repository.upsert(existingDish.copy(name = "Changed elsewhere"))
 
         val restored = createViewModel(handle).uiState.value
 
         assertFalse(restored.isLoading)
-        assertEquals("Tortilla con cebolla", restored.name)
-        assertEquals(listOf("Patata", "Aceite", "Cebolla"), restored.ingredients.map { it.name })
-        assertEquals("150", restored.ingredients.last().quantityText)
-        assertEquals(restored.ingredients.size, restored.ingredients.map { it.key }.toSet().size)
+        assertEquals("Tortilla con cebolla", restored.form.name)
+        assertEquals(listOf("Patata", "Aceite", "Cebolla"), restored.form.ingredients.map { it.name })
+        assertEquals("150", restored.form.ingredients.last().quantityText)
+        assertEquals(restored.form.ingredients.size, restored.form.ingredients.map { it.key }.toSet().size)
     }
 
     @Test
