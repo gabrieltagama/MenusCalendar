@@ -8,8 +8,7 @@ import com.gabrieltagama.menuplanner.core.domain.common.onFailure
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.PlannedLunch
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthLunchesUseCase
+import com.gabrieltagama.menuplanner.core.domain.query.CalendarQueries
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PlanCommandService
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoableChange
 import com.gabrieltagama.menuplanner.core.ui.state.catchingStorageFailure
@@ -34,7 +33,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Monthly calendar: keeps the active view (lunches or dinners) and switches the observed lunch and
- * dinner read models with flatMapLatest whenever the month changes. The visible month, the selected
+ * dinner read models (CalendarQueries) with flatMapLatest whenever the month changes. The visible month, the selected
  * day and "today" (refreshed whenever the screen resumes) live in MonthNavigator, the selection and
  * copy mode in DaySelectionController and the changes on the plan of the active view (autofill,
  * delete, paste and their undo) in PlanCommandService; this class
@@ -45,8 +44,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
-    observeMonthLunches: ObserveMonthLunchesUseCase,
-    observeMonthDinners: ObserveMonthDinnersUseCase,
+    calendar: CalendarQueries,
     private val commands: PlanCommandService,
     clock: Clock
 ) : ViewModel() {
@@ -57,7 +55,7 @@ class CalendarViewModel @Inject constructor(
     private val selection = DaySelectionController()
 
     private val monthPlan = navigator.month.flatMapLatest { visibleMonth ->
-        combine(observeMonthLunches(visibleMonth), observeMonthDinners(visibleMonth)) { lunches, dinners ->
+        combine(calendar.observeLunches(visibleMonth), calendar.observeDinners(visibleMonth)) { lunches, dinners ->
             MonthPlan(visibleMonth, lunches.associateBy { it.date }, dinners.associateBy { it.date })
         }
     }

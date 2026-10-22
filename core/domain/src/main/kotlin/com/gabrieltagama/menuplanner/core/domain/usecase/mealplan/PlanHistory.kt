@@ -11,6 +11,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.LunchPlanRepository
 import java.time.LocalDate
+import javax.inject.Inject
 
 /**
  * Lunches and dinners around the dates an autofill run plans, read once and updated with every
@@ -55,11 +56,11 @@ internal class PlanHistory(lunches: Map<LocalDate, DailyMenu>, dinners: Map<Loca
  * Reads the lunches and dinners of a range of dates into a PlanHistory, so the autofill depends on
  * one reader instead of both calendar repositories.
  */
-internal class PlanHistoryReader(
+class PlanHistoryReader @Inject constructor(
     private val lunchPlanRepository: LunchPlanRepository,
     private val dinnerPlanRepository: DinnerPlanRepository
 ) {
-    suspend fun read(dates: ClosedRange<LocalDate>): PlanHistory = PlanHistory(
+    internal suspend fun read(dates: ClosedRange<LocalDate>): PlanHistory = PlanHistory(
         lunches = lunchPlanRepository.getRange(dates).associate { it.date to it.menu },
         dinners = dinnerPlanRepository.getRange(dates).associate { it.date to it.dish }
     )

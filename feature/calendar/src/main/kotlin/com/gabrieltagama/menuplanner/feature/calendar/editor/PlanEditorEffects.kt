@@ -14,7 +14,7 @@ import com.gabrieltagama.menuplanner.core.ui.text.message
  */
 @Composable
 internal fun PlanEditorEffects(
-    viewModel: PlanEditorViewModel<*>,
+    viewModel: PlanEditorViewModel<*, *>,
     error: DomainError?,
     snackbarHostState: SnackbarHostState,
     onClose: () -> Unit

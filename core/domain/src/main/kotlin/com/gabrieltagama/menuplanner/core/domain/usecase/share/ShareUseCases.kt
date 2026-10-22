@@ -9,7 +9,6 @@ import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.domain.port.TransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
 import java.time.Clock
-import java.time.Instant
 import javax.inject.Inject
 
 /**
@@ -22,7 +21,7 @@ class ExportMenusUseCase @Inject constructor(
     private val codec: MenuSnapshotCodec,
     private val clock: Clock
 ) {
-    suspend operator fun invoke(): String = codec.encode(repository.read(SnapshotScope.EVERYTHING), Instant.now(clock))
+    suspend operator fun invoke(): String = codec.encode(repository.read(SnapshotScope.EVERYTHING), clock.instant())
 }
 
 class ImportMenusUseCase @Inject constructor(

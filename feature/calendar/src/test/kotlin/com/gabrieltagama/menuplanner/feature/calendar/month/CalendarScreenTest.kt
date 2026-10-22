@@ -88,7 +88,7 @@ class CalendarScreenTest {
     @Test
     fun summaryButtonOpensSelectedDay() {
         val opened = mutableListOf<LocalDate>()
-        setScreen(onOpenDay = { opened += it })
+        setScreen(onOpenLunch = { opened += it })
 
         composeRule.onNodeWithText(context.getString(R.string.calendar_edit)).performClick()
 
@@ -109,7 +109,7 @@ class CalendarScreenTest {
         screenState: CalendarUiState = state,
         onToday: () -> Unit = {},
         onDateSelect: (LocalDate) -> Unit = {},
-        onOpenDay: (LocalDate) -> Unit = {}
+        onOpenLunch: (LocalDate) -> Unit = {}
     ) = composeRule.setContent {
         MaterialTheme {
             CalendarScreen(
@@ -118,7 +118,7 @@ class CalendarScreenTest {
                 onNextMonth = {},
                 onToday = onToday,
                 onDateSelect = onDateSelect,
-                onOpenDay = onOpenDay
+                onOpenLunch = onOpenLunch
             )
         }
     }

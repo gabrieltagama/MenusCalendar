@@ -4,7 +4,6 @@ import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.LunchDay
 import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
-import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.port.LunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.UserPreferencesRepository
@@ -20,11 +19,11 @@ import kotlin.random.Random
 class AutoFillMonthLunchesUseCase @Inject constructor(
     dishRepository: DishRepository,
     lunchPlanRepository: LunchPlanRepository,
-    dinnerPlanRepository: DinnerPlanRepository,
+    historyReader: PlanHistoryReader,
     preferencesRepository: UserPreferencesRepository,
     private val random: Random,
     clock: Clock
-) : AutoFillPlanUseCase<LunchDay>(Meal.LUNCH, lunchPlanRepository, dishRepository, PlanHistoryReader(lunchPlanRepository, dinnerPlanRepository), preferencesRepository, clock) {
+) : AutoFillPlanUseCase<LunchDay>(Meal.LUNCH, lunchPlanRepository, dishRepository, historyReader, preferencesRepository, clock) {
 
     override fun pickerFor(dishes: List<Dish>, window: RepeatWindow): DayPicker<LunchDay> {
         val picker = MenuPicker(dishes.filter(Dish::isLunchOption), window, random)

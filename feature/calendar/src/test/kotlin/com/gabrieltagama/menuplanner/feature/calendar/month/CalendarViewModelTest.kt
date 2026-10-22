@@ -6,7 +6,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeLunchPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakePlanQueries
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeSettingsRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
+import com.gabrieltagama.menuplanner.core.domain.fake.TestPlanCommands
 import com.gabrieltagama.menuplanner.core.domain.model.AutoFillResult
 import com.gabrieltagama.menuplanner.core.domain.model.DailyMenu
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
@@ -20,21 +20,6 @@ import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedDinner
 import com.gabrieltagama.menuplanner.core.domain.model.plan.toPlannedLunch
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.testing.awaitItemMatching
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthDinnersUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.AutoFillMonthLunchesUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearLunchDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.DinnerPlanCommands
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.LunchPlanCommands
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthDinnersUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveMonthLunchesUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteDinnerDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PasteLunchDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PlanCommandService
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreDinnerDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.RestoreLunchDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteDinnerDaysUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoPasteLunchDaysUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoableChange
 import java.time.Clock
 import java.time.Instant
@@ -42,7 +27,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.ZoneOffset
-import kotlin.random.Random
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -52,7 +36,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * CalendarViewModel over the real ObserveMonthLunchesUseCase (read through FakePlanQueries) with a controllable clock (2026-10-09 UTC):
+ * CalendarViewModel over the calendar read models of FakePlanQueries with a controllable clock (2026-10-09 UTC):
  * month navigation, selected day summary, the "today" shortcut and the month autofill over the
  * real AutoFillMonthLunchesUseCase with in-memory repositories and a seeded Random; the lunches/dinners
  * view switch, the dinner autofill and the refresh of "today" when the screen resumes; the selection
@@ -89,25 +73,8 @@ class CalendarViewModelTest {
     private val queries = FakePlanQueries(repository, dinnerRepository)
     private val viewModel by lazy {
         CalendarViewModel(
-            ObserveMonthLunchesUseCase(queries),
-            ObserveMonthDinnersUseCase(queries),
-            PlanCommandService(
-                LunchPlanCommands(
-                    AutoFillMonthLunchesUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
-                    ClearLunchDaysUseCase(repository),
-                    RestoreLunchDaysUseCase(repository),
-                    PasteLunchDaysUseCase(repository, clock),
-                    UndoPasteLunchDaysUseCase(repository)
-                ),
-                DinnerPlanCommands(
-                    AutoFillMonthDinnersUseCase(dishRepository, repository, dinnerRepository, settingsRepository, Random(42), clock),
-                    ClearDinnerDaysUseCase(dinnerRepository),
-                    RestoreDinnerDaysUseCase(dinnerRepository),
-                    PasteDinnerDaysUseCase(dinnerRepository, clock),
-                    UndoPasteDinnerDaysUseCase(dinnerRepository)
-                ),
-                ImmediateTransactionRunner()
-            ),
+            queries,
+            TestPlanCommands(lunches = repository, dinners = dinnerRepository, dishes = dishRepository, settings = settingsRepository, seed = 42, clock = clock).service,
             clock
         )
     }
@@ -420,7 +387,7 @@ class CalendarViewModelTest {
 
                 deletion = (awaitItem() as CalendarEvent.DaysDeleted).change
             }
-            assertEquals(Meal.LUNCH, deletion.view)
+            assertEquals(Meal.LUNCH, deletion.meal)
             assertEquals(2, deletion.count)
 
             val cleared = awaitItemMatching { it.lunches.isEmpty() && !it.isLoading }
@@ -465,7 +432,7 @@ class CalendarViewModelTest {
             viewModel.events.test {
                 viewModel.onDeleteSelected()
 
-                assertEquals(Meal.DINNER, (awaitItem() as CalendarEvent.DaysDeleted).change.view)
+                assertEquals(Meal.DINNER, (awaitItem() as CalendarEvent.DaysDeleted).change.meal)
             }
 
             awaitItemMatching { it.dinners.isEmpty() }

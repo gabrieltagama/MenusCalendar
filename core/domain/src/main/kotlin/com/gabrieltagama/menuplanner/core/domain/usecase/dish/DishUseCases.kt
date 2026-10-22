@@ -13,7 +13,6 @@ import com.gabrieltagama.menuplanner.core.domain.port.TransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
 import com.gabrieltagama.menuplanner.core.domain.query.PlannedUseQueries
 import java.time.Clock
-import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
@@ -45,7 +44,7 @@ class SaveDishUseCase @Inject constructor(
         return transaction.inTransaction {
             val conflict = draft.id?.let { planConflictOf(it, draft) }
             if (conflict != null) Outcome.Failure(conflict)
-            else Outcome.Success(standardizeRecipeBook.save(draft.toDish(id = draft.id ?: idGenerator.newId(), updatedAt = Instant.now(clock))))
+            else Outcome.Success(standardizeRecipeBook.save(draft.toDish(id = draft.id ?: idGenerator.newId(), updatedAt = clock.instant())))
         }
     }
 

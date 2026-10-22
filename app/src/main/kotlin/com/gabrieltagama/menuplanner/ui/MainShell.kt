@@ -22,8 +22,8 @@ import androidx.navigation.compose.rememberNavController
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.CalendarRoute
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.calendarGraph
-import com.gabrieltagama.menuplanner.feature.calendar.navigation.navigateToDayEditor
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.navigateToDinnerEditor
+import com.gabrieltagama.menuplanner.feature.calendar.navigation.navigateToLunchEditor
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.navigateToShoppingList
 import com.gabrieltagama.menuplanner.feature.dishes.navigation.dishesGraph
 import com.gabrieltagama.menuplanner.feature.dishes.navigation.navigateToDishEditor
@@ -56,7 +56,7 @@ internal fun MainShell(navController: NavHostController = rememberNavController(
                 .consumeWindowInsets(innerPadding)
         ) {
             calendarGraph(
-                onOpenDay = { navController.navigateToDayEditor(it) },
+                onOpenLunch = { navController.navigateToLunchEditor(it) },
                 onOpenDinner = { navController.navigateToDinnerEditor(it) },
                 onOpenShoppingList = { navController.navigateToShoppingList(it) },
                 onBack = { navController.popBackStack() }

@@ -1,4 +1,4 @@
-package com.gabrieltagama.menuplanner.feature.calendar.day
+package com.gabrieltagama.menuplanner.feature.calendar.lunch
 
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,29 +37,30 @@ import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.calendar.R
 import com.gabrieltagama.menuplanner.feature.calendar.common.DishPickerSheet
 import com.gabrieltagama.menuplanner.feature.calendar.common.longTitleText
+import com.gabrieltagama.menuplanner.feature.calendar.editor.EditorStatus
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEffects
 import java.time.LocalDate
 
 /**
- * Day menu editor: stateful route bound to [DayEditorViewModel] (events, snackbar) and a
+ * Day menu editor: stateful route bound to [LunchEditorViewModel] (events, snackbar) and a
  * stateless screen with the mode selector and one card per slot of the active mode. Tapping a
  * card opens a searchable bottom sheet of the dishes of that type; the dice button picks a
  * random one. A dish meant for dinner can be chosen by hand; its card only shows a warning.
  */
 @Composable
-fun DayEditorScreenRoute(
+fun LunchEditorScreenRoute(
     onBack: () -> Unit,
-    viewModel: DayEditorViewModel = hiltViewModel()
+    viewModel: LunchEditorViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    PlanEditorEffects(viewModel = viewModel, error = state.form.error, snackbarHostState = snackbarHostState, onClose = onBack)
+    PlanEditorEffects(viewModel = viewModel, error = state.status.error, snackbarHostState = snackbarHostState, onClose = onBack)
 
-    DayEditorScreen(
+    LunchEditorScreen(
         state = state,
         snackbarHostState = snackbarHostState,
-        actions = DayEditorActions(
+        actions = LunchEditorActions(
             onBack = onBack,
             onSave = viewModel::onSave,
             onModeChange = viewModel::onModeChange,
@@ -74,9 +75,9 @@ fun DayEditorScreenRoute(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DayEditorScreen(
-    state: DayEditorUiState,
-    actions: DayEditorActions,
+fun LunchEditorScreen(
+    state: LunchEditorUiState,
+    actions: LunchEditorActions,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     var pickingSlot by rememberSaveable { mutableStateOf<MenuSlot?>(null) }
@@ -97,8 +98,8 @@ fun DayEditorScreen(
                     }
                 },
                 actions = {
-                    if (state.form.hasSavedDay)
-                        IconButton(onClick = actions.onClearRequest, enabled = !state.form.isSaving) {
+                    if (state.status.hasSavedPlan)
+                        IconButton(onClick = actions.onClearRequest, enabled = !state.status.isSaving) {
                             Icon(Icons.Filled.DeleteSweep, contentDescription = stringResource(R.string.day_editor_clear))
                         }
                     TextButton(onClick = actions.onSave, enabled = state.canSave) {
@@ -110,8 +111,8 @@ fun DayEditorScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         val contentModifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
-        if (state.form.isLoading || state.isOptionsLoading) LoadingIndicator(modifier = contentModifier)
-        else DayEditorContent(state = state, actions = actions, onPick = { pickingSlot = it }, modifier = contentModifier)
+        if (state.status.isLoading || state.isOptionsLoading) LoadingIndicator(modifier = contentModifier)
+        else LunchEditorContent(state = state, actions = actions, onPick = { pickingSlot = it }, modifier = contentModifier)
     }
 
     pickingSlot?.let { slot ->
@@ -126,7 +127,7 @@ fun DayEditorScreen(
         )
     }
 
-    if (state.form.showClearConfirm)
+    if (state.status.showClearConfirm)
         ConfirmDialog(
             title = stringResource(R.string.day_editor_clear_title),
             text = stringResource(R.string.day_editor_clear_text),
@@ -138,16 +139,17 @@ fun DayEditorScreen(
 
 @Preview(showBackground = true)
 @Composable
-private fun DayEditorScreenPreview() = MenuPlannerTheme {
+private fun LunchEditorScreenPreview() = MenuPlannerTheme {
     val starter = PreviewDishes.dish(name = "Crema de calabaza", type = DishType.STARTER, heaviness = Heaviness.VERY_LOW)
     val main = PreviewDishes.dish(name = "Merluza en salsa verde", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
-    DayEditorScreen(
-        state = DayEditorUiState(
+    LunchEditorScreen(
+        state = LunchEditorUiState(
             date = LocalDate.of(2026, 10, 9),
-            form = DayEditorForm(isLoading = false, selections = mapOf(MenuSlot.STARTER to starter, MenuSlot.MAIN to main)),
+            form = LunchEditorForm(selections = mapOf(MenuSlot.STARTER to starter, MenuSlot.MAIN to main)),
+            status = EditorStatus(isLoading = false),
             options = mapOf(DishType.STARTER to listOf(starter), DishType.MAIN to listOf(main)),
             isOptionsLoading = false
         ),
-        actions = DayEditorActions()
+        actions = LunchEditorActions()
     )
 }

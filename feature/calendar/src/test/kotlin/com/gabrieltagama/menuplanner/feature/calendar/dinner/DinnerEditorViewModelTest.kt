@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishUsageQueries
+import com.gabrieltagama.menuplanner.core.domain.fake.TestPlanCommands
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -14,10 +15,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearDinnerDayUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.GetDinnerDayUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PickRandomDishUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SaveDinnerDayUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
 import java.time.Clock
 import java.time.Instant
@@ -64,16 +62,16 @@ class DinnerEditorViewModelTest {
 
     @Test
     fun onlyDinnerOptionsAreOfferedSortedByNameAndAnEmptyDayCannotSave() = withViewModel { viewModel, _ ->
-        val state = awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
+        val state = awaitState(viewModel) { !it.status.isLoading && !it.isOptionsLoading }
 
         assertEquals(listOf(crema, tortilla), state.options)
-        assertFalse(state.form.hasSavedDinner)
+        assertFalse(state.status.hasSavedPlan)
         assertFalse(state.canSave)
     }
 
     @Test
     fun savingTheSelectedDishPersistsTheDinnerAndCloses() = withViewModel { viewModel, dinnerPlanRepository ->
-        awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
+        awaitState(viewModel) { !it.status.isLoading && !it.isOptionsLoading }
         viewModel.onDishSelect(tortilla)
         awaitState(viewModel) { it.canSave }
 
@@ -85,16 +83,16 @@ class DinnerEditorViewModelTest {
 
     @Test
     fun existingDinnerIsLoaded() = withViewModel(initial = listOf(DinnerDay(date, crema, Instant.EPOCH))) { viewModel, _ ->
-        val state = awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
+        val state = awaitState(viewModel) { !it.status.isLoading && !it.isOptionsLoading }
 
-        assertTrue(state.form.hasSavedDinner)
+        assertTrue(state.status.hasSavedPlan)
         assertEquals(crema, state.form.selected)
         assertTrue(state.canSave)
     }
 
     @Test
     fun randomPickAvoidsTheCurrentDish() = withViewModel { viewModel, _ ->
-        awaitState(viewModel) { !it.form.isLoading && !it.isOptionsLoading }
+        awaitState(viewModel) { !it.status.isLoading && !it.isOptionsLoading }
         viewModel.onDishSelect(tortilla)
         awaitState(viewModel) { it.form.selected == tortilla }
 
@@ -107,9 +105,9 @@ class DinnerEditorViewModelTest {
 
     @Test
     fun clearingTheDinnerRemovesItAndCloses() = withViewModel(initial = listOf(DinnerDay(date, crema, Instant.EPOCH))) { viewModel, dinnerPlanRepository ->
-        awaitState(viewModel) { it.form.hasSavedDinner }
+        awaitState(viewModel) { it.status.hasSavedPlan }
         viewModel.onClearRequest()
-        awaitState(viewModel) { it.form.showClearConfirm }
+        awaitState(viewModel) { it.status.showClearConfirm }
 
         viewModel.onClearConfirm()
 
@@ -127,9 +125,7 @@ class DinnerEditorViewModelTest {
             savedStateHandle = SavedStateHandle(mapOf("epochDay" to date.toEpochDay())),
             observeDishes = ObserveDishesUseCase(dishRepository),
             observeDishUsage = ObserveDishUsageUseCase(FakeDishUsageQueries(), clock),
-            getDinnerDay = GetDinnerDayUseCase(dinnerPlanRepository),
-            saveDinnerDay = SaveDinnerDayUseCase(dinnerPlanRepository, clock),
-            clearDinnerDay = ClearDinnerDayUseCase(dinnerPlanRepository),
+            commands = TestPlanCommands(dinners = dinnerPlanRepository, clock = clock).dinner,
             pickRandomDish = PickRandomDishUseCase(Random(7)),
             defaultDispatcher = Dispatchers.Default
         )
