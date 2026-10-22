@@ -44,8 +44,8 @@ internal fun CalendarEventsEffect(
         events.collect { event ->
             when (event) {
                 is CalendarEvent.AutoFillCompleted -> snackbarHostState.showSnackbar(formatter.format(event.result, event.view))
-                is CalendarEvent.DaysDeleted -> showUndoable(event.change, event.change.view.deletedTextRes())
-                is CalendarEvent.DaysPasted -> showUndoable(event.change, event.change.view.pastedTextRes())
+                is CalendarEvent.DaysDeleted -> showUndoable(event.change, event.change.meal.deletedTextRes())
+                is CalendarEvent.DaysPasted -> showUndoable(event.change, event.change.meal.pastedTextRes())
                 is CalendarEvent.SelectionFilled -> snackbarHostState.showSnackbar(
                     if (event.result.filledDays == 0 && event.result.unfilledDays == 0) resources.getString(R.string.calendar_selection_nothing_to_fill)
                     else formatter.format(event.result, event.view)
