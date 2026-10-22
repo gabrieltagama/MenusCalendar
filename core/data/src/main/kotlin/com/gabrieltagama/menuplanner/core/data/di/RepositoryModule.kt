@@ -24,7 +24,10 @@ import com.gabrieltagama.menuplanner.core.domain.port.TransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.port.UserPreferencesRepository
 import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
 import com.gabrieltagama.menuplanner.core.domain.query.DishUsageQueries
+import com.gabrieltagama.menuplanner.core.domain.query.OnboardingQueries
 import com.gabrieltagama.menuplanner.core.domain.query.PlannedUseQueries
+import com.gabrieltagama.menuplanner.core.domain.query.ShoppingChecklistQueries
+import com.gabrieltagama.menuplanner.core.domain.query.UserPreferencesQueries
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -74,7 +77,13 @@ internal abstract class RepositoryModule {
     abstract fun bindUserPreferencesRepository(implementation: DataStoreSettingsRepository): UserPreferencesRepository
 
     @Binds
+    abstract fun bindUserPreferencesQueries(implementation: DataStoreSettingsRepository): UserPreferencesQueries
+
+    @Binds
     abstract fun bindAppStateRepository(implementation: DataStoreSettingsRepository): AppStateRepository
+
+    @Binds
+    abstract fun bindOnboardingQueries(implementation: DataStoreSettingsRepository): OnboardingQueries
 
     @Binds
     @Singleton
@@ -87,4 +96,7 @@ internal abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindShoppingChecklistRepository(implementation: DataStoreShoppingChecklistRepository): ShoppingChecklistRepository
+
+    @Binds
+    abstract fun bindShoppingChecklistQueries(implementation: DataStoreShoppingChecklistRepository): ShoppingChecklistQueries
 }

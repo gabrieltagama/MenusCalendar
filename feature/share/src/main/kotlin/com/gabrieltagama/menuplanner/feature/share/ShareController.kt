@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gabrieltagama.menuplanner.core.ui.component.SnackbarMessageEffect
 
 /**
  * Wires the share flow into a screen: it opens the system share sheet for an exported file, the
@@ -47,12 +48,7 @@ fun rememberShareController(snackbarHostState: SnackbarHostState, viewModel: Sha
         }
     }
 
-    val messageText = state.message?.text()
-    LaunchedEffect(state.message) {
-        if (messageText == null) return@LaunchedEffect
-        snackbarHostState.showSnackbar(messageText)
-        viewModel.onMessageShown()
-    }
+    SnackbarMessageEffect(message = state.message?.text(), snackbarHostState = snackbarHostState, onShown = viewModel::onMessageShown)
 
     return ShareController(
         isBusy = state.isBusy,

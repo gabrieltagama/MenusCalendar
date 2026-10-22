@@ -16,7 +16,6 @@ import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.testing.awaitItemMatching
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +26,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * DishListViewModel over the real ObserveDishesUseCase: loading, multiple-selection type,
+ * DishListViewModel over the recipe book of an in-memory repository: loading, multiple-selection type,
  * heaviness, rating and meal time filters, accent- and case-insensitive search by name or
  * ingredient, alphabetical ordering and the order by last time served.
  */
@@ -49,7 +48,7 @@ class DishListViewModelTest {
             salad.id to listOf(LocalDate.of(2026, 1, 14))
         )
     )
-    private val viewModel by lazy { DishListViewModel(ObserveDishesUseCase(repository), ObserveDishUsageUseCase(usageRepository, TestDishes.fixedClock), Dispatchers.Default) }
+    private val viewModel by lazy { DishListViewModel(repository, ObserveDishUsageUseCase(usageRepository, TestDishes.fixedClock), Dispatchers.Default) }
 
     @Test
     fun `loads every dish sorted by name`() = runTest {
@@ -189,7 +188,7 @@ class DishListViewModelTest {
 
     @Test
     fun `empty repository reports no dishes`() = runTest {
-        val emptyViewModel = DishListViewModel(ObserveDishesUseCase(FakeDishRepository()), ObserveDishUsageUseCase(FakeDishUsageQueries(), TestDishes.fixedClock), Dispatchers.Default)
+        val emptyViewModel = DishListViewModel(FakeDishRepository(), ObserveDishUsageUseCase(FakeDishUsageQueries(), TestDishes.fixedClock), Dispatchers.Default)
 
         emptyViewModel.uiState.test {
             val state = awaitItemMatching { !it.isLoading }

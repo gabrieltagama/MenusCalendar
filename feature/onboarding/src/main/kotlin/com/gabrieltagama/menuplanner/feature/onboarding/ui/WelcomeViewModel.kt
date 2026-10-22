@@ -18,7 +18,8 @@ import kotlinx.coroutines.launch
 /**
  * Welcome screen state shown only on the first start. Linking Google restores the recipes (never the calendar) from
  * the backup before entering; continuing without an account enters straight away. Either way
- * the onboarding is completed and the screen is never shown again.
+ * the onboarding is completed and the screen is never shown again. A cancelled or failed link is
+ * reported as WelcomeMessage.Failed and the user can try again.
  */
 data class WelcomeUiState(
     val isConnecting: Boolean = false,
@@ -26,7 +27,6 @@ data class WelcomeUiState(
 )
 
 sealed interface WelcomeMessage {
-    data object ConnectionCancelled : WelcomeMessage
     data class Failed(val error: DomainError) : WelcomeMessage
 }
 
@@ -42,21 +42,16 @@ class WelcomeViewModel @Inject constructor(
     fun onConnectStarted() = _uiState.update { it.copy(isConnecting = true, message = null) }
 
     fun onGoogleAuthorization(accessToken: String?) {
-        if (accessToken == null) showMessage(WelcomeMessage.ConnectionCancelled)
-        else connect(accessToken)
-    }
-
-    fun onContinueWithoutAccount() {
-        viewModelScope.launch { completeOnboarding() }
-    }
-
-    private fun connect(accessToken: String) {
         viewModelScope.launch {
             catchingStorageFailure { connectCloudAccount(accessToken) }.fold(
                 onSuccess = { completeOnboarding() },
                 onFailure = { error -> showMessage(WelcomeMessage.Failed(error)) }
             )
         }
+    }
+
+    fun onContinueWithoutAccount() {
+        viewModelScope.launch { completeOnboarding() }
     }
 
     private fun showMessage(message: WelcomeMessage) = _uiState.update { it.copy(isConnecting = false, message = message) }

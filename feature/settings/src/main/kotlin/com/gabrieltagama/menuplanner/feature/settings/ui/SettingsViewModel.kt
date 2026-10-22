@@ -8,25 +8,23 @@ import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
+import com.gabrieltagama.menuplanner.core.domain.query.CloudAccountQueries
+import com.gabrieltagama.menuplanner.core.domain.query.UserPreferencesQueries
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.BackUpUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ConnectCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.DisconnectCloudAccountUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ObserveCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.RestoreBackupUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveRepeatWindowUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveThemeModeUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetRepeatWindowUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetThemeModeUseCase
 import com.gabrieltagama.menuplanner.core.ui.state.BusyRunner
 import com.gabrieltagama.menuplanner.core.ui.state.catchingStorageFailure
 import com.gabrieltagama.menuplanner.core.ui.state.runStorageAction
+import com.gabrieltagama.menuplanner.core.ui.state.stateWhileSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -46,15 +44,13 @@ sealed interface BackupMessage {
     data object BackedUp : BackupMessage
     data class Restored(val summary: ImportSummary) : BackupMessage
     data object Disconnected : BackupMessage
-    data object ConnectionCancelled : BackupMessage
     data class Failed(val error: DomainError) : BackupMessage
 }
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    observeThemeMode: ObserveThemeModeUseCase,
-    observeRepeatWindow: ObserveRepeatWindowUseCase,
-    observeCloudAccount: ObserveCloudAccountUseCase,
+    preferences: UserPreferencesQueries,
+    cloud: CloudAccountQueries,
     private val setThemeMode: SetThemeModeUseCase,
     private val setRepeatWindow: SetRepeatWindowUseCase,
     private val connectCloudAccount: ConnectCloudAccountUseCase,
@@ -63,14 +59,11 @@ class SettingsViewModel @Inject constructor(
     private val disconnectCloudAccount: DisconnectCloudAccountUseCase
 ) : ViewModel() {
 
-    val themeMode: StateFlow<ThemeMode> =
-        observeThemeMode().stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), ThemeMode.SYSTEM)
+    val themeMode: StateFlow<ThemeMode> = preferences.themeMode.stateWhileSubscribed(viewModelScope, ThemeMode.SYSTEM)
 
-    val repeatWindow: StateFlow<RepeatWindow> =
-        observeRepeatWindow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), RepeatWindow.DEFAULT)
+    val repeatWindow: StateFlow<RepeatWindow> = preferences.repeatWindow.stateWhileSubscribed(viewModelScope, RepeatWindow.DEFAULT)
 
-    val cloudAccount: StateFlow<CloudAccount> =
-        observeCloudAccount().stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), CloudAccount.Disconnected)
+    val cloudAccount: StateFlow<CloudAccount> = cloud.account.stateWhileSubscribed(viewModelScope, CloudAccount.Disconnected)
 
     private val _backupState = MutableStateFlow(BackupUiState())
     val backupState: StateFlow<BackupUiState> = _backupState.asStateFlow()
@@ -87,10 +80,8 @@ class SettingsViewModel @Inject constructor(
 
     fun onConnectStarted() = _backupState.update { it.copy(isBusy = true, message = null) }
 
-    fun onGoogleAuthorization(accessToken: String?) {
-        if (accessToken == null) showMessage(BackupMessage.ConnectionCancelled)
-        else runBusy { catchingStorageFailure { connectCloudAccount(accessToken) }.fold(BackupMessage::Restored, BackupMessage::Failed) }
-    }
+    fun onGoogleAuthorization(accessToken: String?) =
+        runBusy { catchingStorageFailure { connectCloudAccount(accessToken) }.fold(BackupMessage::Restored, BackupMessage::Failed) }
 
     fun onBackUpNow() = runBusy { catchingStorageFailure { backUp(onlyIfChanged = false) }.fold({ BackupMessage.BackedUp }, BackupMessage::Failed) }
 
@@ -103,8 +94,4 @@ class SettingsViewModel @Inject constructor(
     private fun runBusy(action: suspend () -> BackupMessage) = busy.run { showMessage(action()) }
 
     private fun showMessage(message: BackupMessage) = _backupState.update { it.copy(isBusy = false, message = message) }
-
-    private companion object {
-        const val STOP_TIMEOUT_MILLIS = 5_000L
-    }
 }

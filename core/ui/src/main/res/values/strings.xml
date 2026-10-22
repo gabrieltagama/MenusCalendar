@@ -38,6 +38,7 @@
     <string name="error_unsupported_import_version">El archivo es de una versión no compatible</string>
     <string name="error_cloud_unavailable">No se ha podido conectar con Google Drive. Inténtalo de nuevo más tarde</string>
     <string name="error_storage_unavailable">No se han podido guardar o leer los datos en el móvil. Inténtalo de nuevo</string>
+    <string name="error_cloud_authorization_cancelled">No se ha conectado la cuenta de Google</string>
     <string name="error_cloud_authorization_required">Google Drive necesita que vuelvas a dar permiso. Conecta de nuevo la cuenta en Ajustes</string>
 
     <string name="dish_sort_title">Ordenar</string>

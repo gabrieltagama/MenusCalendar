@@ -6,7 +6,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Meal
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.port.DinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.port.UserPreferencesRepository
+import com.gabrieltagama.menuplanner.core.domain.query.UserPreferencesQueries
 import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
@@ -20,10 +20,10 @@ class AutoFillMonthDinnersUseCase @Inject constructor(
     dishRepository: DishRepository,
     dinnerPlanRepository: DinnerPlanRepository,
     historyReader: PlanHistoryReader,
-    preferencesRepository: UserPreferencesRepository,
+    preferences: UserPreferencesQueries,
     private val random: Random,
     clock: Clock
-) : AutoFillPlanUseCase<DinnerDay>(Meal.DINNER, dinnerPlanRepository, dishRepository, historyReader, preferencesRepository, clock) {
+) : AutoFillPlanUseCase<DinnerDay>(Meal.DINNER, dinnerPlanRepository, dishRepository, historyReader, preferences, clock) {
 
     override fun pickerFor(dishes: List<Dish>, window: RepeatWindow): DayPicker<DinnerDay> {
         val picker = DinnerPicker(dishes.filter(Dish::isDinnerOption), window, random)

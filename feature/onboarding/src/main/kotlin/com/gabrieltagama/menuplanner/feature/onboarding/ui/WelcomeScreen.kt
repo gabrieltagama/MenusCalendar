@@ -125,7 +125,6 @@ private fun WelcomeActions(onConnectGoogle: () -> Unit, onContinueLocal: () -> U
 @Composable
 private fun WelcomeMessageText(message: WelcomeMessage) = Text(
     text = when (message) {
-        WelcomeMessage.ConnectionCancelled -> stringResource(R.string.welcome_connect_cancelled)
         is WelcomeMessage.Failed -> message.error.message()
     },
     color = MaterialTheme.colorScheme.error,

@@ -30,7 +30,6 @@
     <string name="settings_backup_done">Copia guardada en Google Drive</string>
     <string name="settings_backup_restored">Copia recuperada: %1$d platos nuevos, %2$d actualizados</string>
     <string name="settings_backup_disconnected">Cuenta de Google desconectada</string>
-    <string name="settings_backup_cancelled">No se ha conectado la cuenta de Google</string>
 
     <string name="settings_section_share">Compartir</string>
     <string name="settings_share_export">Exportar JSON</string>

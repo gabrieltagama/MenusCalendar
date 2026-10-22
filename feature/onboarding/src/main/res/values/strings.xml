@@ -6,5 +6,4 @@
     <string name="welcome_connect_google">Conectar con Google</string>
     <string name="welcome_continue_local">Continuar sin cuenta</string>
     <string name="welcome_connecting">Recuperando tu copia…</string>
-    <string name="welcome_connect_cancelled">No se ha conectado la cuenta de Google</string>
 </resources>

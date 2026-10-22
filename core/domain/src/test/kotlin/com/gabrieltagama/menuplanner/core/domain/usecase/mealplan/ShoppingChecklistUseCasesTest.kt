@@ -30,18 +30,17 @@ class ShoppingChecklistUseCasesTest {
     fun `ticks products by key whatever their spelling`() = runBlocking {
         SetShoppingItemCheckedUseCase(repository)(week, onions, true)
 
-        val checked = ObserveShoppingChecksUseCase(repository)(week).first()
+        val checked = repository.checked(week).first()
         assertTrue(onions.copy(name = "cebolla").key in checked)
     }
 
     @Test
     fun `ticks belong to their filter`() = runBlocking {
         SetShoppingItemCheckedUseCase(repository)(week, onions, true)
-        val observe = ObserveShoppingChecksUseCase(repository)
 
-        assertTrue(observe(nextWeek).first().isEmpty())
-        assertTrue(observe(week.copy(meals = setOf(Meal.DINNER))).first().isEmpty())
-        assertEquals(setOf(onions.key), observe(week).first())
+        assertTrue(repository.checked(nextWeek).first().isEmpty())
+        assertTrue(repository.checked(week.copy(meals = setOf(Meal.DINNER))).first().isEmpty())
+        assertEquals(setOf(onions.key), repository.checked(week).first())
     }
 
     @Test

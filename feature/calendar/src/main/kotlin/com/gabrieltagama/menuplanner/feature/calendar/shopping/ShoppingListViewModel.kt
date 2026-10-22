@@ -10,9 +10,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.ShoppingFilter
 import com.gabrieltagama.menuplanner.core.domain.model.ShoppingItem
 import com.gabrieltagama.menuplanner.core.domain.model.firstPlannableDay
 import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
+import com.gabrieltagama.menuplanner.core.domain.query.ShoppingChecklistQueries
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearExpiredShoppingChecksUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearShoppingChecksUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveShoppingChecksUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveShoppingListUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SetShoppingItemCheckedUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.ShoppingListRoute
@@ -71,7 +71,7 @@ data class ShoppingListUiState(
 class ShoppingListViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     clock: Clock,
-    observeShoppingChecks: ObserveShoppingChecksUseCase,
+    checklist: ShoppingChecklistQueries,
     observeShoppingList: ObserveShoppingListUseCase,
     clearExpiredShoppingChecks: ClearExpiredShoppingChecksUseCase,
     private val setShoppingItemChecked: SetShoppingItemCheckedUseCase,
@@ -94,7 +94,7 @@ class ShoppingListViewModel @Inject constructor(
         viewModelScope.launch {
             clearExpiredShoppingChecks()
             filters()
-                .flatMapLatest { filter -> observeShoppingChecks(filter) }
+                .flatMapLatest { filter -> checklist.checked(filter) }
                 .collect { keys -> _uiState.update { it.copy(checked = keys) } }
         }
     }

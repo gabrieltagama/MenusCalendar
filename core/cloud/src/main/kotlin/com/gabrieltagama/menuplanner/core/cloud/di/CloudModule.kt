@@ -8,6 +8,7 @@ import com.gabrieltagama.menuplanner.core.cloud.drive.DriveAppDataClient
 import com.gabrieltagama.menuplanner.core.cloud.drive.DriveFiles
 import com.gabrieltagama.menuplanner.core.domain.port.BackupScheduler
 import com.gabrieltagama.menuplanner.core.domain.port.CloudBackupRepository
+import com.gabrieltagama.menuplanner.core.domain.query.CloudAccountQueries
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -25,6 +26,9 @@ internal abstract class CloudModule {
     @Binds
     @Singleton
     abstract fun bindCloudBackupRepository(implementation: GoogleDriveBackupRepository): CloudBackupRepository
+
+    @Binds
+    abstract fun bindCloudAccountQueries(implementation: GoogleDriveBackupRepository): CloudAccountQueries
 
     @Binds
     abstract fun bindBackupScheduler(implementation: WorkManagerBackupScheduler): BackupScheduler
