@@ -14,7 +14,6 @@ import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PickRandomDishUseCase
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorEvent
 import java.time.Clock
@@ -123,7 +122,7 @@ class DinnerEditorViewModelTest {
         val dinnerPlanRepository = FakeDinnerPlanRepository(initial)
         val viewModel = DinnerEditorViewModel(
             savedStateHandle = SavedStateHandle(mapOf("epochDay" to date.toEpochDay())),
-            observeDishes = ObserveDishesUseCase(dishRepository),
+            dishCatalog = dishRepository,
             observeDishUsage = ObserveDishUsageUseCase(FakeDishUsageQueries(), clock),
             commands = TestPlanCommands(dinners = dinnerPlanRepository, clock = clock).dinner,
             pickRandomDish = PickRandomDishUseCase(Random(7)),

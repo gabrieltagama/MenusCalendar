@@ -1,5 +1,6 @@
 package com.gabrieltagama.menuplanner.core.domain.usecase.backup
 
+import com.gabrieltagama.menuplanner.core.domain.common.CloudError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.common.flatMap
 import com.gabrieltagama.menuplanner.core.domain.common.map
@@ -16,7 +17,6 @@ import com.gabrieltagama.menuplanner.core.domain.port.MenuSnapshotRepository
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import java.time.Clock
 import javax.inject.Inject
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 /**
@@ -26,12 +26,9 @@ import kotlinx.coroutines.flow.first
  * the snapshot fingerprint changed since the last upload.
  * Connecting restores, schedules the daily backup and uploads; the daily backup is scheduled only
  * once the restore succeeded, so it can never replace the backup with a recipe book that is still
- * missing the restored recipes. Disconnecting cancels it.
+ * missing the restored recipes. Without an access token (the user cancelled Google's consent)
+ * connecting fails with AuthorizationCancelled. Disconnecting cancels the daily backup.
  */
-
-class ObserveCloudAccountUseCase @Inject constructor(private val cloud: CloudBackupRepository) {
-    operator fun invoke(): Flow<CloudAccount> = cloud.account
-}
 
 class BackUpUseCase @Inject constructor(
     private val cloud: CloudBackupRepository,
@@ -62,11 +59,13 @@ class ConnectCloudAccountUseCase @Inject constructor(
     private val backUp: BackUpUseCase,
     private val scheduler: BackupScheduler
 ) {
-    suspend operator fun invoke(accessToken: String): Outcome<ImportSummary> =
-        cloud.connect(accessToken)
+    suspend operator fun invoke(accessToken: String?): Outcome<ImportSummary> {
+        if (accessToken == null) return Outcome.Failure(CloudError.AuthorizationCancelled)
+        return cloud.connect(accessToken)
             .flatMap { restoreBackup() }
             .onSuccess { scheduler.scheduleDaily() }
             .flatMap { summary -> backUp(onlyIfChanged = true).map { summary } }
+    }
 }
 
 class DisconnectCloudAccountUseCase @Inject constructor(

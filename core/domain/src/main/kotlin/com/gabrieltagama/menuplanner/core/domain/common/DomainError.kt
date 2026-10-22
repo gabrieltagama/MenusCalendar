@@ -34,6 +34,7 @@ sealed interface ShareError : DomainError {
 sealed interface CloudError : DomainError {
     data object CloudUnavailable : CloudError
     data object CloudAuthorizationRequired : CloudError
+    data object AuthorizationCancelled : CloudError
 }
 
 sealed interface StorageError : DomainError {

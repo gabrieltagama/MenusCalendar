@@ -94,5 +94,6 @@ fun DomainError.message(): String = when (this) {
     ShareError.UnsupportedImportVersion -> stringResource(R.string.error_unsupported_import_version)
     CloudError.CloudUnavailable -> stringResource(R.string.error_cloud_unavailable)
     CloudError.CloudAuthorizationRequired -> stringResource(R.string.error_cloud_authorization_required)
+    CloudError.AuthorizationCancelled -> stringResource(R.string.error_cloud_authorization_cancelled)
     StorageError.StorageUnavailable -> stringResource(R.string.error_storage_unavailable)
 }

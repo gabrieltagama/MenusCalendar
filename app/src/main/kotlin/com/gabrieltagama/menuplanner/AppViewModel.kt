@@ -3,8 +3,8 @@ package com.gabrieltagama.menuplanner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
-import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveOnboardingCompletedUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveThemeModeUseCase
+import com.gabrieltagama.menuplanner.core.domain.query.OnboardingQueries
+import com.gabrieltagama.menuplanner.core.domain.query.UserPreferencesQueries
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,11 +19,11 @@ import kotlinx.coroutines.flow.stateIn
  */
 @HiltViewModel
 class AppViewModel @Inject constructor(
-    observeOnboardingCompleted: ObserveOnboardingCompletedUseCase,
-    observeThemeMode: ObserveThemeModeUseCase
+    onboarding: OnboardingQueries,
+    preferences: UserPreferencesQueries
 ) : ViewModel() {
 
-    val isOnboardingCompleted: StateFlow<Boolean?> = observeOnboardingCompleted().stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val isOnboardingCompleted: StateFlow<Boolean?> = onboarding.isOnboardingCompleted.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val themeMode: StateFlow<ThemeMode?> = observeThemeMode().stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val themeMode: StateFlow<ThemeMode?> = preferences.themeMode.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 }

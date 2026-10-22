@@ -68,7 +68,7 @@ class WelcomeViewModelTest {
         viewModel.onConnectStarted()
         viewModel.onGoogleAuthorization(null)
 
-        assertEquals(WelcomeUiState(message = WelcomeMessage.ConnectionCancelled), viewModel.uiState.value)
+        assertEquals(WelcomeUiState(message = WelcomeMessage.Failed(CloudError.AuthorizationCancelled)), viewModel.uiState.value)
         assertFalse(settings.isOnboardingCompleted.first())
     }
 

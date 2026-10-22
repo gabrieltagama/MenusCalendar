@@ -10,15 +10,15 @@ import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
+import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
+import com.gabrieltagama.menuplanner.core.ui.state.stateWhileSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
 /**
@@ -54,7 +53,7 @@ private data class Listing(val criteria: DishFilterCriteria, val sort: DishSort)
 
 @HiltViewModel
 class DishListViewModel @Inject constructor(
-    observeDishes: ObserveDishesUseCase,
+    dishCatalog: DishCatalogQueries,
     observeDishUsage: ObserveDishUsageUseCase,
     @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
 ) : ViewModel() {
@@ -67,7 +66,7 @@ class DishListViewModel @Inject constructor(
     private val listing = combine(filters, sort, ::Listing)
 
     val uiState: StateFlow<DishListUiState> =
-        combine(observeDishes().map(DishFilter::index), debouncedQuery(), listing, observeDishUsage()) { index, query, (criteria, order), usage ->
+        combine(dishCatalog.observeDishes().map(DishFilter::index), debouncedQuery(), listing, observeDishUsage()) { index, query, (criteria, order), usage ->
             DishListUiState(
                 isLoading = false,
                 hasDishes = index.isNotEmpty(),
@@ -82,7 +81,7 @@ class DishListViewModel @Inject constructor(
             )
         }
             .flowOn(defaultDispatcher)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DishListUiState())
+            .stateWhileSubscribed(viewModelScope, DishListUiState())
 
     fun onQueryChange(value: String) {
         _query.value = value

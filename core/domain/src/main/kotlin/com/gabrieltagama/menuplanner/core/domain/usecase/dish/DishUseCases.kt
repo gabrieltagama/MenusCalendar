@@ -10,23 +10,17 @@ import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
 import com.gabrieltagama.menuplanner.core.domain.port.DishIdGenerator
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.port.TransactionRunner
-import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
 import com.gabrieltagama.menuplanner.core.domain.query.PlannedUseQueries
 import java.time.Clock
 import javax.inject.Inject
-import kotlinx.coroutines.flow.Flow
 
 /**
- * Use cases of the recipe book: query, save a draft (validated with the Dish rules, given an id
+ * Commands of the recipe book (read through DishCatalogQueries): get a dish, save a draft (validated with the Dish rules, given an id
  * when new and converted to standard units) and delete (blocked while the dish is planned). Saving
  * a planned dish with a type or meal time that its calendar days no longer accept is refused with
  * DishPlannedIncompatibly, so the calendar never holds days that an export could not restore; the
  * check and the save run in one transaction.
  */
-class ObserveDishesUseCase @Inject constructor(private val queries: DishCatalogQueries) {
-    operator fun invoke(): Flow<List<Dish>> = queries.observeDishes()
-}
-
 class GetDishUseCase @Inject constructor(private val repository: DishRepository) {
     suspend operator fun invoke(id: DishId): Outcome<Dish> =
         repository.getDish(id)?.let { Outcome.Success(it) } ?: Outcome.Failure(RecipeError.DishNotFound)

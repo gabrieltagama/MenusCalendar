@@ -18,11 +18,8 @@ import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.BackUpUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ConnectCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.DisconnectCloudAccountUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.backup.ObserveCloudAccountUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.backup.RestoreBackupUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveRepeatWindowUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.settings.ObserveThemeModeUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetRepeatWindowUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.settings.SetThemeModeUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
@@ -84,7 +81,7 @@ class SettingsViewModelTest {
         viewModel.onConnectStarted()
         viewModel.onGoogleAuthorization(null)
 
-        assertEquals(BackupUiState(message = BackupMessage.ConnectionCancelled), viewModel.backupState.value)
+        assertEquals(BackupUiState(message = BackupMessage.Failed(CloudError.AuthorizationCancelled)), viewModel.backupState.value)
     }
 
     @Test
@@ -136,9 +133,8 @@ class SettingsViewModelTest {
         val backUp = BackUpUseCase(cloud, snapshots, codec, TestDishes.fixedClock)
         val restore = RestoreBackupUseCase(cloud, ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes), ImmediateTransactionRunner()))
         return SettingsViewModel(
-            observeThemeMode = ObserveThemeModeUseCase(settings),
-            observeRepeatWindow = ObserveRepeatWindowUseCase(settings),
-            observeCloudAccount = ObserveCloudAccountUseCase(cloud),
+            preferences = settings,
+            cloud = cloud,
             setThemeMode = SetThemeModeUseCase(settings),
             setRepeatWindow = SetRepeatWindowUseCase(settings),
             connectCloudAccount = ConnectCloudAccountUseCase(cloud, restore, backUp, scheduler),

@@ -22,7 +22,6 @@ import com.gabrieltagama.menuplanner.core.domain.model.measure.IngredientKey
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearExpiredShoppingChecksUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ClearShoppingChecksUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveShoppingChecksUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.ObserveShoppingListUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.SetShoppingItemCheckedUseCase
 import java.time.Clock
@@ -167,7 +166,7 @@ class ShoppingListViewModelTest {
     ) = ShoppingListViewModel(
         savedStateHandle = SavedStateHandle(mapOf("year" to year, "month" to month)),
         clock = clock,
-        observeShoppingChecks = ObserveShoppingChecksUseCase(checklist),
+        checklist = checklist,
         observeShoppingList = ObserveShoppingListUseCase(FakePlanQueries(lunchPlan, dinnerPlan)),
         clearExpiredShoppingChecks = ClearExpiredShoppingChecksUseCase(checklist, clock),
         setShoppingItemChecked = SetShoppingItemCheckedUseCase(checklist),

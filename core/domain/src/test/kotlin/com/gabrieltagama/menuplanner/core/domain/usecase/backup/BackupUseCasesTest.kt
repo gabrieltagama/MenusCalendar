@@ -149,6 +149,15 @@ class BackupUseCasesTest {
     }
 
     @Test
+    fun `cancelled authorization connects nothing`() = runBlocking {
+        val cloud = FakeCloudBackupRepository()
+
+        assertEquals(Outcome.Failure(CloudError.AuthorizationCancelled), connect(cloud)(null))
+        assertTrue(cloud.uploads.isEmpty())
+        assertFalse(scheduler.isScheduled)
+    }
+
+    @Test
     fun `failed restore does not schedule the daily backup`() = runBlocking {
         val cloud = FakeCloudBackupRepository(remoteJson = "not a backup")
 

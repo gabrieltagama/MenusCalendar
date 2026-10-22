@@ -7,7 +7,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.PlannedDay
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.port.DayPlanRepository
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
-import com.gabrieltagama.menuplanner.core.domain.port.UserPreferencesRepository
+import com.gabrieltagama.menuplanner.core.domain.query.UserPreferencesQueries
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -26,7 +26,7 @@ abstract class AutoFillPlanUseCase<D : PlannedDay<D>> internal constructor(
     private val repository: DayPlanRepository<D>,
     private val dishRepository: DishRepository,
     private val historyReader: PlanHistoryReader,
-    private val preferencesRepository: UserPreferencesRepository,
+    private val preferences: UserPreferencesQueries,
     private val clock: Clock
 ) {
     internal abstract fun pickerFor(dishes: List<Dish>, window: RepeatWindow): DayPicker<D>
@@ -35,7 +35,7 @@ abstract class AutoFillPlanUseCase<D : PlannedDay<D>> internal constructor(
 
     suspend operator fun invoke(dates: Collection<LocalDate>): AutoFillResult {
         if (dates.isEmpty()) return AutoFillResult.EMPTY
-        val window = preferencesRepository.repeatWindow.first()
+        val window = preferences.repeatWindow.first()
         val picker = pickerFor(dishRepository.getDishes(), window)
         val range = window.historyRange(dates.min()..dates.max())
         val history = historyReader.read(range)

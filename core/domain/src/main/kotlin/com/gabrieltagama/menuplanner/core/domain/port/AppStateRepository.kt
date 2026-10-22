@@ -1,14 +1,13 @@
 package com.gabrieltagama.menuplanner.core.domain.port
 
-import kotlinx.coroutines.flow.Flow
+import com.gabrieltagama.menuplanner.core.domain.query.OnboardingQueries
 
 /**
- * Persistence port for the state the app keeps for itself: whether the welcome screen was already
- * answered and the version of the unit conversion already applied to the recipe book (see
- * MigrateRecipeUnitsUseCase). Implemented in :core:data.
+ * Persistence port for the state the app keeps for itself: marking the welcome screen as answered
+ * (read through OnboardingQueries) and the version of the unit conversion already applied to the
+ * recipe book (see MigrateRecipeUnitsUseCase). Implemented in :core:data.
  */
-interface AppStateRepository {
-    val isOnboardingCompleted: Flow<Boolean>
+interface AppStateRepository : OnboardingQueries {
     suspend fun completeOnboarding()
     suspend fun recipeUnitsVersion(): Int
     suspend fun setRecipeUnitsVersion(version: Int)

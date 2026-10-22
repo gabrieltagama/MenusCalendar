@@ -6,6 +6,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
+import com.gabrieltagama.menuplanner.core.ui.component.SnackbarMessageEffect
 import com.gabrieltagama.menuplanner.core.ui.text.message
 
 /**
@@ -20,7 +21,6 @@ internal fun PlanEditorEffects(
     onClose: () -> Unit
 ) {
     val currentOnClose by rememberUpdatedState(onClose)
-    val errorMessage = error?.message()
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -29,9 +29,5 @@ internal fun PlanEditorEffects(
             }
         }
     }
-    LaunchedEffect(errorMessage) {
-        val message = errorMessage ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(message)
-        viewModel.onErrorShown()
-    }
+    SnackbarMessageEffect(message = error?.message(), snackbarHostState = snackbarHostState, onShown = viewModel::onErrorShown)
 }

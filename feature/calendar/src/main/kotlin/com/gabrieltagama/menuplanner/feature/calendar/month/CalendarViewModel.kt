@@ -13,6 +13,7 @@ import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PlanCommandSer
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.UndoableChange
 import com.gabrieltagama.menuplanner.core.ui.state.catchingStorageFailure
 import com.gabrieltagama.menuplanner.core.ui.state.runStorageAction
+import com.gabrieltagama.menuplanner.core.ui.state.stateWhileSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -22,12 +23,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -79,9 +78,8 @@ class CalendarViewModel @Inject constructor(
                 showAutoFillConfirm = status.showConfirm,
                 mode = mode
             )
-        }.stateIn(
+        }.stateWhileSubscribed(
             viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
             CalendarUiState(month = navigator.month.value, selectedDate = navigator.selectedDate.value, today = navigator.today.value)
         )
 

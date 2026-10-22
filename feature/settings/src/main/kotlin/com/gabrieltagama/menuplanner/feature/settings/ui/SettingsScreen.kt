@@ -38,7 +38,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -54,6 +53,7 @@ import com.gabrieltagama.menuplanner.core.cloud.ui.rememberGoogleDriveConnect
 import com.gabrieltagama.menuplanner.core.domain.model.CloudAccount
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
+import com.gabrieltagama.menuplanner.core.ui.component.SnackbarMessageEffect
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
 import com.gabrieltagama.menuplanner.feature.settings.R
@@ -80,12 +80,7 @@ fun SettingsScreenRoute(
     val connectGoogle = rememberGoogleDriveConnect(onResult = viewModel::onGoogleAuthorization)
     val fileShare = rememberFileShare(snackbarHostState)
 
-    val messageText = backupState.message?.text()
-    LaunchedEffect(backupState.message) {
-        if (messageText == null) return@LaunchedEffect
-        snackbarHostState.showSnackbar(messageText)
-        viewModel.onMessageShown()
-    }
+    SnackbarMessageEffect(message = backupState.message?.text(), snackbarHostState = snackbarHostState, onShown = viewModel::onMessageShown)
 
     SettingsScreen(
         themeMode = themeMode,
@@ -237,7 +232,6 @@ private fun BackupMessage.text(): String = when (this) {
     BackupMessage.BackedUp -> stringResource(R.string.settings_backup_done)
     is BackupMessage.Restored -> stringResource(R.string.settings_backup_restored, summary.dishesAdded, summary.dishesUpdated)
     BackupMessage.Disconnected -> stringResource(R.string.settings_backup_disconnected)
-    BackupMessage.ConnectionCancelled -> stringResource(R.string.settings_backup_cancelled)
     is BackupMessage.Failed -> error.message()
 }
 

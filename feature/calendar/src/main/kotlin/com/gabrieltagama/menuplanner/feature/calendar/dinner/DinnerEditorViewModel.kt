@@ -7,22 +7,21 @@ import com.gabrieltagama.menuplanner.core.domain.common.DefaultDispatcher
 import com.gabrieltagama.menuplanner.core.domain.model.DinnerDay
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishSort
+import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishesUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.DinnerPlanCommands
 import com.gabrieltagama.menuplanner.core.domain.usecase.mealplan.PickRandomDishUseCase
+import com.gabrieltagama.menuplanner.core.ui.state.stateWhileSubscribed
 import com.gabrieltagama.menuplanner.feature.calendar.editor.PlanEditorViewModel
 import com.gabrieltagama.menuplanner.feature.calendar.navigation.DinnerEditorRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
 /**
@@ -33,7 +32,7 @@ import kotlinx.coroutines.flow.update
 @HiltViewModel
 class DinnerEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    observeDishes: ObserveDishesUseCase,
+    dishCatalog: DishCatalogQueries,
     observeDishUsage: ObserveDishUsageUseCase,
     private val commands: DinnerPlanCommands,
     private val pickRandomDish: PickRandomDishUseCase,
@@ -41,12 +40,12 @@ class DinnerEditorViewModel @Inject constructor(
 ) : PlanEditorViewModel<DinnerDay, DinnerEditorForm>(savedStateHandle.toRoute<DinnerEditorRoute>().date, commands, DinnerEditorForm()) {
 
     private val options: Flow<List<Dish>> =
-        observeDishes().map { dishes -> DishSort.NAME.sorted(dishes.filter(Dish::isDinnerOption)) }.flowOn(defaultDispatcher)
+        dishCatalog.observeDishes().map { dishes -> DishSort.NAME.sorted(dishes.filter(Dish::isDinnerOption)) }.flowOn(defaultDispatcher)
 
     val uiState: StateFlow<DinnerEditorUiState> =
         combine(form, status, options, observeDishUsage()) { currentForm, currentStatus, currentOptions, usage ->
             DinnerEditorUiState(date = date, form = currentForm, status = currentStatus, options = currentOptions, isOptionsLoading = false, usage = usage)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DinnerEditorUiState(date = date))
+        }.stateWhileSubscribed(viewModelScope, DinnerEditorUiState(date = date))
 
     init {
         loadSavedDay()

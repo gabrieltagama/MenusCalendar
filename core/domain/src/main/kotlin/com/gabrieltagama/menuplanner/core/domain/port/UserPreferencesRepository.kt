@@ -2,15 +2,14 @@ package com.gabrieltagama.menuplanner.core.domain.port
 
 import com.gabrieltagama.menuplanner.core.domain.model.RepeatWindow
 import com.gabrieltagama.menuplanner.core.domain.model.ThemeMode
-import kotlinx.coroutines.flow.Flow
+import com.gabrieltagama.menuplanner.core.domain.query.UserPreferencesQueries
 
 /**
- * Persistence port for what the user chooses in Ajustes, read without blocking: the theme mode and
- * the days without repeating a dish of the autofill (RepeatWindow). Implemented in :core:data.
+ * Persistence port for what the user chooses in Ajustes: the changes of the theme mode and of the
+ * days without repeating a dish, on top of reading them (UserPreferencesQueries). Implemented in
+ * :core:data.
  */
-interface UserPreferencesRepository {
-    val themeMode: Flow<ThemeMode>
-    val repeatWindow: Flow<RepeatWindow>
+interface UserPreferencesRepository : UserPreferencesQueries {
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setRepeatWindow(window: RepeatWindow)
 }

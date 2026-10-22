@@ -47,6 +47,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
 import com.gabrieltagama.menuplanner.core.ui.component.ConfirmDialog
 import com.gabrieltagama.menuplanner.core.ui.component.LoadingIndicator
+import com.gabrieltagama.menuplanner.core.ui.component.SnackbarMessageEffect
 import com.gabrieltagama.menuplanner.core.ui.text.label
 import com.gabrieltagama.menuplanner.core.ui.text.message
 import com.gabrieltagama.menuplanner.core.ui.theme.MenuPlannerTheme
@@ -68,7 +69,6 @@ fun DishEditorScreenRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnBack by rememberUpdatedState(onBack)
     val snackbarHostState = remember { SnackbarHostState() }
-    val errorMessage = state.error?.message()
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -77,11 +77,7 @@ fun DishEditorScreenRoute(
             }
         }
     }
-    LaunchedEffect(errorMessage) {
-        val message = errorMessage ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(message)
-        viewModel.onErrorShown()
-    }
+    SnackbarMessageEffect(message = state.error?.message(), snackbarHostState = snackbarHostState, onShown = viewModel::onErrorShown)
 
     BackHandler(onBack = viewModel::onBackRequest)
 
