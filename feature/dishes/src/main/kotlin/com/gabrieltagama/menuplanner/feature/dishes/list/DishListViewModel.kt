@@ -3,7 +3,7 @@ package com.gabrieltagama.menuplanner.feature.dishes.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gabrieltagama.menuplanner.core.domain.common.DefaultDispatcher
-import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishListItem
 import com.gabrieltagama.menuplanner.core.domain.model.DishSort
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
@@ -46,7 +46,7 @@ data class DishListUiState(
     val selectedMealTimes: Set<MealTime> = emptySet(),
     val sort: DishSort = DishSort.NAME,
     val usage: DishUsage = DishUsage.NONE,
-    val dishes: List<Dish> = emptyList()
+    val dishes: List<DishListItem> = emptyList()
 )
 
 private data class Listing(val criteria: DishFilterCriteria, val sort: DishSort)
@@ -66,7 +66,7 @@ class DishListViewModel @Inject constructor(
     private val listing = combine(filters, sort, ::Listing)
 
     val uiState: StateFlow<DishListUiState> =
-        combine(dishCatalog.observeDishes().map(DishFilter::index), debouncedQuery(), listing, observeDishUsage()) { index, query, (criteria, order), usage ->
+        combine(dishCatalog.observeDishList().map { DishFilter.index(it) }, debouncedQuery(), listing, observeDishUsage()) { index, query, (criteria, order), usage ->
             DishListUiState(
                 isLoading = false,
                 hasDishes = index.isNotEmpty(),

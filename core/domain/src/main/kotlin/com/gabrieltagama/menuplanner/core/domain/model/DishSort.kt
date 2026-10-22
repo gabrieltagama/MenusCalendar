@@ -5,7 +5,8 @@ import com.gabrieltagama.menuplanner.core.domain.text.spanishCollator
 /**
  * Orders in which dishes can be listed: by name (Spanish order, ignoring case and accents), by
  * last time served (never served first, then the oldest), by rating (best first) and by
- * heaviness (lightest first). Ties are always broken by name.
+ * heaviness (lightest first). Ties are always broken by name. It orders any CatalogDish, so the
+ * recipe book list and the dish pickers share it.
  */
 enum class DishSort {
     NAME,
@@ -13,13 +14,13 @@ enum class DishSort {
     RATING,
     HEAVINESS;
 
-    fun sorted(dishes: List<Dish>, usage: DishUsage = DishUsage.NONE): List<Dish> {
-        val byName = compareBy(spanishCollator(), Dish::name)
-        val primary: Comparator<Dish>? = when (this) {
+    fun <T : CatalogDish> sorted(dishes: List<T>, usage: DishUsage = DishUsage.NONE): List<T> {
+        val byName: Comparator<T> = compareBy(spanishCollator()) { it.name }
+        val primary: Comparator<T>? = when (this) {
             NAME -> null
             LAST_SERVED -> compareBy(nullsFirst()) { usage.lastServedOf(it.id) }
-            RATING -> compareByDescending(Dish::rating)
-            HEAVINESS -> compareBy(Dish::heaviness)
+            RATING -> compareByDescending { it.rating }
+            HEAVINESS -> compareBy { it.heaviness }
         }
         return dishes.sortedWith(primary?.then(byName) ?: byName)
     }

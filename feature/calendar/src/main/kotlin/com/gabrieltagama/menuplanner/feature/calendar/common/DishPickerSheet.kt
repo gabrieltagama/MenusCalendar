@@ -74,7 +74,7 @@ internal fun DishPickerSheet(
     val index = remember(options) { options.map(::SearchableDish) }
     val visible = remember(index, query, sort, usage) {
         val normalizedQuery = query.normalizedForSearch()
-        sort.sorted(index.filter { it.matches(normalizedQuery) }.map(SearchableDish::dish), usage)
+        sort.sorted(index.filter { it.matches(normalizedQuery) }.map { it.dish }, usage)
     }
     val choose: (Dish?) -> Unit = { dish ->
         onSelect(dish)

@@ -31,7 +31,8 @@ import kotlinx.serialization.json.jsonPrimitive
 /**
  * JSON format of shared files and backups (ShareDocumentDto). The schema version is read before
  * full decoding so a newer file reports UnsupportedImportVersion instead of a parse error. Malformed
- * JSON, unknown enum names, malformed dates or dishes breaking the Dish rules make the whole file
+ * JSON, unknown enum names, malformed dates or dishes breaking the Dish rules (checked when the Dish
+ * is created) make the whole file
  * invalid (InvalidImportFile); SerializationException and NumberFormatException extend
  * IllegalArgumentException, so one catch covers them. Repeated dish ids, lunch dates or dinner dates
  * keep only their newest version.
@@ -92,7 +93,7 @@ internal class JsonMenuSnapshotCodec @Inject constructor(private val json: Json)
 
     private fun DishDto.toDomain(): Dish {
         require(id.isNotBlank())
-        val dish = Dish(
+        return Dish(
             id = DishId(id),
             name = name,
             description = description,
@@ -104,8 +105,6 @@ internal class JsonMenuSnapshotCodec @Inject constructor(private val json: Json)
             mealTime = MealTime.valueOf(mealTime),
             updatedAt = Instant.parse(updatedAt)
         )
-        require(dish.validationError == null)
-        return dish
     }
 
     private fun MealDayDto.toDomain(): LunchEntry = LunchEntry(

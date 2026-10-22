@@ -6,6 +6,7 @@ import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
+import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.draft
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
@@ -37,7 +38,7 @@ class SaveDishUseCaseTest {
 
     @Test
     fun `blank name fails with BlankDishName and is not persisted`() = runBlocking {
-        val result = save(dish(name = "   "))
+        val result = save(draft(name = "   "))
 
         assertEquals(Outcome.Failure(RecipeError.BlankDishName), result)
         assertTrue(repository.upserted.isEmpty())
@@ -50,7 +51,7 @@ class SaveDishUseCaseTest {
             Ingredient(" ", 1.0, MeasureUnit.UNIT)
         )
 
-        val result = save(dish(ingredients = ingredients))
+        val result = save(draft(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(1)), result)
         assertTrue(repository.upserted.isEmpty())
@@ -60,7 +61,7 @@ class SaveDishUseCaseTest {
     fun `ingredient with negative quantity fails with its index`() = runBlocking {
         val ingredients = listOf(Ingredient("Salt", -0.5, MeasureUnit.PINCH))
 
-        val result = save(dish(ingredients = ingredients))
+        val result = save(draft(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(0)), result)
     }
@@ -167,5 +168,7 @@ class SaveDishUseCaseTest {
         assertEquals("Renamed", repository.current.getValue("d1").name)
     }
 
-    private suspend fun save(dish: Dish) = useCase(dish.toDraft())
+    private suspend fun save(dish: Dish) = save(dish.toDraft())
+
+    private suspend fun save(draft: DishDraft) = useCase(draft)
 }

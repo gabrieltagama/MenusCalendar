@@ -6,6 +6,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.gabrieltagama.menuplanner.core.data.database.entity.DishEntity
+import com.gabrieltagama.menuplanner.core.data.database.entity.DishListRow
 import com.gabrieltagama.menuplanner.core.data.database.entity.DishWithIngredients
 import com.gabrieltagama.menuplanner.core.data.database.entity.IngredientEntity
 import com.gabrieltagama.menuplanner.core.data.database.entity.LunchUse
@@ -23,6 +24,10 @@ internal interface DishDao {
     @Transaction
     @Query("SELECT * FROM dishes ORDER BY name COLLATE NOCASE")
     fun observeAll(): Flow<List<DishWithIngredients>>
+
+    @Transaction
+    @Query("SELECT id, name, type, heaviness, rating, meal_time FROM dishes ORDER BY name COLLATE NOCASE")
+    fun observeList(): Flow<List<DishListRow>>
 
     @Transaction
     @Query("SELECT * FROM dishes WHERE id = :id")

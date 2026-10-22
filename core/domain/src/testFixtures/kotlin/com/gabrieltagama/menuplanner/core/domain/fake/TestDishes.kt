@@ -1,6 +1,7 @@
 package com.gabrieltagama.menuplanner.core.domain.fake
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
@@ -14,7 +15,8 @@ import java.time.ZoneOffset
 import java.util.UUID
 
 /**
- * Test-data builders and a fixed clock shared by domain tests.
+ * Test-data builders and a fixed clock shared by domain tests. draft builds what the editor sends,
+ * which may break the Dish rules, while dish always builds a valid Dish.
  */
 object TestDishes {
     val FIXED_INSTANT: Instant = Instant.parse("2026-01-15T10:00:00Z")
@@ -46,4 +48,12 @@ object TestDishes {
         mealTime = mealTime,
         updatedAt = updatedAt
     )
+
+    fun draft(
+        id: String? = null,
+        name: String = "Dish",
+        type: DishType = DishType.MAIN,
+        heaviness: Heaviness = Heaviness.MEDIUM,
+        ingredients: List<Ingredient> = emptyList()
+    ) = DishDraft(id = id?.let(::DishId), name = name, ingredients = ingredients, type = type, heaviness = heaviness)
 }

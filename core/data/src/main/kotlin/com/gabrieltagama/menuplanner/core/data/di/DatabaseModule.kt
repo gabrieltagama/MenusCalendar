@@ -2,6 +2,7 @@ package com.gabrieltagama.menuplanner.core.data.di
 
 import android.content.Context
 import androidx.room.Room
+import com.gabrieltagama.menuplanner.core.data.database.MealDaysShapeGuard
 import com.gabrieltagama.menuplanner.core.data.database.MenuPlannerDatabase
 import com.gabrieltagama.menuplanner.core.data.database.Migrations
 import com.gabrieltagama.menuplanner.core.data.database.dao.DinnerDayDao
@@ -28,6 +29,7 @@ internal object DatabaseModule {
     fun provideDatabase(@ApplicationContext context: Context): MenuPlannerDatabase =
         Room.databaseBuilder(context, MenuPlannerDatabase::class.java, MenuPlannerDatabase.NAME)
             .addMigrations(*Migrations.ALL)
+            .addCallback(MealDaysShapeGuard)
             .build()
 
     @Provides
