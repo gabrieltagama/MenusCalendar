@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class FakeSettingsRepository(
     initial: ThemeMode = ThemeMode.SYSTEM,
     var unitsVersion: Int = 0,
+    var initialDishesLoaded: Boolean = false,
     initialRepeatWindow: RepeatWindow = RepeatWindow.DEFAULT
 ) : UserPreferencesRepository, AppStateRepository {
     private val mode = MutableStateFlow(initial)
@@ -35,6 +36,12 @@ class FakeSettingsRepository(
 
     override suspend fun completeOnboarding() {
         onboardingCompleted.value = true
+    }
+
+    override suspend fun isInitialDishesLoaded(): Boolean = initialDishesLoaded
+
+    override suspend fun setInitialDishesLoaded() {
+        initialDishesLoaded = true
     }
 
     override suspend fun recipeUnitsVersion(): Int = unitsVersion

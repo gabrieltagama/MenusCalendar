@@ -6,15 +6,13 @@ import com.gabrieltagama.menuplanner.core.domain.common.ShareError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotCodec
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeMenuSnapshotRepository
-import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
+import com.gabrieltagama.menuplanner.core.domain.fake.TestImports
 import com.gabrieltagama.menuplanner.core.domain.model.ImportSummary
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
-import com.gabrieltagama.menuplanner.core.domain.usecase.dish.StandardizeRecipeBookUseCase
 import com.gabrieltagama.menuplanner.core.domain.usecase.share.ExportMenusUseCase
-import com.gabrieltagama.menuplanner.core.domain.usecase.share.ImportMenusUseCase
 import com.gabrieltagama.menuplanner.feature.share.files.ShareFiles
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -38,8 +36,7 @@ class ShareViewModelTest {
 
     private val dishes = FakeDishRepository(listOf(dish(id = "a")))
     private val codec = FakeMenuSnapshotCodec()
-    private val summary = ImportSummary(1, 0, 0, 2, 0, 0)
-    private val snapshots = FakeMenuSnapshotRepository(dishes, mergeResult = summary)
+    private val snapshots = FakeMenuSnapshotRepository(dishes)
     private val files = InMemoryShareFiles()
 
     @Test
@@ -90,13 +87,13 @@ class ShareViewModelTest {
 
     @Test
     fun importReportsTheMergeSummary() {
-        codec.register("payload", MenuSnapshot(emptyList()))
+        codec.register("payload", MenuSnapshot(listOf(dish(id = "b", name = "Gazpacho"))))
         files.contents[files.importUri] = "payload"
         val viewModel = viewModel()
 
         viewModel.onImport(files.importUri)
 
-        assertEquals(ShareMessage.Imported(summary), viewModel.uiState.value.message)
+        assertEquals(ShareMessage.Imported(ImportSummary(1, 0, 0, 0, 0, 0)), viewModel.uiState.value.message)
     }
 
     @Test
@@ -110,7 +107,7 @@ class ShareViewModelTest {
 
     private fun viewModel() = ShareViewModel(
         exportMenus = ExportMenusUseCase(snapshots, codec, TestDishes.fixedClock),
-        importMenus = ImportMenusUseCase(snapshots, codec, StandardizeRecipeBookUseCase(dishes), ImmediateTransactionRunner()),
+        importMenus = TestImports.importMenus(dishes, codec),
         files = files
     )
 

@@ -6,7 +6,6 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.gabrieltagama.menuplanner.core.data.database.entity.DishEntity
-import com.gabrieltagama.menuplanner.core.data.database.entity.DishVersion
 import com.gabrieltagama.menuplanner.core.data.database.entity.DishWithIngredients
 import com.gabrieltagama.menuplanner.core.data.database.entity.IngredientEntity
 import com.gabrieltagama.menuplanner.core.data.database.entity.LunchUse
@@ -36,9 +35,6 @@ internal interface DishDao {
     @Transaction
     @Query("SELECT * FROM dishes ORDER BY name COLLATE NOCASE")
     suspend fun getAll(): List<DishWithIngredients>
-
-    @Query("SELECT id, type, meal_time, updated_at FROM dishes")
-    suspend fun getVersions(): List<DishVersion>
 
     @Query(
         "SELECT (SELECT COUNT(*) FROM meal_days WHERE starter_id = :id OR main_id = :id OR single_id = :id) + " +

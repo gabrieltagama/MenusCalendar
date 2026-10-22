@@ -14,7 +14,7 @@ import javax.inject.Inject
 /**
  * Use cases to share the recipe book and calendar with other users. Export encodes a snapshot of
  * everything; import decodes a received file, merges what the scope covers (everything by default)
- * and converts the recipes to standard units, both in one transaction.
+ * with MenuSnapshotMerger and converts the recipes to standard units, both in one transaction.
  */
 class ExportMenusUseCase @Inject constructor(
     private val repository: MenuSnapshotRepository,
@@ -25,13 +25,13 @@ class ExportMenusUseCase @Inject constructor(
 }
 
 class ImportMenusUseCase @Inject constructor(
-    private val repository: MenuSnapshotRepository,
     private val codec: MenuSnapshotCodec,
+    private val merger: MenuSnapshotMerger,
     private val standardizeRecipeBook: StandardizeRecipeBookUseCase,
     private val transaction: TransactionRunner
 ) {
     suspend operator fun invoke(text: String, scope: SnapshotScope = SnapshotScope.EVERYTHING): Outcome<ImportSummary> =
         codec.decode(text).map { snapshot ->
-            transaction.inTransaction { repository.merge(snapshot.limitedTo(scope)).also { standardizeRecipeBook() } }
+            transaction.inTransaction { merger.merge(snapshot.limitedTo(scope)).also { standardizeRecipeBook() } }
         }
 }

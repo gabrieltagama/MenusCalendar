@@ -14,6 +14,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.share.DinnerEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.LunchEntry
 import com.gabrieltagama.menuplanner.core.domain.model.share.MenuSnapshot
 import com.gabrieltagama.menuplanner.core.domain.model.share.SnapshotScope
+import com.gabrieltagama.menuplanner.core.domain.usecase.share.MenuSnapshotMerger
 import java.time.LocalDate
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -25,8 +26,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Robolectric tests of RoomMenuSnapshotRepository on an in-memory database: reading and merging
- * back restores the same data, merging again skips everything, last writer wins for dishes, lunches
+ * Robolectric tests of RoomMenuSnapshotRepository and of MenuSnapshotMerger over the Room
+ * repositories on an in-memory database: reading and merging back restores the same data, merging again skips everything, last writer wins for dishes, lunches
  * and dinners, and planned days that break the planning rules are skipped.
  */
 @RunWith(AndroidJUnit4::class)
@@ -36,6 +37,7 @@ class RoomMenuSnapshotRepositoryTest {
     private lateinit var lunchPlanRepository: RoomLunchPlanRepository
     private lateinit var dinnerPlanRepository: RoomDinnerPlanRepository
     private lateinit var repository: RoomMenuSnapshotRepository
+    private lateinit var merger: MenuSnapshotMerger
 
     private val date = LocalDate.of(2026, 3, 10)
     private val starter = DatabaseTestData.dish(
@@ -66,7 +68,7 @@ class RoomMenuSnapshotRepositoryTest {
         val snapshot = repository.read(SnapshotScope.EVERYTHING)
         recreateDatabase()
 
-        val summary = repository.merge(snapshot)
+        val summary = merger.merge(snapshot)
 
         assertEquals(ImportSummary(4, 0, 0, 3, 0, 0), summary)
         assertEquals(setOf(dessert, starter, single, main), dishRepository.getDishes().toSet())
@@ -89,7 +91,7 @@ class RoomMenuSnapshotRepositoryTest {
     fun mergingTheSameSnapshotAgainSkipsEverything() = runTest {
         seed()
 
-        val summary = repository.merge(repository.read(SnapshotScope.EVERYTHING))
+        val summary = merger.merge(repository.read(SnapshotScope.EVERYTHING))
 
         assertEquals(ImportSummary(0, 0, 4, 0, 0, 3), summary)
     }
@@ -109,7 +111,7 @@ class RoomMenuSnapshotRepositoryTest {
             DatabaseTestData.dish("equal", name = "Remote equal")
         )
 
-        val summary = repository.merge(MenuSnapshot(incoming))
+        val summary = merger.merge(MenuSnapshot(incoming))
 
         assertEquals(ImportSummary(0, 1, 2, 0, 0, 0), summary)
         assertEquals("Remote newer", dishRepository.getDish(DishId("newer"))?.name)
@@ -128,7 +130,7 @@ class RoomMenuSnapshotRepositoryTest {
             dinners = listOf(DinnerEntry(date, edited.id, DatabaseTestData.OLD_INSTANT))
         )
 
-        val summary = repository.merge(snapshot)
+        val summary = merger.merge(snapshot)
 
         val expected = edited.copy(id = local.id)
         assertEquals(ImportSummary(0, 1, 0, 2, 0, 0), summary)
@@ -145,7 +147,7 @@ class RoomMenuSnapshotRepositoryTest {
             lunches = listOf(LunchEntry(date, starterId = starter.id, mainId = main.id, updatedAt = DatabaseTestData.OLD_INSTANT))
         )
 
-        assertEquals(ImportSummary(1, 0, 0, 1, 0, 0), repository.merge(snapshot))
+        assertEquals(ImportSummary(1, 0, 0, 1, 0, 0), merger.merge(snapshot))
         assertEquals(coursesDay, lunchPlanRepository.getDay(date))
     }
 
@@ -158,7 +160,7 @@ class RoomMenuSnapshotRepositoryTest {
             LunchEntry(date.plusDays(2), starterId = starter.id, updatedAt = DatabaseTestData.OLD_INSTANT)
         )
 
-        assertEquals(ImportSummary(0, 0, 0, 0, 0, 3), repository.merge(MenuSnapshot(emptyList(), lunches)))
+        assertEquals(ImportSummary(0, 0, 0, 0, 0, 3), merger.merge(MenuSnapshot(emptyList(), lunches)))
         (0L..2L).forEach { assertNull(lunchPlanRepository.getDay(date.plusDays(it))) }
     }
 
@@ -177,7 +179,7 @@ class RoomMenuSnapshotRepositoryTest {
             LunchEntry(date.plusDays(1), singleId = other.id, updatedAt = DatabaseTestData.OLD_INSTANT)
         )
 
-        assertEquals(ImportSummary(0, 0, 0, 0, 1, 1), repository.merge(MenuSnapshot(emptyList(), lunches)))
+        assertEquals(ImportSummary(0, 0, 0, 0, 1, 1), merger.merge(MenuSnapshot(emptyList(), lunches)))
         assertEquals(other, lunchPlanRepository.getDay(date)?.menu?.dishes?.single())
         assertEquals(single, lunchPlanRepository.getDay(date.plusDays(1))?.menu?.dishes?.single())
     }
@@ -193,7 +195,7 @@ class RoomMenuSnapshotRepositoryTest {
             DinnerEntry(date.plusDays(3), main.id, DatabaseTestData.OLD_INSTANT)
         )
 
-        assertEquals(ImportSummary(0, 0, 0, 1, 0, 3), repository.merge(MenuSnapshot(emptyList(), dinners = dinners)))
+        assertEquals(ImportSummary(0, 0, 0, 1, 0, 3), merger.merge(MenuSnapshot(emptyList(), dinners = dinners)))
         assertEquals(main, dinnerPlanRepository.getDay(date.plusDays(3))?.dish)
     }
 
@@ -214,5 +216,6 @@ class RoomMenuSnapshotRepositoryTest {
         lunchPlanRepository = RoomLunchPlanRepository(database.lunchDayDao(), database.dishDao())
         dinnerPlanRepository = RoomDinnerPlanRepository(database.dinnerDayDao(), database.dishDao())
         repository = RoomMenuSnapshotRepository(database)
+        merger = MenuSnapshotMerger(dishRepository, lunchPlanRepository, dinnerPlanRepository)
     }
 }
