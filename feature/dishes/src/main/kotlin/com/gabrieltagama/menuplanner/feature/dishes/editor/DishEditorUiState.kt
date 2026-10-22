@@ -1,60 +1,26 @@
 package com.gabrieltagama.menuplanner.feature.dishes.editor
 
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
-import com.gabrieltagama.menuplanner.core.domain.model.DishName
-import com.gabrieltagama.menuplanner.core.domain.model.DishType
-import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
-import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
-import com.gabrieltagama.menuplanner.core.domain.model.IngredientName
-import com.gabrieltagama.menuplanner.core.domain.model.MealTime
-import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
-import com.gabrieltagama.menuplanner.core.domain.model.Quantity
-import com.gabrieltagama.menuplanner.core.domain.model.Rating
 
 /**
- * Immutable form state of the dish editor. Quantities are kept as raw text so the user can type
- * freely ("1,5", "0.25"); they are parsed and validated only when saving. A blank quantity is
- * accepted only for the "al gusto" unit (stored as 0). Each ingredient row carries a stable key.
+ * Immutable state of the dish editor: the DishForm being edited and the progress around it
+ * (loading, saving, the validation errors shown after a first save attempt, the delete and discard
+ * confirmations and the error to show once). DishEditorEvent.Close asks the screen to close it.
  */
 data class DishEditorUiState(
     val isEditMode: Boolean = false,
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val name: String = "",
-    val description: String = "",
-    val type: DishType = DishType.MAIN,
-    val heaviness: Heaviness = Heaviness.MEDIUM,
-    val rating: Rating = Rating.THREE,
-    val mealTime: MealTime = MealTime.ANY,
-    val ingredients: List<IngredientForm> = emptyList(),
-    val preparation: String = "",
+    val form: DishForm = DishForm(),
     val showValidationErrors: Boolean = false,
     val showDeleteConfirm: Boolean = false,
     val showDiscardConfirm: Boolean = false,
     val error: DomainError? = null
 ) {
-    val isNameInvalid: Boolean get() = showValidationErrors && !DishName.isValid(name)
+    val isNameInvalid: Boolean get() = showValidationErrors && !form.isNameValid
     val canSubmit: Boolean get() = !isLoading && !isSaving
 }
 
-data class IngredientForm(
-    val key: Long,
-    val name: String = "",
-    val quantityText: String = "",
-    val unit: MeasureUnit = MeasureUnit.GRAM
-) {
-    val parsedQuantity: Double?
-        get() = if (quantityText.isBlank() && unit == MeasureUnit.TO_TASTE) 0.0
-        else quantityText.trim().replace(',', '.').toDoubleOrNull()?.let(Quantity::of)?.value
-
-    val isNameValid: Boolean get() = IngredientName.isValid(name)
-    val isQuantityValid: Boolean get() = parsedQuantity != null
-
-    fun toDomain(): Ingredient? = parsedQuantity?.let { Ingredient(name = name, quantity = it, unit = unit) }
+sealed interface DishEditorEvent {
+    data object Close : DishEditorEvent
 }
-
-internal fun Ingredient.toForm(key: Long): IngredientForm =
-    IngredientForm(key = key, name = name, quantityText = quantity.toEditableText(), unit = unit)
-
-private fun Double.toEditableText(): String =
-    if (this % 1.0 == 0.0) toLong().toString() else toString().replace('.', ',')

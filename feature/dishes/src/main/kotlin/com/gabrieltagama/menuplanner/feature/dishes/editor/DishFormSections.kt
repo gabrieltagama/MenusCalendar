@@ -107,13 +107,13 @@ internal fun HeavinessSelector(selected: Heaviness, onSelect: (Heaviness) -> Uni
 internal fun IngredientsSection(state: DishEditorUiState, actions: DishEditorActions) = Column(
     verticalArrangement = Arrangement.spacedBy(8.dp)
 ) {
-    if (state.ingredients.isEmpty())
+    if (state.form.ingredients.isEmpty())
         Text(
             text = stringResource(R.string.dish_editor_no_ingredients),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-    state.ingredients.forEach { ingredient ->
+    state.form.ingredients.forEach { ingredient ->
         key(ingredient.key) {
             IngredientRow(ingredient = ingredient, showErrors = state.showValidationErrors, actions = actions)
         }

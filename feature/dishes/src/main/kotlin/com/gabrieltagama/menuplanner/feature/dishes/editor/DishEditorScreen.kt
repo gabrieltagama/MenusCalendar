@@ -147,7 +147,7 @@ fun DishEditorScreen(
     if (state.showDeleteConfirm)
         ConfirmDialog(
             title = stringResource(R.string.dish_editor_delete_title),
-            text = stringResource(R.string.dish_editor_delete_text, state.name),
+            text = stringResource(R.string.dish_editor_delete_text, state.form.name),
             onConfirm = actions.onDeleteConfirm,
             onDismiss = actions.onDeleteDismiss,
             confirmLabel = stringResource(R.string.dish_editor_delete)
@@ -170,7 +170,7 @@ private fun DishForm(state: DishEditorUiState, actions: DishEditorActions, modif
 ) {
     SectionCard(title = stringResource(R.string.dish_editor_section_basics)) {
         OutlinedTextField(
-            value = state.name,
+            value = state.form.name,
             onValueChange = actions.onNameChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(R.string.dish_editor_name)) },
@@ -180,7 +180,7 @@ private fun DishForm(state: DishEditorUiState, actions: DishEditorActions, modif
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
         )
         OutlinedTextField(
-            value = state.description,
+            value = state.form.description,
             onValueChange = actions.onDescriptionChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(R.string.dish_editor_description)) },
@@ -189,13 +189,13 @@ private fun DishForm(state: DishEditorUiState, actions: DishEditorActions, modif
         )
     }
     SectionCard(title = stringResource(R.string.dish_editor_section_classification)) {
-        TypeSelector(selected = state.type, onSelect = actions.onTypeChange)
-        HeavinessSelector(selected = state.heaviness, onSelect = actions.onHeavinessChange)
+        TypeSelector(selected = state.form.type, onSelect = actions.onTypeChange)
+        HeavinessSelector(selected = state.form.heaviness, onSelect = actions.onHeavinessChange)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             EnumDropdown(
                 label = stringResource(R.string.dish_editor_rating),
                 options = Rating.entries,
-                selected = state.rating,
+                selected = state.form.rating,
                 optionLabel = { it.label() },
                 onSelect = actions.onRatingChange,
                 modifier = Modifier.weight(1f)
@@ -203,7 +203,7 @@ private fun DishForm(state: DishEditorUiState, actions: DishEditorActions, modif
             EnumDropdown(
                 label = stringResource(R.string.dish_editor_meal_time),
                 options = MealTime.entries,
-                selected = state.mealTime,
+                selected = state.form.mealTime,
                 optionLabel = { it.label() },
                 onSelect = actions.onMealTimeChange,
                 modifier = Modifier.weight(1f)
@@ -215,7 +215,7 @@ private fun DishForm(state: DishEditorUiState, actions: DishEditorActions, modif
     }
     SectionCard(title = stringResource(R.string.dish_editor_preparation)) {
         OutlinedTextField(
-            value = state.preparation,
+            value = state.form.preparation,
             onValueChange = actions.onPreparationChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(R.string.dish_editor_preparation)) },
@@ -231,17 +231,19 @@ private fun DishEditorScreenPreview() = MenuPlannerTheme {
     DishEditorScreen(
         state = DishEditorUiState(
             isEditMode = true,
-            name = "Tortilla de patatas",
-            description = "Jugosa, con cebolla",
-            type = DishType.MAIN,
-            heaviness = Heaviness.MEDIUM,
-            rating = Rating.FOUR,
-            mealTime = MealTime.LUNCH,
-            ingredients = listOf(
-                IngredientForm(key = 0, name = "Patata", quantityText = "500", unit = MeasureUnit.GRAM),
-                IngredientForm(key = 1, name = "Huevo", quantityText = "6", unit = MeasureUnit.UNIT)
-            ),
-            preparation = "Pelar y freír las patatas..."
+            form = DishForm(
+                name = "Tortilla de patatas",
+                description = "Jugosa, con cebolla",
+                type = DishType.MAIN,
+                heaviness = Heaviness.MEDIUM,
+                rating = Rating.FOUR,
+                mealTime = MealTime.LUNCH,
+                ingredients = listOf(
+                    IngredientForm(key = 0, name = "Patata", quantityText = "500", unit = MeasureUnit.GRAM),
+                    IngredientForm(key = 1, name = "Huevo", quantityText = "6", unit = MeasureUnit.UNIT)
+                ),
+                preparation = "Pelar y freír las patatas..."
+            )
         ),
         actions = DishEditorActions()
     )

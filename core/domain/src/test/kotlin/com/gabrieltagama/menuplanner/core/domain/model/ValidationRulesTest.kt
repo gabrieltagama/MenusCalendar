@@ -8,7 +8,8 @@ import org.junit.Test
 
 /**
  * Rules shared by the whole app for a dish: DishName and IngredientName trim the text and reject it
- * when empty, Quantity accepts only finite non-negative numbers, and Dish.validate applies them.
+ * when empty, Quantity accepts only finite non-negative numbers (also when parsed from typed text),
+ * and Dish.validate applies them.
  */
 class ValidationRulesTest {
 
@@ -30,6 +31,16 @@ class ValidationRulesTest {
         assertEquals(1.5, Quantity.of(1.5)?.value)
         assertEquals(Quantity.ZERO, Quantity.of(0.0))
         listOf(-1.0, Double.NaN, Double.POSITIVE_INFINITY).forEach { assertFalse(it.toString(), Quantity.isValid(it)) }
+    }
+
+    @Test
+    fun `quantity is parsed from what the user typed`() {
+        assertEquals(1.5, Quantity.parse(" 1,5 ", MeasureUnit.GRAM)?.value)
+        assertEquals(0.25, Quantity.parse("0.25", MeasureUnit.MILLILITER)?.value)
+        assertEquals(Quantity.ZERO, Quantity.parse("", MeasureUnit.TO_TASTE))
+        assertNull(Quantity.parse("", MeasureUnit.GRAM))
+        assertNull(Quantity.parse("1,2,3", MeasureUnit.GRAM))
+        assertNull(Quantity.parse("-2", MeasureUnit.UNIT))
     }
 
     @Test
