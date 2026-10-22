@@ -2,7 +2,9 @@ package com.gabrieltagama.menuplanner.core.domain.fake
 
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
+import com.gabrieltagama.menuplanner.core.domain.model.DishListItem
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
+import com.gabrieltagama.menuplanner.core.domain.model.toListItem
 import com.gabrieltagama.menuplanner.core.domain.port.DishRepository
 import com.gabrieltagama.menuplanner.core.domain.query.DishCatalogQueries
 import com.gabrieltagama.menuplanner.core.domain.query.PlannedUseQueries
@@ -24,6 +26,8 @@ class FakeDishRepository(initial: List<Dish> = emptyList()) : DishRepository, Di
     val current: Map<String, Dish> get() = dishes.value.mapKeys { it.key.value }
 
     override fun observeDishes(): Flow<List<Dish>> = dishes.map { it.values.toList() }
+
+    override fun observeDishList(): Flow<List<DishListItem>> = dishes.map { it.values.map(Dish::toListItem) }
 
     override suspend fun getDishes(): List<Dish> = dishes.value.values.toList()
 

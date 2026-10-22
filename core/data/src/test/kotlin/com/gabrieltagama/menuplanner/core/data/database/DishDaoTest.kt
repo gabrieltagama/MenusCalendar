@@ -6,6 +6,7 @@ import com.gabrieltagama.menuplanner.core.data.database.dao.DishDao
 import com.gabrieltagama.menuplanner.core.data.mapper.toDomain
 import com.gabrieltagama.menuplanner.core.data.mapper.toEntity
 import com.gabrieltagama.menuplanner.core.data.mapper.toIngredientEntities
+import com.gabrieltagama.menuplanner.core.data.query.RoomDishQueries
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomLunchPlanRepository
@@ -17,7 +18,9 @@ import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.MenuSlot
 import com.gabrieltagama.menuplanner.core.domain.model.PlannedUse
+import com.gabrieltagama.menuplanner.core.domain.model.toListItem
 import java.time.LocalDate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -149,6 +152,22 @@ class DishDaoTest {
     }
 
     @Test
+    fun listRowsCarryWhatTheRecipeBookShows() = runTest {
+        val dish = DatabaseTestData.dish(
+            "d1",
+            name = "Gazpacho",
+            type = DishType.STARTER,
+            ingredients = listOf(Ingredient("Tomate", 500.0, MeasureUnit.GRAM), Ingredient("Aceite", 30.0, MeasureUnit.MILLILITER))
+        )
+        dishRepository.upsert(dish)
+
+        val item = RoomDishQueries(dishDao).observeDishList().first().single()
+
+        assertEquals(dish.toListItem().copy(ingredientNames = emptyList()), item.copy(ingredientNames = emptyList()))
+        assertEquals(setOf("Tomate", "Aceite"), item.ingredientNames.toSet())
+    }
+
+    @Test
     fun plannedUsesListTheLunchSlotsAndDinnersOfTheDish() = runTest {
         val starter = DatabaseTestData.dish("st", type = DishType.STARTER)
         val main = DatabaseTestData.dish("mn", type = DishType.MAIN)
@@ -157,12 +176,12 @@ class DishDaoTest {
         lunchPlanRepository.saveAll(listOf(DatabaseTestData.coursesDay(date, starter, main), DatabaseTestData.singleDay(date.plusDays(1), single)))
         RoomDinnerPlanRepository(database.dinnerDayDao(), dishDao).save(DinnerDay(date.plusDays(2), single, DatabaseTestData.OLD_INSTANT))
 
-        assertEquals(listOf(PlannedUse.Lunch(date, MenuSlot.MAIN)), dishRepository.getPlannedUses(main.id))
+        assertEquals(listOf(PlannedUse.Lunch(date, MenuSlot.MAIN)), RoomDishQueries(dishDao).getPlannedUses(main.id))
         assertEquals(
             setOf(PlannedUse.Lunch(date.plusDays(1), MenuSlot.SINGLE), PlannedUse.Dinner(date.plusDays(2))),
-            dishRepository.getPlannedUses(single.id).toSet()
+            RoomDishQueries(dishDao).getPlannedUses(single.id).toSet()
         )
-        assertEquals(emptyList<PlannedUse>(), dishRepository.getPlannedUses(DishId("unplanned")))
+        assertEquals(emptyList<PlannedUse>(), RoomDishQueries(dishDao).getPlannedUses(DishId("unplanned")))
     }
 
     private suspend fun assertPlannedDishCannotBeDeleted(dish: Dish) {

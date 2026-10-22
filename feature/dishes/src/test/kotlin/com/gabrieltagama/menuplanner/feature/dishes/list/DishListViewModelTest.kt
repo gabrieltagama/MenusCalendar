@@ -13,6 +13,7 @@ import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import com.gabrieltagama.menuplanner.core.domain.model.Rating
+import com.gabrieltagama.menuplanner.core.domain.model.toListItem
 import com.gabrieltagama.menuplanner.core.domain.testing.MainDispatcherRule
 import com.gabrieltagama.menuplanner.core.domain.testing.awaitItemMatching
 import com.gabrieltagama.menuplanner.core.domain.usecase.dish.ObserveDishUsageUseCase
@@ -56,7 +57,7 @@ class DishListViewModelTest {
             val state = awaitItemMatching { !it.isLoading }
 
             assertTrue(state.hasDishes)
-            assertEquals(listOf(salad, flan, chicken, puree), state.dishes)
+            assertEquals(listOf(salad, flan, chicken, puree).map(Dish::toListItem), state.dishes)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -69,7 +70,7 @@ class DishListViewModelTest {
             viewModel.onTypesChange(setOf(DishType.STARTER))
 
             val state = awaitItemMatching { it.selectedTypes == setOf(DishType.STARTER) }
-            assertEquals(listOf(salad, puree), state.dishes)
+            assertEquals(listOf(salad, puree).map(Dish::toListItem), state.dishes)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -96,7 +97,7 @@ class DishListViewModelTest {
             viewModel.onQueryChange("  PURE ")
 
             val state = awaitItemMatching { it.dishes.size == 1 }
-            assertEquals(listOf(puree), state.dishes)
+            assertEquals(listOf(puree).map(Dish::toListItem), state.dishes)
             assertEquals("  PURE ", viewModel.query.value)
             cancelAndIgnoreRemainingEvents()
         }
@@ -109,7 +110,7 @@ class DishListViewModelTest {
 
             viewModel.onQueryChange("flán")
 
-            assertEquals(listOf(flan), awaitItemMatching { it.dishes.size == 1 }.dishes)
+            assertEquals(listOf(flan).map(Dish::toListItem), awaitItemMatching { it.dishes.size == 1 }.dishes)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -139,7 +140,7 @@ class DishListViewModelTest {
             viewModel.onTypesChange(setOf(DishType.SINGLE))
 
             val state = awaitItemMatching { it.selectedHeaviness == setOf(Heaviness.VERY_HIGH) && it.selectedTypes == setOf(DishType.SINGLE) }
-            assertEquals(listOf(lentils), state.dishes)
+            assertEquals(listOf(lentils).map(Dish::toListItem), state.dishes)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -159,7 +160,7 @@ class DishListViewModelTest {
             val state = awaitItemMatching {
                 it.selectedRatings == setOf(Rating.FOUR, Rating.FIVE) && it.selectedMealTimes == setOf(MealTime.DINNER, MealTime.ANY)
             }
-            assertEquals(listOf(stew, soup), state.dishes)
+            assertEquals(listOf(stew, soup).map(Dish::toListItem), state.dishes)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -181,7 +182,7 @@ class DishListViewModelTest {
             viewModel.onQueryChange("PATATA")
 
             val state = awaitItemMatching { it.query == "PATATA" }
-            assertEquals(listOf(omelette), state.dishes)
+            assertEquals(listOf(omelette).map(Dish::toListItem), state.dishes)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -207,7 +208,7 @@ class DishListViewModelTest {
             viewModel.onSortChange(DishSort.LAST_SERVED)
 
             val state = awaitItemMatching { it.sort == DishSort.LAST_SERVED }
-            assertEquals(listOf(flan, chicken, puree, salad), state.dishes)
+            assertEquals(listOf(flan, chicken, puree, salad).map(Dish::toListItem), state.dishes)
             assertEquals(LocalDate.of(2025, 12, 1), state.usage.lastServedOf(chicken.id))
             cancelAndIgnoreRemainingEvents()
         }

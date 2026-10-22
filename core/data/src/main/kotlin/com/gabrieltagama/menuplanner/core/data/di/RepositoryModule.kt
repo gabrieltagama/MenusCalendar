@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.core.data.di
 import com.gabrieltagama.menuplanner.core.data.database.RoomTransactionRunner
 import com.gabrieltagama.menuplanner.core.data.id.UuidDishIdGenerator
 import com.gabrieltagama.menuplanner.core.data.initial.AssetInitialDishesSource
+import com.gabrieltagama.menuplanner.core.data.query.RoomDishQueries
 import com.gabrieltagama.menuplanner.core.data.query.RoomDishUsageQueries
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDinnerPlanRepository
 import com.gabrieltagama.menuplanner.core.data.repository.RoomDishRepository
@@ -46,10 +47,10 @@ internal abstract class RepositoryModule {
     abstract fun bindDishRepository(implementation: RoomDishRepository): DishRepository
 
     @Binds
-    abstract fun bindDishCatalogQueries(implementation: RoomDishRepository): DishCatalogQueries
+    abstract fun bindDishCatalogQueries(implementation: RoomDishQueries): DishCatalogQueries
 
     @Binds
-    abstract fun bindPlannedUseQueries(implementation: RoomDishRepository): PlannedUseQueries
+    abstract fun bindPlannedUseQueries(implementation: RoomDishQueries): PlannedUseQueries
 
     @Binds
     @Singleton

@@ -1,6 +1,6 @@
 package com.gabrieltagama.menuplanner.feature.dishes.list
 
-import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.CatalogDish
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.MealTime
@@ -26,9 +26,9 @@ data class DishFilterCriteria(
 
 internal object DishFilter {
 
-    fun index(dishes: List<Dish>): List<SearchableDish> = dishes.map(::SearchableDish).sortedBy(SearchableDish::sortKey)
+    fun <T : CatalogDish> index(dishes: List<T>): List<SearchableDish<T>> = dishes.map { SearchableDish(it) }.sortedBy { it.sortKey }
 
-    fun filter(index: List<SearchableDish>, criteria: DishFilterCriteria): List<Dish> {
+    fun <T : CatalogDish> filter(index: List<SearchableDish<T>>, criteria: DishFilterCriteria): List<T> {
         val normalizedQuery = criteria.query.normalizedForSearch()
         return index
             .filter { criteria.types.accepts(it.dish.type) }
@@ -36,7 +36,7 @@ internal object DishFilter {
             .filter { criteria.ratings.accepts(it.dish.rating) }
             .filter { criteria.mealTimes.accepts(it.dish.mealTime) }
             .filter { it.matches(normalizedQuery) }
-            .map(SearchableDish::dish)
+            .map { it.dish }
     }
 
     private fun <T> Set<T>.accepts(value: T): Boolean = isEmpty() || value in this

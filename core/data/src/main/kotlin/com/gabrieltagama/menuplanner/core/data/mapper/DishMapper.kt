@@ -1,15 +1,18 @@
 package com.gabrieltagama.menuplanner.core.data.mapper
 
 import com.gabrieltagama.menuplanner.core.data.database.entity.DishEntity
+import com.gabrieltagama.menuplanner.core.data.database.entity.DishListRow
 import com.gabrieltagama.menuplanner.core.data.database.entity.DishWithIngredients
 import com.gabrieltagama.menuplanner.core.data.database.entity.IngredientEntity
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
+import com.gabrieltagama.menuplanner.core.domain.model.DishListItem
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 
 /**
  * Maps dishes between Room rows and the domain (column types are converted by Room, see
- * Converters); the ingredient order is preserved through the position column.
+ * Converters); the ingredient order is preserved through the position column. A DishListRow maps
+ * to the DishListItem read model.
  */
 internal fun DishWithIngredients.toDomain(): Dish = Dish(
     id = DishId(dish.id),
@@ -49,3 +52,13 @@ internal fun Dish.toIngredientEntities(): List<IngredientEntity> =
 
 private fun IngredientEntity.toDomain(): Ingredient =
     Ingredient(name = name, quantity = quantity, unit = unit)
+
+internal fun DishListRow.toListItem(): DishListItem = DishListItem(
+    id = DishId(id),
+    name = name,
+    type = type,
+    heaviness = heaviness,
+    rating = rating,
+    mealTime = mealTime,
+    ingredientNames = ingredientNames
+)

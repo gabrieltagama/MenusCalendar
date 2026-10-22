@@ -5,7 +5,8 @@ import java.time.LocalDate
 /**
  * A calendar day where a dish is planned, in a lunch slot or as the dinner. allows tells whether
  * the dish could stay there with another type and meal time, with the same rules as planning it by
- * hand: a lunch slot takes only its dish type and a dinner only a dinner option.
+ * hand: a lunch slot takes only its dish type and a dinner only a dinner option. A lunch slot ignores
+ * the meal time on purpose, because a dish meant for dinner may be chosen by hand for lunch.
  */
 sealed interface PlannedUse {
     val date: LocalDate

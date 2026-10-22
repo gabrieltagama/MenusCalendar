@@ -3,6 +3,7 @@ package com.gabrieltagama.menuplanner.core.domain.usecase.dish
 import com.gabrieltagama.menuplanner.core.domain.common.DomainError
 import com.gabrieltagama.menuplanner.core.domain.common.Outcome
 import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
+import com.gabrieltagama.menuplanner.core.domain.common.onSuccess
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
 import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
 import com.gabrieltagama.menuplanner.core.domain.model.DishId
@@ -19,7 +20,8 @@ import javax.inject.Inject
  * when new and converted to standard units) and delete (blocked while the dish is planned). Saving
  * a planned dish with a type or meal time that its calendar days no longer accept is refused with
  * DishPlannedIncompatibly, so the calendar never holds days that an export could not restore; the
- * check and the save run in one transaction.
+ * check and the save run in one transaction. Once the dish is saved, the rest of the recipe book is
+ * aligned with its units as a separate step (StandardizeRecipeBookUseCase).
  */
 class GetDishUseCase @Inject constructor(private val repository: DishRepository) {
     suspend operator fun invoke(id: DishId): Outcome<Dish> =
@@ -35,11 +37,12 @@ class SaveDishUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(draft: DishDraft): Outcome<Dish> {
         draft.validationError?.let { return Outcome.Failure(it) }
-        return transaction.inTransaction {
+        val saved = transaction.inTransaction {
             val conflict = draft.id?.let { planConflictOf(it, draft) }
             if (conflict != null) Outcome.Failure(conflict)
             else Outcome.Success(standardizeRecipeBook.save(draft.toDish(id = draft.id ?: idGenerator.newId(), updatedAt = clock.instant())))
         }
+        return saved.onSuccess { standardizeRecipeBook() }
     }
 
     private suspend fun planConflictOf(id: DishId, draft: DishDraft): DomainError? =

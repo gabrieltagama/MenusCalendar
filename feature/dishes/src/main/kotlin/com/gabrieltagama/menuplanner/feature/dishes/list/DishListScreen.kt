@@ -44,12 +44,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.model.DishListItem
 import com.gabrieltagama.menuplanner.core.domain.model.DishSort
 import com.gabrieltagama.menuplanner.core.domain.model.DishType
 import com.gabrieltagama.menuplanner.core.domain.model.DishUsage
 import com.gabrieltagama.menuplanner.core.domain.model.Heaviness
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
+import com.gabrieltagama.menuplanner.core.domain.model.toListItem
 import com.gabrieltagama.menuplanner.core.ui.component.DishTypeAvatar
 import com.gabrieltagama.menuplanner.core.ui.component.EmptyState
 import com.gabrieltagama.menuplanner.core.ui.component.HeavinessChip
@@ -131,7 +133,7 @@ private fun DishListContent(state: DishListUiState, listState: LazyListState, on
 }
 
 @Composable
-private fun DishList(dishes: List<Dish>, usage: DishUsage?, listState: LazyListState, onOpenDish: (String?) -> Unit) = LazyColumn(
+private fun DishList(dishes: List<DishListItem>, usage: DishUsage?, listState: LazyListState, onOpenDish: (String?) -> Unit) = LazyColumn(
     state = listState,
     modifier = Modifier.fillMaxSize(),
     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
@@ -143,7 +145,7 @@ private fun DishList(dishes: List<Dish>, usage: DishUsage?, listState: LazyListS
 }
 
 @Composable
-private fun DishCard(dish: Dish, usage: DishUsage?, onClick: () -> Unit, modifier: Modifier = Modifier) = Surface(
+private fun DishCard(dish: DishListItem, usage: DishUsage?, onClick: () -> Unit, modifier: Modifier = Modifier) = Surface(
     shape = MaterialTheme.shapes.large,
     color = MaterialTheme.colorScheme.surfaceContainerLow,
     modifier = modifier.fillMaxWidth()
@@ -162,10 +164,10 @@ private fun DishCard(dish: Dish, usage: DishUsage?, onClick: () -> Unit, modifie
 }
 
 @Composable
-private fun Dish.supportingText(): String {
+private fun DishListItem.supportingText(): String {
     val typeText = type.shortLabel()
-    if (ingredients.isEmpty()) return typeText
-    return "$typeText · ${pluralStringResource(R.plurals.dishes_ingredient_count, ingredients.size, ingredients.size)}"
+    if (ingredientNames.isEmpty()) return typeText
+    return "$typeText · ${pluralStringResource(R.plurals.dishes_ingredient_count, ingredientNames.size, ingredientNames.size)}"
 }
 
 @Composable
@@ -200,7 +202,7 @@ private val previewState = DishListUiState(
         PreviewDishes.dish(name = "Flan de huevo", type = DishType.DESSERT, heaviness = Heaviness.MEDIUM),
         PreviewDishes.dish(name = "Lentejas estofadas con chorizo y verduras de temporada", type = DishType.SINGLE, heaviness = Heaviness.VERY_HIGH),
         PreviewDishes.dish(name = "Pollo asado", type = DishType.MAIN, heaviness = Heaviness.MEDIUM)
-    )
+    ).map(Dish::toListItem)
 )
 
 @Preview(showBackground = true)

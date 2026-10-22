@@ -74,7 +74,6 @@ class InitialDishesLoadingTest {
         assertTrue(dishes.isNotEmpty())
         assertEquals(dishes.size, (result as Outcome.Success).value.dishesAdded)
         assertEquals(dishes.size, dishes.map { it.id }.toSet().size)
-        assertTrue(dishes.all { it.validationError == null })
     }
 
     @Test

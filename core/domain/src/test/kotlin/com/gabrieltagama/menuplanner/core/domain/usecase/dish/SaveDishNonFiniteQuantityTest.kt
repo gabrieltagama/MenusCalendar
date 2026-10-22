@@ -5,8 +5,8 @@ import com.gabrieltagama.menuplanner.core.domain.common.RecipeError
 import com.gabrieltagama.menuplanner.core.domain.fake.FakeDishRepository
 import com.gabrieltagama.menuplanner.core.domain.fake.ImmediateTransactionRunner
 import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes
-import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.dish
-import com.gabrieltagama.menuplanner.core.domain.model.Dish
+import com.gabrieltagama.menuplanner.core.domain.fake.TestDishes.draft
+import com.gabrieltagama.menuplanner.core.domain.model.DishDraft
 import com.gabrieltagama.menuplanner.core.domain.model.Ingredient
 import com.gabrieltagama.menuplanner.core.domain.model.MeasureUnit
 import kotlinx.coroutines.runBlocking
@@ -36,7 +36,7 @@ class SaveDishNonFiniteQuantityTest {
             Ingredient("Oil", Double.NaN, MeasureUnit.TABLESPOON)
         )
 
-        val result = save(dish(ingredients = ingredients))
+        val result = save(draft(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(1)), result)
         assertTrue(repository.upserted.isEmpty())
@@ -46,7 +46,7 @@ class SaveDishNonFiniteQuantityTest {
     fun `positive infinity quantity fails with its index`() = runBlocking {
         val ingredients = listOf(Ingredient("Water", Double.POSITIVE_INFINITY, MeasureUnit.LITER))
 
-        val result = save(dish(ingredients = ingredients))
+        val result = save(draft(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(0)), result)
         assertTrue(repository.upserted.isEmpty())
@@ -60,7 +60,7 @@ class SaveDishNonFiniteQuantityTest {
             Ingredient("Flour", Double.NEGATIVE_INFINITY, MeasureUnit.GRAM)
         )
 
-        val result = save(dish(ingredients = ingredients))
+        val result = save(draft(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(2)), result)
     }
@@ -72,10 +72,10 @@ class SaveDishNonFiniteQuantityTest {
             Ingredient("Egg", Double.NaN, MeasureUnit.UNIT)
         )
 
-        val result = save(dish(ingredients = ingredients))
+        val result = save(draft(ingredients = ingredients))
 
         assertEquals(Outcome.Failure(RecipeError.InvalidIngredient(0)), result)
     }
 
-    private suspend fun save(dish: Dish) = useCase(dish.toDraft())
+    private suspend fun save(draft: DishDraft) = useCase(draft)
 }
